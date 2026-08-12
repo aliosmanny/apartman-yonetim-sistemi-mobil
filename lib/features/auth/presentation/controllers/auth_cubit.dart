@@ -1,0 +1,105 @@
+import 'package:flutter_bloc/flutter_bloc.dart';
+import '../../domain/repositories/auth_repository.dart';
+import '../../../../core/errors/failures.dart';
+import 'auth_state.dart';
+
+class AuthCubit extends Cubit<AuthState> {
+  final AuthRepository _repository;
+
+  AuthCubit(this._repository) : super(const AuthInitial());
+
+  /// Uygulama açıldığında mevcut oturumu kontrol eder.
+  Future<void> checkSession() async {
+    emit(const AuthLoading());
+    try {
+      final user = await _repository.getStoredUser();
+      if (user != null) {
+        emit(AuthAuthenticated(user));
+      } else {
+        emit(const AuthUnauthenticated());
+      }
+    } catch (_) {
+      emit(const AuthUnauthenticated());
+    }
+  }
+
+  /// Telefon + şifre ile giriş.
+  Future<void> login({required String phone, required String password}) async {
+    emit(const AuthActionLoading());
+    try {
+      final user = await _repository.login(phone: phone, password: password);
+      emit(AuthAuthenticated(user));
+    } on ServerFailure catch (e) {
+      emit(AuthError(e.message));
+    } on ValidationFailure catch (e) {
+      emit(AuthError(e.message));
+    } on NetworkFailure catch (e) {
+      emit(AuthError(e.message));
+    } on UnauthorizedFailure catch (e) {
+      emit(AuthError(e.message));
+    } catch (e) {
+      emit(const AuthError('Giriş sırasında bir hata oluştu.'));
+    }
+  }
+
+  /// Oturumu kapat.
+  Future<void> logout() async {
+    emit(const AuthActionLoading());
+    try {
+      await _repository.logout();
+    } finally {
+      emit(const AuthUnauthenticated());
+    }
+  }
+
+  /// Şifre sıfırlama — OTP gönder.
+  Future<void> sendForgotPasswordOtp({required String identifier}) async {
+    emit(const AuthActionLoading());
+    try {
+      await _repository.sendForgotPasswordOtp(identifier: identifier);
+      emit(AuthForgotPasswordOtpSent(identifier));
+    } on Failure catch (e) {
+      emit(AuthError(e.message));
+    } catch (_) {
+      emit(const AuthError('OTP gönderilemedi. Lütfen tekrar deneyin.'));
+    }
+  }
+
+  /// OTP kodu doğrula.
+  Future<void> verifyOtp({required String phone, required String code}) async {
+    emit(const AuthActionLoading());
+    try {
+      await _repository.verifyForgotPasswordOtp(phone: phone, code: code);
+      emit(AuthOtpVerified(phone));
+    } on Failure catch (e) {
+      emit(AuthError(e.message));
+    } catch (_) {
+      emit(const AuthError('Kod doğrulanamadı. Lütfen tekrar deneyin.'));
+    }
+  }
+
+  /// Yeni şifre belirle.
+  Future<void> resetPassword({
+    required String phone,
+    required String code,
+    required String password,
+    required String passwordConfirm,
+  }) async {
+    emit(const AuthActionLoading());
+    try {
+      await _repository.resetPassword(
+        phone: phone,
+        code: code,
+        password: password,
+        passwordConfirm: passwordConfirm,
+      );
+      emit(const AuthPasswordReset());
+    } on Failure catch (e) {
+      emit(AuthError(e.message));
+    } catch (_) {
+      emit(const AuthError('Şifre sıfırlanamadı. Lütfen tekrar deneyin.'));
+    }
+  }
+
+  void resetState() => emit(const AuthUnauthenticated());
+}
