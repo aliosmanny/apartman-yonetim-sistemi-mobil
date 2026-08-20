@@ -1,112 +1,248 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
+import '../../../notifications/presentation/widgets/notification_bell.dart';
 import 'package:go_router/go_router.dart';
 import '../../../auth/presentation/controllers/auth_cubit.dart';
 import '../../../auth/presentation/controllers/auth_state.dart';
-import '../../../auth/domain/models/auth_user.dart';
 import '../../../../app/theme/app_colors.dart';
 import '../../../../app/theme/app_text_styles.dart';
+import '../controllers/dashboard_cubit.dart';
+import '../../../notifications/presentation/controllers/notification_cubit.dart';
+import '../../../../core/di/injection.dart';
+import 'package:intl/intl.dart'; // Para birimi formatlama için eklendi
 
 class ManagerDashboardPage extends StatelessWidget {
   const ManagerDashboardPage({super.key});
 
   @override
   Widget build(BuildContext context) {
-    return BlocBuilder<AuthCubit, AuthState>(
-      builder: (context, state) {
-        final user = state is AuthAuthenticated ? state.user : null;
-        return Scaffold(
-          backgroundColor: AppColors.background,
-          body: CustomScrollView(
-            slivers: [
-              // ── AppBar ──────────────────────────────
+    // Para birimi formatter (Örn: 124.500 ₺)
+    final formatCurrency = NumberFormat.currency(locale: 'tr_TR', symbol: '₺');
+    
+    return MultiBlocProvider(
+      providers: [
+        BlocProvider<DashboardCubit>(
+          create: (context) => sl<DashboardCubit>()..fetchManagerDashboard(),
+        ),
+        BlocProvider<NotificationCubit>(
+          create: (context) => sl<NotificationCubit>()..fetchNotifications(),
+        ),
+      ],
+      child: BlocBuilder<AuthCubit, AuthState>(
+        builder: (context, authState) {
+          final user = authState is AuthAuthenticated ? authState.user : null;
+
+          return Scaffold(
+            backgroundColor: AppColors.background,
+            body: CustomScrollView(
+              slivers: [
               SliverAppBar(
-                expandedHeight: 160,
+                expandedHeight: 170,
                 floating: false,
                 pinned: true,
-                backgroundColor: AppColors.surface,
+                elevation: 0,
+                backgroundColor: AppColors.primary,
                 flexibleSpace: FlexibleSpaceBar(
-                  background: Container(
-                    decoration: const BoxDecoration(
-                      gradient: AppColors.primaryGradient,
+                  background: ClipRRect(
+                    borderRadius: const BorderRadius.only(
+                      bottomLeft: Radius.circular(28),
+                      bottomRight: Radius.circular(28),
                     ),
-                    padding: const EdgeInsets.fromLTRB(20, 60, 20, 20),
-                    child: Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      mainAxisAlignment: MainAxisAlignment.end,
-                      children: [
-                        Row(
-                          children: [
-                            Expanded(
-                              child: Column(
-                                crossAxisAlignment: CrossAxisAlignment.start,
-                                children: [
-                                  Text(
-                                    'Merhaba, ${user?.firstName ?? ''}! 👋',
-                                    style: const TextStyle(
-                                      fontFamily: 'Inter',
-                                      fontSize: 20,
-                                      fontWeight: FontWeight.w700,
-                                      color: Colors.white,
-                                    ),
-                                  ),
-                                  const SizedBox(height: 4),
-                                  Text(
-                                    user?.role.displayName ?? '',
-                                    style: TextStyle(
-                                      fontFamily: 'Inter',
-                                      fontSize: 13,
-                                      fontWeight: FontWeight.w400,
-                                      color: Colors.white.withOpacity(0.8),
-                                    ),
-                                  ),
-                                ],
+                    child: Container(
+                      // Elle renk yazmak yerine hazır gradient
+                      decoration: const BoxDecoration(
+                        gradient: AppColors.primaryGradient,
+                      ),
+                      child: Stack(
+                        children: [
+                          Positioned(
+                            top: -30,
+                            right: -30,
+                            child: Container(
+                              width: 140,
+                              height: 140,
+                              decoration: BoxDecoration(
+                                shape: BoxShape.circle,
+                                color: Colors.white.withOpacity(0.05),
                               ),
                             ),
-                            _NotificationButton(),
-                            const SizedBox(width: 8),
-                            IconButton(
-                              onPressed: () => context.read<AuthCubit>().logout(),
-                              icon: const Icon(Icons.logout, color: Colors.white),
-                              tooltip: 'Çıkış Yap',
+                          ),
+                          Padding(
+                            padding: const EdgeInsets.fromLTRB(20, 60, 20, 24),
+                            child: Column(
+                              crossAxisAlignment: CrossAxisAlignment.start,
+                              mainAxisAlignment: MainAxisAlignment.end,
+                              children: [
+                                Row(
+                                  children: [
+                                    Expanded(
+                                      child: Column(
+                                        crossAxisAlignment: CrossAxisAlignment.start,
+                                        children: [
+                                          Text(
+                                            'İyi çalışmalar, ${user?.firstName ?? 'Yönetici'}!',
+                                            style: AppTextStyles.headlineMedium.copyWith(
+                                              color: AppColors.textOnPrimary,
+                                            ),
+                                          ),
+                                          const SizedBox(height: 4),
+                                          Text(
+                                            'Yönetim Paneli Özeti',
+                                            style: AppTextStyles.bodySmall.copyWith(
+                                              color: AppColors.textOnPrimary.withOpacity(0.75),
+                                            ),
+                                          ),
+                                        ],
+                                      ),
+                                    ),
+                                    const NotificationBell(routePath: '/manager/notifications'),
+                                    const SizedBox(width: 16),
+                                    Container(
+                                      width: 48,
+                                      height: 48,
+                                      decoration: BoxDecoration(
+                                        color: Colors.white.withOpacity(0.18),
+                                        shape: BoxShape.circle,
+                                        border: Border.all(
+                                          color: Colors.white.withOpacity(0.35),
+                                          width: 1.5,
+                                        ),
+                                      ),
+                                      child: Center(
+                                        child: Text(
+                                          (user?.firstName != null && user!.firstName.isNotEmpty)
+                                              ? user.firstName.substring(0, 1).toUpperCase()
+                                              : 'Y',
+                                          style: AppTextStyles.headlineMedium.copyWith(
+                                            color: AppColors.textOnPrimary,
+                                          ),
+                                        ),
+                                      ),
+                                    ),
+                                  ],
+                                ),
+                              ],
                             ),
-                          ],
-                        ),
-                      ],
+                          ),
+                        ],
+                      ),
                     ),
                   ),
                 ),
               ),
-
-              // ── İçerik ──────────────────────────────
               SliverPadding(
                 padding: const EdgeInsets.all(20),
                 sliver: SliverList(
                   delegate: SliverChildListDelegate([
-                    // ── Özet Kartlar ──────────────────
-                    const Text('Genel Durum', style: AppTextStyles.headlineSmall),
+
+                    // ── Finansal Özet Kartları ─────────────────
+                    BlocBuilder<DashboardCubit, DashboardState>(
+                      builder: (context, state) {
+                        if (state is DashboardLoading) {
+                          return const Center(child: CircularProgressIndicator());
+                        } else if (state is DashboardError) {
+                          return Center(child: Text(state.message, style: const TextStyle(color: Colors.red)));
+                        } else if (state is ManagerDashboardLoaded) {
+                          final data = state.data;
+                          return Row(
+                            children: [
+                              Expanded(
+                                child: _buildStatCard(
+                                  title: 'Kasa Bakiyesi',
+                                  amount: formatCurrency.format(data.netBalance),
+                                  icon: Icons.account_balance_wallet_rounded,
+                                  color: AppColors.debtPaid,
+                                  trend: '+%5', // Gerçek veride yok, mockup kaldı
+                                ),
+                              ),
+                              const SizedBox(width: 16),
+                              Expanded(
+                                child: _buildStatCard(
+                                  title: 'Gecikmiş Alacak',
+                                  amount: formatCurrency.format(data.totalUnpaidAmount),
+                                  icon: Icons.money_off_rounded,
+                                  color: AppColors.debtOverdue,
+                                  trend: '${data.overdueCount} Daire',
+                                ),
+                              ),
+                            ],
+                          );
+                        }
+                        return const SizedBox.shrink();
+                      },
+                    ),
+                    const SizedBox(height: 28),
+
+                    // ── Hızlı Eylemler ────────────────────────
+                    Text('Hızlı Eylemler', style: AppTextStyles.headlineSmall),
                     const SizedBox(height: 12),
-                    _SummaryGrid(
-                      items: const [
-                        _SummaryItem(icon: Icons.apartment, label: 'Apartmanlar', value: '--', color: AppColors.primary),
-                        _SummaryItem(icon: Icons.people, label: 'Sakinler', value: '--', color: AppColors.secondary),
-                        _SummaryItem(icon: Icons.receipt_long, label: 'Bekleyen Borç', value: '--', color: AppColors.warning),
-                        _SummaryItem(icon: Icons.build, label: 'Açık Talep', value: '--', color: AppColors.error),
+                    Container(
+                      padding: const EdgeInsets.symmetric(vertical: 12),
+                      decoration: BoxDecoration(
+                        color: AppColors.cardBackground,
+                        borderRadius: BorderRadius.circular(20),
+                        border: Border.all(color: AppColors.border),
+                        boxShadow: [
+                          BoxShadow(
+                            color: Colors.black.withOpacity(0.03),
+                            blurRadius: 12,
+                            offset: const Offset(0, 4),
+                          ),
+                        ],
+                      ),
+                      child: GridView.count(
+                        crossAxisCount: 4,
+                        shrinkWrap: true,
+                        physics: const NeverScrollableScrollPhysics(),
+                        children: [
+                          _buildActionBtn(context, Icons.campaign_rounded, 'Duyuru\nYayınla', AppColors.primary, '/manager/more'),
+                          _buildActionBtn(context, Icons.receipt_long_rounded, 'Gider\nEkle', AppColors.warning, '/manager/finance'),
+                          _buildActionBtn(context, Icons.person_add_rounded, 'Sakin\nEkle', AppColors.secondary, '/manager/properties'),
+                          _buildActionBtn(context, Icons.engineering_rounded, 'İş\nAta', AppColors.success, '/manager/maintenance'),
+                        ],
+                      ),
+                    ),
+                    const SizedBox(height: 28),
+
+                    // ── Bekleyen Talepler Özeti ───────────────
+                    Row(
+                      children: [
+                        Expanded(
+                          child: Text('Son Talepler', style: AppTextStyles.headlineSmall),
+                        ),
+                        TextButton(
+                          onPressed: () => context.go('/manager/maintenance'),
+                          child: const Text('Tümü'),
+                        ),
                       ],
                     ),
-
-                    const SizedBox(height: 24),
-
-                    // ── Hızlı İşlemler ────────────────
-                    const Text('Hızlı İşlemler', style: AppTextStyles.headlineSmall),
-                    const SizedBox(height: 12),
-                    _QuickActions(),
-
-                    const SizedBox(height: 24),
-
-                    // ── Bilgi kartı (API bağlanınca) ──
-                    _ComingSoonCard(),
-
+                    const SizedBox(height: 8),
+                    BlocBuilder<DashboardCubit, DashboardState>(
+                      builder: (context, state) {
+                        if (state is ManagerDashboardLoaded) {
+                          if (state.data.recentMaintenance.isEmpty) {
+                            return const Center(child: Padding(
+                              padding: EdgeInsets.all(16.0),
+                              child: Text('Bekleyen talep yok.'),
+                            ));
+                          }
+                          return Column(
+                            children: state.data.recentMaintenance.take(3).map((req) {
+                              return Padding(
+                                padding: const EdgeInsets.only(bottom: 8.0),
+                                child: _buildPendingRequestCard(
+                                  title: req.title,
+                                  unit: req.unit ?? 'Ortak Alan',
+                                  timeAgo: req.createdAt.split('T').first, // Basit tarih
+                                  status: req.status,
+                                ),
+                              );
+                            }).toList(),
+                          );
+                        }
+                        return const SizedBox.shrink();
+                      },
+                    ),
                     const SizedBox(height: 80),
                   ]),
                 ),
@@ -115,221 +251,179 @@ class ManagerDashboardPage extends StatelessWidget {
           ),
         );
       },
+      ),
     );
   }
-}
 
-class _NotificationButton extends StatelessWidget {
-  @override
-  Widget build(BuildContext context) {
-    return Stack(
-      children: [
-        Container(
-          width: 42,
-          height: 42,
-          decoration: BoxDecoration(
-            color: Colors.white.withOpacity(0.15),
-            borderRadius: BorderRadius.circular(12),
-          ),
-          child: const Icon(Icons.notifications_outlined,
-              color: Colors.white, size: 22),
-        ),
-        Positioned(
-          right: 8,
-          top: 8,
-          child: Container(
-            width: 8,
-            height: 8,
-            decoration: const BoxDecoration(
-              color: AppColors.error,
-              shape: BoxShape.circle,
-            ),
-          ),
-        ),
-      ],
-    );
-  }
-}
-
-class _SummaryGrid extends StatelessWidget {
-  final List<_SummaryItem> items;
-  const _SummaryGrid({required this.items});
-
-  @override
-  Widget build(BuildContext context) {
-    return GridView.count(
-      crossAxisCount: 2,
-      shrinkWrap: true,
-      physics: const NeverScrollableScrollPhysics(),
-      crossAxisSpacing: 12,
-      mainAxisSpacing: 12,
-      childAspectRatio: 1.6,
-      children: items,
-    );
-  }
-}
-
-class _SummaryItem extends StatelessWidget {
-  final IconData icon;
-  final String label;
-  final String value;
-  final Color color;
-
-  const _SummaryItem({
-    required this.icon,
-    required this.label,
-    required this.value,
-    required this.color,
-  });
-
-  @override
-  Widget build(BuildContext context) {
+  Widget _buildStatCard({
+    required String title,
+    required String amount,
+    required IconData icon,
+    required Color color,
+    required String trend,
+  }) {
     return Container(
       padding: const EdgeInsets.all(16),
       decoration: BoxDecoration(
-        color: AppColors.surface,
-        borderRadius: BorderRadius.circular(16),
+        color: AppColors.cardBackground,
+        borderRadius: BorderRadius.circular(20),
         border: Border.all(color: AppColors.border),
+        boxShadow: [
+          BoxShadow(
+            color: color.withOpacity(0.06),
+            blurRadius: 16,
+            offset: const Offset(0, 6),
+          ),
+        ],
       ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
-        mainAxisAlignment: MainAxisAlignment.spaceBetween,
+        children: [
+          Row(
+            children: [
+              Container(
+                padding: const EdgeInsets.all(9),
+                decoration: BoxDecoration(
+                  color: color.withOpacity(0.12),
+                  borderRadius: BorderRadius.circular(10),
+                ),
+                child: Icon(icon, color: color, size: 19),
+              ),
+              const Spacer(),
+              Container(
+                padding: const EdgeInsets.symmetric(horizontal: 7, vertical: 3),
+                decoration: BoxDecoration(
+                  color: color.withOpacity(0.1),
+                  borderRadius: BorderRadius.circular(20),
+                ),
+                child: Text(
+                  trend,
+                  style: AppTextStyles.labelSmall.copyWith(
+                    color: color,
+                    fontWeight: FontWeight.w700,
+                  ),
+                ),
+              ),
+            ],
+          ),
+          const SizedBox(height: 14),
+          Text(title, style: AppTextStyles.labelSmall.copyWith(color: AppColors.textSecondary)),
+          const SizedBox(height: 4),
+          Text(amount, style: AppTextStyles.amountMedium),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildActionBtn(BuildContext context, IconData icon, String label, Color color, String route) {
+    return InkWell(
+      onTap: () => context.go(route),
+      borderRadius: BorderRadius.circular(16),
+      child: Column(
+        mainAxisAlignment: MainAxisAlignment.center,
         children: [
           Container(
-            width: 34,
-            height: 34,
+            padding: const EdgeInsets.all(12),
             decoration: BoxDecoration(
-              color: color.withOpacity(0.12),
-              borderRadius: BorderRadius.circular(10),
+              color: color.withOpacity(0.1),
+              borderRadius: BorderRadius.circular(14),
             ),
-            child: Icon(icon, size: 18, color: color),
+            child: Icon(icon, color: color, size: 22),
           ),
-          Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              Text(value,
-                  style: AppTextStyles.headlineMedium.copyWith(color: color)),
-              Text(label, style: AppTextStyles.bodySmall),
-            ],
+          const SizedBox(height: 8),
+          Text(
+            label,
+            textAlign: TextAlign.center,
+            style: AppTextStyles.labelSmall.copyWith(
+              color: AppColors.textSecondary,
+              fontWeight: FontWeight.w600,
+              height: 1.2,
+            ),
           ),
         ],
       ),
     );
   }
-}
 
-class _QuickActions extends StatelessWidget {
-  @override
-  Widget build(BuildContext context) {
-    final actions = [
-      (icon: Icons.add_business, label: 'Apartman\nEkle', color: AppColors.primary),
-      (icon: Icons.person_add, label: 'Sakin\nEkle', color: AppColors.secondary),
-      (icon: Icons.payment, label: 'Aidat\nOluştur', color: AppColors.success),
-      (icon: Icons.campaign, label: 'Duyuru\nYayınla', color: AppColors.warning),
-    ];
+  Widget _buildPendingRequestCard({
+    required String title,
+    required String unit,
+    required String timeAgo,
+    required String status,
+  }) {
+    // Statüye göre renk belirleme
+    Color statusColor;
+    if (status == 'pending' || status == 'p') {
+      statusColor = AppColors.maintenancePending;
+    } else if (status == 'assigned' || status == 'a' || status == 'in_progress' || status == 'i') {
+      statusColor = AppColors.primary;
+    } else {
+      statusColor = AppColors.maintenanceCompleted;
+    }
 
-    return Row(
-      children: actions
-          .map((a) => Expanded(
-                child: Padding(
-                  padding: const EdgeInsets.only(right: 8),
-                  child: _QuickActionCard(
-                    icon: a.icon,
-                    label: a.label,
-                    color: a.color,
-                  ),
-                ),
-              ))
-          .toList(),
-    );
-  }
-}
-
-class _QuickActionCard extends StatelessWidget {
-  final IconData icon;
-  final String label;
-  final Color color;
-
-  const _QuickActionCard({
-    required this.icon,
-    required this.label,
-    required this.color,
-  });
-
-  @override
-  Widget build(BuildContext context) {
-    return GestureDetector(
-      onTap: () {},
-      child: Container(
-        padding: const EdgeInsets.symmetric(vertical: 14, horizontal: 8),
-        decoration: BoxDecoration(
-          color: color.withOpacity(0.08),
-          borderRadius: BorderRadius.circular(14),
-          border: Border.all(color: color.withOpacity(0.2)),
-        ),
-        child: Column(
+    return Container(
+      decoration: BoxDecoration(
+        color: AppColors.cardBackground,
+        borderRadius: BorderRadius.circular(18),
+        border: Border.all(color: AppColors.border),
+        boxShadow: [
+          BoxShadow(
+            color: statusColor.withOpacity(0.06),
+            blurRadius: 14,
+            offset: const Offset(0, 6),
+          ),
+        ],
+      ),
+      child: IntrinsicHeight(
+        child: Row(
           children: [
-            Icon(icon, color: color, size: 24),
-            const SizedBox(height: 6),
-            Text(
-              label,
-              textAlign: TextAlign.center,
-              style: TextStyle(
-                fontFamily: 'Inter',
-                fontSize: 10,
-                fontWeight: FontWeight.w600,
-                color: color,
-                height: 1.3,
+            Container(
+              width: 4,
+              decoration: BoxDecoration(
+                color: statusColor,
+                borderRadius: const BorderRadius.only(
+                  topLeft: Radius.circular(18),
+                  bottomLeft: Radius.circular(18),
+                ),
+              ),
+            ),
+            Expanded(
+              child: Padding(
+                padding: const EdgeInsets.all(16),
+                child: Row(
+                  children: [
+                    Container(
+                      padding: const EdgeInsets.all(12),
+                      decoration: BoxDecoration(
+                        color: statusColor.withOpacity(0.1),
+                        borderRadius: BorderRadius.circular(14),
+                      ),
+                      child: Icon(Icons.build_rounded, color: statusColor),
+                    ),
+                    const SizedBox(width: 16),
+                    Expanded(
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          Row(
+                            children: [
+                              Text(unit, style: AppTextStyles.labelSmall.copyWith(color: AppColors.textTertiary)),
+                              const Spacer(),
+                              Text(timeAgo, style: AppTextStyles.labelSmall.copyWith(color: AppColors.textTertiary)),
+                            ],
+                          ),
+                          const SizedBox(height: 4),
+                          Text(title, style: AppTextStyles.titleMedium),
+                        ],
+                      ),
+                    ),
+                    const Icon(Icons.chevron_right_rounded, color: AppColors.textTertiary),
+                  ],
+                ),
               ),
             ),
           ],
         ),
-      ),
-    );
-  }
-}
-
-class _ComingSoonCard extends StatelessWidget {
-  @override
-  Widget build(BuildContext context) {
-    return Container(
-      padding: const EdgeInsets.all(20),
-      decoration: BoxDecoration(
-        gradient: const LinearGradient(
-          colors: [Color(0xFFF0F9FF), Color(0xFFE0F2FE)],
-          begin: Alignment.topLeft,
-          end: Alignment.bottomRight,
-        ),
-        borderRadius: BorderRadius.circular(16),
-        border: Border.all(color: const Color(0xFFBAE6FD)),
-      ),
-      child: Row(
-        children: [
-          Container(
-            width: 48,
-            height: 48,
-            decoration: BoxDecoration(
-              color: AppColors.secondary.withOpacity(0.15),
-              borderRadius: BorderRadius.circular(14),
-            ),
-            child: const Icon(Icons.api_outlined,
-                color: AppColors.secondary, size: 26),
-          ),
-          const SizedBox(width: 16),
-          Expanded(
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Text('API Bağlantısı', style: AppTextStyles.titleLarge),
-                const SizedBox(height: 4),
-                Text(
-                  'Backend bağlantısı kurulunca veriler burada görünecek.',
-                  style: AppTextStyles.bodySmall.copyWith(height: 1.5),
-                ),
-              ],
-            ),
-          ),
-        ],
       ),
     );
   }

@@ -15,14 +15,12 @@ abstract class AppEnvironment {
   static String get baseUrl {
     switch (_current) {
       case AppEnv.development:
-        // TODO(api-contract): Ahmet'ten development sunucu adresi alınacak.
-        // Örnek: 'http://192.168.1.100:8000/api/v1'
-        return 'http://10.0.2.2:8000/api/v1'; // Android emülatör localhost
+        // Production API'sine bağlanıyoruz — web ile aynı veritabanı burada.
+        // Yerel test için: 'http://10.0.2.2:8000/api/v1' (local Django sunucu)
+        return 'https://siteyonetimi.argeyazilim.tr/api/v1';
       case AppEnv.staging:
-        // TODO(api-contract): Staging sunucu adresi alınacak.
         return 'https://staging.example.com/api/v1';
       case AppEnv.production:
-        // TODO(api-contract): Production sunucu adresi alınacak.
         return 'https://siteyonetimi.argeyazilim.tr/api/v1';
     }
   }
@@ -32,9 +30,10 @@ abstract class AppEnvironment {
   static Duration get sendTimeout => const Duration(seconds: 60);
 
   /// Mock veri kaynağını etkinleştirir.
-  /// Backend erişilemediğinde geliştirme için kullanılır.
+  /// false: Gerçek backend API kullanılır.
+  /// true : Mock veri kullanılır (backend hazır olmadığında).
   static bool get useMock => _current == AppEnv.development && _forceMock;
-  static bool _forceMock = true;
+  static bool _forceMock = false; // ← BACKEND ENTEGRASYONU BAŞLADI
 
   static void enableMock() => _forceMock = true;
   static void disableMock() => _forceMock = false;

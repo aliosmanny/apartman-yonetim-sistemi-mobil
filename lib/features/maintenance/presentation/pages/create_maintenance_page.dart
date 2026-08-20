@@ -33,14 +33,14 @@ class _CreateMaintenancePageState extends State<CreateMaintenancePage> {
     _formKey.currentState!.save();
 
     setState(() => _isLoading = true);
-    
+
     try {
       await sl<MaintenanceCubit>().createRequest(
         title: _title,
         description: _description,
         category: _category,
       );
-      
+
       if (!mounted) return;
       ScaffoldMessenger.of(context).showSnackBar(
         const SnackBar(
@@ -77,28 +77,20 @@ class _CreateMaintenancePageState extends State<CreateMaintenancePage> {
             children: [
               Text('Kategori Seçin', style: AppTextStyles.inputLabel),
               const SizedBox(height: 8),
-              Container(
-                padding: const EdgeInsets.symmetric(horizontal: 16),
-                decoration: BoxDecoration(
-                  color: AppColors.surface,
-                  borderRadius: BorderRadius.circular(12),
-                  border: Border.all(color: AppColors.border),
+              DropdownButtonFormField<String>(
+                value: _category,
+                decoration: const InputDecoration(
+                  prefixIcon: Icon(Icons.category_rounded, size: 20, color: AppColors.textTertiary),
                 ),
-                child: DropdownButtonHideUnderline(
-                  child: DropdownButton<String>(
-                    value: _category,
-                    isExpanded: true,
-                    items: _categories.map((cat) {
-                      return DropdownMenuItem(
-                        value: cat['value'],
-                        child: Text(cat['label']!),
-                      );
-                    }).toList(),
-                    onChanged: (val) {
-                      if (val != null) setState(() => _category = val);
-                    },
-                  ),
-                ),
+                items: _categories.map((cat) {
+                  return DropdownMenuItem(
+                    value: cat['value'],
+                    child: Text(cat['label']!),
+                  );
+                }).toList(),
+                onChanged: (val) {
+                  if (val != null) setState(() => _category = val);
+                },
               ),
               const SizedBox(height: 20),
 
@@ -107,6 +99,7 @@ class _CreateMaintenancePageState extends State<CreateMaintenancePage> {
               TextFormField(
                 decoration: const InputDecoration(
                   hintText: 'Örn: Asansör Çalışmıyor',
+                  prefixIcon: Icon(Icons.title_rounded, size: 20, color: AppColors.textTertiary),
                 ),
                 validator: (val) => val == null || val.isEmpty ? 'Zorunlu alan' : null,
                 onSaved: (val) => _title = val ?? '',
@@ -119,6 +112,7 @@ class _CreateMaintenancePageState extends State<CreateMaintenancePage> {
                 maxLines: 4,
                 decoration: const InputDecoration(
                   hintText: 'Sorunu veya talebinizi detaylıca açıklayın...',
+                  alignLabelWithHint: true,
                 ),
                 validator: (val) => val == null || val.isEmpty ? 'Zorunlu alan' : null,
                 onSaved: (val) => _description = val ?? '',
@@ -134,53 +128,43 @@ class _CreateMaintenancePageState extends State<CreateMaintenancePage> {
                     const SnackBar(content: Text('Fotoğraf yükleme yapım aşamasında.')),
                   );
                 },
-                borderRadius: BorderRadius.circular(12),
+                borderRadius: BorderRadius.circular(14),
                 child: Container(
                   height: 100,
                   width: double.infinity,
                   decoration: BoxDecoration(
-                    color: AppColors.surface,
-                    borderRadius: BorderRadius.circular(12),
-                    border: Border.all(color: AppColors.border, style: BorderStyle.solid),
+                    color: AppColors.primary.withOpacity(0.04),
+                    borderRadius: BorderRadius.circular(14),
+                    border: Border.all(color: AppColors.primary.withOpacity(0.25)),
                   ),
                   child: Column(
                     mainAxisAlignment: MainAxisAlignment.center,
                     children: [
-                      const Icon(Icons.add_a_photo_outlined, color: AppColors.textTertiary, size: 32),
+                      Container(
+                        padding: const EdgeInsets.all(8),
+                        decoration: BoxDecoration(
+                          color: AppColors.primary.withOpacity(0.1),
+                          shape: BoxShape.circle,
+                        ),
+                        child: const Icon(Icons.add_a_photo_rounded, color: AppColors.primary, size: 20),
+                      ),
                       const SizedBox(height: 8),
-                      Text('Galeriden Seç', style: AppTextStyles.labelMedium.copyWith(color: AppColors.textTertiary)),
+                      Text('Galeriden Seç', style: AppTextStyles.labelMedium.copyWith(color: AppColors.primary)),
                     ],
                   ),
                 ),
               ),
               const SizedBox(height: 32),
 
-              SizedBox(
-                width: double.infinity,
-                height: 54,
-                child: ElevatedButton(
-                  onPressed: _isLoading ? null : _submit,
-                  style: ElevatedButton.styleFrom(
-                    backgroundColor: AppColors.primary,
-                    shape: RoundedRectangleBorder(
-                      borderRadius: BorderRadius.circular(14),
-                    ),
-                  ),
-                  child: _isLoading
-                      ? const SizedBox(
-                          width: 24, height: 24,
-                          child: CircularProgressIndicator(color: Colors.white, strokeWidth: 2),
-                        )
-                      : const Text(
-                          'Talebi Gönder',
-                          style: TextStyle(
-                            fontFamily: 'Inter',
-                            fontSize: 16,
-                            fontWeight: FontWeight.w600,
-                            color: Colors.white,
-                          ),
-                        ),
-                ),
+              ElevatedButton(
+                onPressed: _isLoading ? null : _submit,
+                child: _isLoading
+                    ? const SizedBox(
+                  width: 22,
+                  height: 22,
+                  child: CircularProgressIndicator(color: Colors.white, strokeWidth: 2),
+                )
+                    : const Text('Talebi Gönder'),
               ),
             ],
           ),

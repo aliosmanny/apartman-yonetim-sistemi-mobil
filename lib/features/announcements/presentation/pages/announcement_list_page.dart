@@ -36,70 +36,88 @@ class _AnnouncementCard extends StatelessWidget {
   Widget build(BuildContext context) {
     return Container(
       decoration: BoxDecoration(
-        color: AppColors.surface,
-        borderRadius: BorderRadius.circular(16),
-        border: Border.all(
-          color: announcement.isImportant ? AppColors.error.withOpacity(0.5) : AppColors.border,
-          width: announcement.isImportant ? 1.5 : 1.0,
-        ),
+        color: AppColors.cardBackground,
+        borderRadius: BorderRadius.circular(18),
+        border: Border.all(color: AppColors.border),
         boxShadow: [
           BoxShadow(
             color: announcement.isImportant
-                ? AppColors.error.withOpacity(0.1)
-                : Colors.black.withOpacity(0.02),
-            blurRadius: 8,
-            offset: const Offset(0, 4),
+                ? AppColors.error.withOpacity(0.06)
+                : Colors.black.withOpacity(0.03),
+            blurRadius: 14,
+            offset: const Offset(0, 6),
           ),
         ],
       ),
-      padding: const EdgeInsets.all(16),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          Row(
-            children: [
+      child: IntrinsicHeight(
+        child: Row(
+          children: [
+            if (announcement.isImportant)
               Container(
-                padding: const EdgeInsets.all(8),
-                decoration: BoxDecoration(
-                  color: announcement.isImportant
-                      ? AppColors.error.withOpacity(0.1)
-                      : AppColors.primary.withOpacity(0.1),
-                  borderRadius: BorderRadius.circular(8),
-                ),
-                child: Icon(
-                  announcement.isImportant ? Icons.warning_amber_rounded : Icons.campaign_outlined,
-                  color: announcement.isImportant ? AppColors.error : AppColors.primary,
-                  size: 20,
+                width: 4,
+                decoration: const BoxDecoration(
+                  color: AppColors.error,
+                  borderRadius: BorderRadius.only(
+                    topLeft: Radius.circular(18),
+                    bottomLeft: Radius.circular(18),
+                  ),
                 ),
               ),
-              const SizedBox(width: 12),
-              Expanded(
+            Expanded(
+              child: Padding(
+                padding: const EdgeInsets.all(16),
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
-                    Text(
-                      announcement.title,
-                      style: AppTextStyles.titleMedium.copyWith(
-                        fontWeight: FontWeight.w700,
-                        color: announcement.isImportant ? AppColors.error : AppColors.textPrimary,
-                      ),
+                    Row(
+                      children: [
+                        Container(
+                          padding: const EdgeInsets.all(12),
+                          decoration: BoxDecoration(
+                            color: announcement.isImportant
+                                ? AppColors.error.withOpacity(0.1)
+                                : AppColors.primary.withOpacity(0.1),
+                            borderRadius: BorderRadius.circular(14),
+                          ),
+                          child: Icon(
+                            announcement.isImportant ? Icons.warning_amber_rounded : Icons.campaign_rounded,
+                            color: announcement.isImportant ? AppColors.error : AppColors.primary,
+                            size: 24,
+                          ),
+                        ),
+                        const SizedBox(width: 14),
+                        Expanded(
+                          child: Column(
+                            crossAxisAlignment: CrossAxisAlignment.start,
+                            children: [
+                              Text(
+                                announcement.title,
+                                style: AppTextStyles.titleMedium.copyWith(
+                                  fontWeight: FontWeight.w700,
+                                  color: announcement.isImportant ? AppColors.error : AppColors.textPrimary,
+                                ),
+                              ),
+                              const SizedBox(height: 4),
+                              Text(
+                                _formatDate(announcement.date),
+                                style: AppTextStyles.labelSmall.copyWith(color: AppColors.textTertiary),
+                              ),
+                            ],
+                          ),
+                        ),
+                      ],
                     ),
-                    const SizedBox(height: 2),
+                    const SizedBox(height: 14),
                     Text(
-                      _formatDate(announcement.date),
-                      style: AppTextStyles.labelSmall.copyWith(color: AppColors.textTertiary),
+                      announcement.content,
+                      style: AppTextStyles.bodyMedium,
                     ),
                   ],
                 ),
               ),
-            ],
-          ),
-          const SizedBox(height: 12),
-          Text(
-            announcement.content,
-            style: AppTextStyles.bodyMedium,
-          ),
-        ],
+            ),
+          ],
+        ),
       ),
     );
   }

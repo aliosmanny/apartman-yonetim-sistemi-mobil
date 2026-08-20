@@ -32,7 +32,7 @@ class DebtListPage extends StatelessWidget {
                 child: Column(
                   mainAxisAlignment: MainAxisAlignment.center,
                   children: [
-                    const Icon(Icons.error_outline, size: 48, color: AppColors.error),
+                    const Icon(Icons.error_outline_rounded, size: 48, color: AppColors.error),
                     const SizedBox(height: 16),
                     Text(state.message, style: AppTextStyles.bodyMedium),
                     const SizedBox(height: 16),
@@ -52,7 +52,7 @@ class DebtListPage extends StatelessWidget {
                   child: Column(
                     mainAxisAlignment: MainAxisAlignment.center,
                     children: [
-                      const Icon(Icons.check_circle_outline, size: 64, color: AppColors.success),
+                      Icon(Icons.check_circle_rounded, size: 64, color: AppColors.debtPaid),
                       const SizedBox(height: 16),
                       Text('Harika! Hiç borcunuz yok.',
                           style: AppTextStyles.headlineMedium.copyWith(color: AppColors.textPrimary)),
@@ -100,32 +100,32 @@ class _DebtCard extends StatelessWidget {
 
     Color statusColor = AppColors.primary;
     String statusText = 'Ödenecek';
-    IconData statusIcon = Icons.schedule;
+    IconData statusIcon = Icons.schedule_rounded;
 
     if (isPaid) {
-      statusColor = AppColors.success;
+      statusColor = AppColors.debtPaid;
       statusText = 'Ödendi';
-      statusIcon = Icons.check_circle;
+      statusIcon = Icons.check_circle_rounded;
     } else if (isOverdue) {
-      statusColor = AppColors.error;
+      statusColor = AppColors.debtOverdue;
       statusText = 'Gecikmiş';
-      statusIcon = Icons.warning;
+      statusIcon = Icons.warning_rounded;
     }
 
     return Container(
       margin: const EdgeInsets.only(bottom: 16),
       decoration: BoxDecoration(
-        color: AppColors.surface,
-        borderRadius: BorderRadius.circular(16),
+        color: AppColors.cardBackground,
+        borderRadius: BorderRadius.circular(18),
         border: Border.all(
-          color: isOverdue ? AppColors.error.withOpacity(0.3) : AppColors.border,
+          color: isOverdue ? AppColors.debtOverdue.withOpacity(0.3) : AppColors.border,
           width: isOverdue ? 1.5 : 1.0,
         ),
         boxShadow: [
           BoxShadow(
-            color: Colors.black.withOpacity(0.03),
-            blurRadius: 10,
-            offset: const Offset(0, 4),
+            color: statusColor.withOpacity(0.05),
+            blurRadius: 12,
+            offset: const Offset(0, 5),
           ),
         ],
       ),
@@ -150,34 +150,47 @@ class _DebtCard extends StatelessWidget {
                   child: Column(
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
-                      Text(
-                        debt.description,
-                        style: AppTextStyles.titleMedium.copyWith(
-                          fontWeight: FontWeight.w600,
-                        ),
+                      Row(
+                        children: [
+                          Expanded(
+                            child: Text(debt.description, style: AppTextStyles.titleMedium),
+                          ),
+                          Container(
+                            padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
+                            decoration: BoxDecoration(
+                              color: statusColor.withOpacity(0.1),
+                              borderRadius: BorderRadius.circular(8),
+                            ),
+                            child: Text(
+                              statusText,
+                              style: AppTextStyles.labelSmall.copyWith(color: statusColor, fontWeight: FontWeight.w700),
+                            ),
+                          ),
+                        ],
                       ),
-                      const SizedBox(height: 4),
+                      const SizedBox(height: 6),
                       Text(
                         'Son Ödeme: ${_formatDate(debt.dueDate)}',
                         style: AppTextStyles.bodySmall.copyWith(
-                          color: isOverdue ? AppColors.error : AppColors.textSecondary,
+                          color: isOverdue ? AppColors.debtOverdue : AppColors.textSecondary,
                           fontWeight: isOverdue ? FontWeight.w600 : FontWeight.w400,
                         ),
                       ),
                     ],
                   ),
                 ),
-                Text(
-                  '₺${debt.amount.toStringAsFixed(2)}',
-                  style: AppTextStyles.titleLarge.copyWith(
-                    color: AppColors.textPrimary,
-                    fontWeight: FontWeight.w700,
-                  ),
-                ),
               ],
             ),
+            const SizedBox(height: 12),
+            Align(
+              alignment: Alignment.centerRight,
+              child: Text(
+                '₺${debt.totalAmount.toStringAsFixed(2)}',
+                style: AppTextStyles.amountMedium,
+              ),
+            ),
             if (!isPaid) ...[
-              const SizedBox(height: 20),
+              const SizedBox(height: 16),
               SizedBox(
                 width: double.infinity,
                 child: ElevatedButton(
@@ -185,22 +198,10 @@ class _DebtCard extends StatelessWidget {
                     context.go('/resident/debts/pay', extra: debt);
                   },
                   style: ElevatedButton.styleFrom(
-                    backgroundColor: isOverdue ? AppColors.error : AppColors.primary,
+                    backgroundColor: isOverdue ? AppColors.debtOverdue : AppColors.primary,
                     foregroundColor: Colors.white,
-                    elevation: 0,
-                    padding: const EdgeInsets.symmetric(vertical: 14),
-                    shape: RoundedRectangleBorder(
-                      borderRadius: BorderRadius.circular(12),
-                    ),
                   ),
-                  child: const Text(
-                    'Hemen Öde',
-                    style: TextStyle(
-                      fontFamily: 'Inter',
-                      fontSize: 15,
-                      fontWeight: FontWeight.w600,
-                    ),
-                  ),
+                  child: const Text('Hemen Öde'),
                 ),
               ),
             ] else ...[
@@ -209,18 +210,13 @@ class _DebtCard extends StatelessWidget {
                 width: double.infinity,
                 padding: const EdgeInsets.symmetric(vertical: 12),
                 decoration: BoxDecoration(
-                  color: AppColors.success.withOpacity(0.05),
+                  color: AppColors.debtPaid.withOpacity(0.08),
                   borderRadius: BorderRadius.circular(10),
                 ),
                 child: Center(
                   child: Text(
                     'Bu borç ödenmiştir.',
-                    style: TextStyle(
-                      fontFamily: 'Inter',
-                      fontSize: 13,
-                      fontWeight: FontWeight.w500,
-                      color: AppColors.success,
-                    ),
+                    style: AppTextStyles.labelMedium.copyWith(color: AppColors.debtPaid, fontWeight: FontWeight.w600),
                   ),
                 ),
               ),

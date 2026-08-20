@@ -2,12 +2,19 @@ class MaintenanceRequest {
   final String id;
   final String title;
   final String description;
-  final String status; // 'pending', 'in_progress', 'resolved', 'rejected'
-  final String category; // 'plumbing', 'electrical', 'cleaning', 'elevator', 'other'
+  final String status;
+  final String category;
+  final String? priority;
   final String? imageUrl;
   final DateTime createdAt;
   final DateTime? resolvedAt;
   final String? adminNotes;
+  final String? creatorName;
+  final String? unitDisplay;
+  final String? apartmentName;
+  final String? assignedToName;
+  final String? statusDisplay;
+  final String? categoryDisplay;
 
   const MaintenanceRequest({
     required this.id,
@@ -15,39 +22,90 @@ class MaintenanceRequest {
     required this.description,
     required this.status,
     required this.category,
+    this.priority,
     this.imageUrl,
     required this.createdAt,
     this.resolvedAt,
     this.adminNotes,
+    this.creatorName,
+    this.unitDisplay,
+    this.apartmentName,
+    this.assignedToName,
+    this.statusDisplay,
+    this.categoryDisplay,
   });
 
-  String get statusDisplayName {
-    switch (status) {
+  MaintenanceRequest copyWith({
+    String? id,
+    String? title,
+    String? description,
+    String? status,
+    String? category,
+    String? priority,
+    String? imageUrl,
+    DateTime? createdAt,
+    DateTime? resolvedAt,
+    String? adminNotes,
+    String? creatorName,
+    String? unitDisplay,
+    String? apartmentName,
+    String? assignedToName,
+    String? statusDisplay,
+    String? categoryDisplay,
+  }) {
+    return MaintenanceRequest(
+      id: id ?? this.id,
+      title: title ?? this.title,
+      description: description ?? this.description,
+      status: status ?? this.status,
+      category: category ?? this.category,
+      priority: priority ?? this.priority,
+      imageUrl: imageUrl ?? this.imageUrl,
+      createdAt: createdAt ?? this.createdAt,
+      resolvedAt: resolvedAt ?? this.resolvedAt,
+      adminNotes: adminNotes ?? this.adminNotes,
+      creatorName: creatorName ?? this.creatorName,
+      unitDisplay: unitDisplay ?? this.unitDisplay,
+      apartmentName: apartmentName ?? this.apartmentName,
+      assignedToName: assignedToName ?? this.assignedToName,
+      statusDisplay: statusDisplay ?? this.statusDisplay,
+      categoryDisplay: categoryDisplay ?? this.categoryDisplay,
+    );
+  }
+
+  String get safeStatusDisplay => statusDisplay ?? _mapStatus(status);
+  String get safeCategoryDisplay => categoryDisplay ?? _mapCategory(category);
+
+  static String _mapStatus(String s) {
+    switch (s) {
       case 'pending':
-        return 'İşleme Alınmadı';
+      case 'p':
+        return 'Beklemede';
+      case 'assigned':
+      case 'a':
+        return 'Personel Atandı';
       case 'in_progress':
+      case 'i':
         return 'İşlemde';
+      case 'completed':
+      case 'c':
       case 'resolved':
-        return 'Çözüldü';
+        return 'Tamamlandı';
+      case 'cancelled':
       case 'rejected':
+      case 'x':
         return 'İptal Edildi';
-      default:
-        return 'Bilinmiyor';
+      default: return s;
     }
   }
 
-  String get categoryDisplayName {
-    switch (category) {
-      case 'plumbing':
-        return 'Tesisat';
-      case 'electrical':
-        return 'Elektrik';
-      case 'cleaning':
-        return 'Temizlik';
-      case 'elevator':
-        return 'Asansör';
-      default:
-        return 'Diğer';
+  static String _mapCategory(String c) {
+    switch (c) {
+      case 'plumbing': return 'Tesisat';
+      case 'electrical': return 'Elektrik';
+      case 'cleaning': return 'Temizlik';
+      case 'elevator': return 'Asansör';
+      default: return c;
     }
   }
 }

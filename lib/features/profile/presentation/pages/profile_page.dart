@@ -30,7 +30,9 @@ class ProfilePage extends StatelessWidget {
                 // ── Üst Kısım (Avatar & İsim) ────────────────
                 Container(
                   width: double.infinity,
-                  color: AppColors.primary,
+                  decoration: const BoxDecoration(
+                    gradient: AppColors.primaryGradient,
+                  ),
                   padding: const EdgeInsets.only(bottom: 40, top: 20),
                   child: Column(
                     children: [
@@ -89,34 +91,30 @@ class ProfilePage extends StatelessWidget {
                       children: [
                         const Text('Kişisel Bilgiler', style: AppTextStyles.titleMedium),
                         const SizedBox(height: 12),
-                        _buildInfoTile(Icons.phone_outlined, 'Telefon', user?.phone ?? '-'),
-                        _buildInfoTile(Icons.email_outlined, 'E-Posta', user?.email ?? '-'),
+                        _buildInfoTile(Icons.phone_rounded, 'Telefon', user?.phone ?? '-'),
+                        _buildInfoTile(Icons.email_rounded, 'E-Posta', user?.email ?? '-'),
                         if (user?.companyName != null)
-                          _buildInfoTile(Icons.business_outlined, 'Şirket/Bina', user!.companyName!),
-                        
+                          _buildInfoTile(Icons.business_rounded, 'Şirket/Bina', user!.companyName!),
+
                         const SizedBox(height: 32),
                         const Text('Ayarlar', style: AppTextStyles.titleMedium),
                         const SizedBox(height: 12),
-                        
+
                         _buildActionTile(
                           context,
-                          icon: Icons.lock_outline,
+                          icon: Icons.lock_rounded,
                           title: 'Şifre Değiştir',
                           onTap: () => context.push('/resident/profile/change-password'),
                         ),
                         _buildActionTile(
                           context,
-                          icon: Icons.notifications_outlined,
+                          icon: Icons.notifications_rounded,
                           title: 'Bildirim Tercihleri',
-                          onTap: () {
-                            ScaffoldMessenger.of(context).showSnackBar(
-                              const SnackBar(content: Text('Bildirim ayarları çok yakında eklenecek.')),
-                            );
-                          },
+                          onTap: () => context.push('/resident/profile/notifications'),
                         ),
                         _buildActionTile(
                           context,
-                          icon: Icons.help_outline,
+                          icon: Icons.help_rounded,
                           title: 'Yardım ve Destek',
                           onTap: () {
                             ScaffoldMessenger.of(context).showSnackBar(
@@ -124,9 +122,9 @@ class ProfilePage extends StatelessWidget {
                             );
                           },
                         ),
-                        
+
                         const SizedBox(height: 40),
-                        
+
                         // ── Çıkış Yap Butonu ─────────────────
                         SizedBox(
                           width: double.infinity,
@@ -134,7 +132,7 @@ class ProfilePage extends StatelessWidget {
                             onPressed: () {
                               _showLogoutDialog(context);
                             },
-                            icon: const Icon(Icons.logout, color: AppColors.error),
+                            icon: const Icon(Icons.logout_rounded, color: AppColors.error),
                             label: const Text(
                               'Çıkış Yap',
                               style: TextStyle(color: AppColors.error, fontSize: 16, fontWeight: FontWeight.w600),
@@ -164,9 +162,16 @@ class ProfilePage extends StatelessWidget {
       margin: const EdgeInsets.only(bottom: 12),
       padding: const EdgeInsets.all(16),
       decoration: BoxDecoration(
-        color: AppColors.surface,
-        borderRadius: BorderRadius.circular(12),
+        color: AppColors.cardBackground,
+        borderRadius: BorderRadius.circular(16),
         border: Border.all(color: AppColors.border),
+        boxShadow: [
+          BoxShadow(
+            color: Colors.black.withOpacity(0.02),
+            blurRadius: 10,
+            offset: const Offset(0, 4),
+          ),
+        ],
       ),
       child: Row(
         children: [
@@ -189,9 +194,16 @@ class ProfilePage extends StatelessWidget {
     return Container(
       margin: const EdgeInsets.only(bottom: 12),
       decoration: BoxDecoration(
-        color: AppColors.surface,
-        borderRadius: BorderRadius.circular(12),
+        color: AppColors.cardBackground,
+        borderRadius: BorderRadius.circular(16),
         border: Border.all(color: AppColors.border),
+        boxShadow: [
+          BoxShadow(
+            color: Colors.black.withOpacity(0.02),
+            blurRadius: 10,
+            offset: const Offset(0, 4),
+          ),
+        ],
       ),
       child: ListTile(
         onTap: onTap,
@@ -204,7 +216,7 @@ class ProfilePage extends StatelessWidget {
           child: Icon(icon, color: AppColors.primary, size: 20),
         ),
         title: Text(title, style: AppTextStyles.bodyMedium.copyWith(fontWeight: FontWeight.w600)),
-        trailing: const Icon(Icons.arrow_forward_ios, size: 16, color: AppColors.textTertiary),
+        trailing: const Icon(Icons.arrow_forward_ios_rounded, size: 16, color: AppColors.textTertiary),
       ),
     );
   }
@@ -213,20 +225,33 @@ class ProfilePage extends StatelessWidget {
     showDialog(
       context: context,
       builder: (ctx) => AlertDialog(
+        icon: Container(
+          padding: const EdgeInsets.all(12),
+          decoration: BoxDecoration(
+            color: AppColors.error.withOpacity(0.1),
+            shape: BoxShape.circle,
+          ),
+          child: const Icon(Icons.logout_rounded, color: AppColors.error),
+        ),
         title: const Text('Çıkış Yap'),
         content: const Text('Hesabınızdan çıkış yapmak istediğinize emin misiniz?'),
-        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
+        actionsAlignment: MainAxisAlignment.spaceBetween,
         actions: [
           TextButton(
             onPressed: () => Navigator.pop(ctx),
             child: const Text('İptal', style: TextStyle(color: AppColors.textSecondary)),
           ),
-          TextButton(
+          ElevatedButton(
             onPressed: () {
               Navigator.pop(ctx);
               context.read<AuthCubit>().logout();
             },
-            child: const Text('Çıkış Yap', style: TextStyle(color: AppColors.error, fontWeight: FontWeight.w600)),
+            style: ElevatedButton.styleFrom(
+              backgroundColor: AppColors.error,
+              foregroundColor: Colors.white,
+              minimumSize: const Size(0, 44),
+            ),
+            child: const Text('Çıkış Yap'),
           ),
         ],
       ),

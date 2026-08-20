@@ -1,3 +1,5 @@
+import 'package:flutter_bloc/flutter_bloc.dart';
+import '../../features/finance/presentation/controllers/finance_cubit.dart';
 import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
@@ -10,6 +12,23 @@ import '../../features/auth/presentation/pages/splash_page.dart';
 import '../../features/auth/presentation/pages/login_page.dart';
 import '../../features/auth/presentation/pages/forgot_password_page.dart';
 import '../../features/dashboard/presentation/pages/manager_dashboard_page.dart';
+import '../../features/dashboard/presentation/pages/manager_properties_page.dart';
+import '../../features/dashboard/presentation/pages/manager_finance_page.dart';
+import '../../features/dashboard/presentation/pages/manager_edit_due_period_page.dart';
+import '../../features/dashboard/presentation/pages/manager_edit_debt_page.dart';
+import '../../features/dashboard/presentation/pages/manager_edit_transaction_page.dart';
+import '../../features/dashboard/presentation/pages/manager_add_expense_page.dart';
+import '../../features/dashboard/presentation/pages/manager_maintenance_page.dart';
+import '../../features/dashboard/presentation/pages/manager_more_page.dart';
+import '../../features/dashboard/presentation/pages/manager_documents_page.dart';
+import '../../features/dashboard/presentation/pages/manager_staff_page.dart';
+import '../../features/dashboard/presentation/pages/manager_profile_page.dart';
+import '../../features/dashboard/presentation/pages/manager_settings_page.dart';
+import '../../features/dashboard/presentation/pages/manager_maintenance_detail_page.dart';
+import '../../features/announcements/presentation/pages/create_announcement_page.dart';
+import '../../features/dashboard/presentation/pages/manager_add_resident_page.dart';
+import '../../features/dashboard/presentation/pages/manager_add_staff_page.dart';
+
 import '../../features/dashboard/presentation/pages/resident_dashboard_page.dart';
 import '../../features/finance/presentation/pages/debt_list_page.dart';
 import '../../features/finance/presentation/pages/payment_page.dart';
@@ -86,25 +105,92 @@ class AppRouter {
             GoRoute(
               path: '/manager/properties',
               name: RouteNames.managerProperties,
-              builder: (_, __) =>
-                  const _PlaceholderPage(title: 'Yapı Yönetimi'),
+              builder: (_, __) => const ManagerPropertiesPage(),
+              routes: [
+                GoRoute(
+                  path: 'add_resident',
+                  name: 'managerAddResident',
+                  builder: (_, __) => const ManagerAddResidentPage(),
+                ),
+              ],
             ),
             GoRoute(
               path: '/manager/finance',
               name: RouteNames.managerFinance,
-              builder: (_, __) =>
-                  const _PlaceholderPage(title: 'Finans'),
+              builder: (_, __) => const ManagerFinancePage(),
+              routes: [
+                GoRoute(
+                  path: 'add',
+                  name: 'managerFinanceAdd',
+                  builder: (_, __) => const ManagerAddExpensePage(),
+                ),
+                GoRoute(
+                  path: 'edit_due_period',
+                  name: 'managerEditDuePeriod',
+                  builder: (_, state) {
+                    final map = state.extra as Map<String, dynamic>;
+                    final cubit = map['cubit'] as FinanceCubit;
+                    return BlocProvider.value(
+                      value: cubit,
+                      child: ManagerEditDuePeriodPage(period: map['period'] as dynamic),
+                    );
+                  },
+                ),
+                GoRoute(
+                  path: 'edit_debt',
+                  name: 'managerEditDebt',
+                  builder: (_, state) {
+                    final map = state.extra as Map<String, dynamic>;
+                    final cubit = map['cubit'] as FinanceCubit;
+                    return BlocProvider.value(
+                      value: cubit,
+                      child: ManagerEditDebtPage(debt: map['debt'] as dynamic),
+                    );
+                  },
+                ),
+                GoRoute(
+                  path: 'edit_transaction',
+                  name: 'managerEditTransaction',
+                  builder: (_, state) {
+                    final map = state.extra as Map<String, dynamic>;
+                    final cubit = map['cubit'] as FinanceCubit;
+                    Widget page;
+                    if (map.containsKey('income')) {
+                      page = ManagerEditTransactionPage(income: map['income']);
+                    } else {
+                      page = ManagerEditTransactionPage(expense: map['expense']);
+                    }
+                    return BlocProvider.value(value: cubit, child: page);
+                  },
+                ),
+              ],
             ),
             GoRoute(
               path: '/manager/maintenance',
               name: RouteNames.managerMaintenance,
-              builder: (_, __) =>
-                  const _PlaceholderPage(title: 'Talepler'),
+              builder: (_, __) => const ManagerMaintenancePage(),
+            ),
+            GoRoute(
+              path: '/manager/maintenance/detail',
+              name: 'managerMaintenanceDetail',
+              builder: (_, state) {
+                final req = state.extra;
+                return ManagerMaintenanceDetailPage(item: req as Map<String, dynamic>);
+              },
             ),
             GoRoute(
               path: '/manager/more',
               name: RouteNames.managerMore,
-              builder: (_, __) => const _PlaceholderPage(title: 'Menü'),
+              builder: (_, __) => const ManagerMorePage(),
+              routes: [
+                GoRoute(path: 'create_announcement', name: 'createAnnouncement', builder: (_, __) => const CreateAnnouncementPage()),
+                GoRoute(path: 'documents', name: 'managerDocuments', builder: (_, __) => const ManagerDocumentsPage()),
+                GoRoute(path: 'staff', name: 'managerStaff', builder: (_, __) => const ManagerStaffPage(), routes: [
+                  GoRoute(path: 'add', name: 'managerAddStaff', builder: (_, __) => const ManagerAddStaffPage()),
+                ]),
+                GoRoute(path: 'profile', name: 'managerProfile', builder: (_, __) => const ManagerProfilePage()),
+                GoRoute(path: 'settings', name: 'managerSettings', builder: (_, __) => const ManagerSettingsPage()),
+              ]
             ),
           ],
         ),

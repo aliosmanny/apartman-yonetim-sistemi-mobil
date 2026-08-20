@@ -21,7 +21,7 @@ class _PaymentPageState extends State<PaymentPage> {
 
   void _processPayment() async {
     setState(() => _isProcessing = true);
-    
+
     // Ödeme yapılıyormuş gibi bekle (Mock gecikme)
     await Future.delayed(const Duration(seconds: 2));
 
@@ -57,81 +57,99 @@ class _PaymentPageState extends State<PaymentPage> {
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            // Borç Özeti
+            // ── Borç Özeti ──
             Container(
-              padding: const EdgeInsets.all(20),
+              width: double.infinity,
+              padding: const EdgeInsets.all(24),
               decoration: BoxDecoration(
-                color: AppColors.surface,
-                borderRadius: BorderRadius.circular(16),
-                border: Border.all(color: AppColors.border),
+                gradient: AppColors.cardGradient,
+                borderRadius: BorderRadius.circular(20),
+                boxShadow: [
+                  BoxShadow(
+                    color: AppColors.primary.withOpacity(0.25),
+                    blurRadius: 16,
+                    offset: const Offset(0, 6),
+                  ),
+                ],
               ),
               child: Column(
                 children: [
-                  Text('Ödenecek Tutar', style: AppTextStyles.bodyMedium),
+                  Text(
+                    'Ödenecek Tutar',
+                    style: AppTextStyles.bodyMedium.copyWith(color: Colors.white.withOpacity(0.8)),
+                  ),
                   const SizedBox(height: 8),
                   Text(
-                    '₺${widget.debt.amount.toStringAsFixed(2)}',
-                    style: AppTextStyles.headlineLarge.copyWith(color: AppColors.primary),
+                    '₺${widget.debt.totalAmount.toStringAsFixed(2)}',
+                    style: AppTextStyles.amountLarge.copyWith(color: Colors.white),
                   ),
-                  const Divider(height: 32),
+                  const SizedBox(height: 20),
+                  Container(height: 1, color: Colors.white.withOpacity(0.15)),
+                  const SizedBox(height: 16),
                   Row(
                     mainAxisAlignment: MainAxisAlignment.spaceBetween,
                     children: [
-                      Text('Açıklama', style: AppTextStyles.bodySmall),
-                      Text(widget.debt.description, style: AppTextStyles.labelMedium),
+                      Text('Açıklama', style: AppTextStyles.bodySmall.copyWith(color: Colors.white.withOpacity(0.7))),
+                      Flexible(
+                        child: Text(
+                          widget.debt.description,
+                          textAlign: TextAlign.end,
+                          style: AppTextStyles.labelMedium.copyWith(color: Colors.white),
+                        ),
+                      ),
                     ],
                   ),
                 ],
               ),
             ),
-            const SizedBox(height: 32),
-            
-            // Kredi Kartı Formu (Mock)
+            const SizedBox(height: 28),
+
+            // ── Kredi Kartı Formu (Mock) ──
             Text('Kart Bilgileri', style: AppTextStyles.titleMedium),
-            const SizedBox(height: 16),
-            
-            _buildTextField('Kart Üzerindeki İsim', 'Örn: ALİ YILMAZ', Icons.person_outline),
-            const SizedBox(height: 16),
-            _buildTextField('Kart Numarası', '0000 0000 0000 0000', Icons.credit_card),
-            const SizedBox(height: 16),
-            
-            Row(
-              children: [
-                Expanded(child: _buildTextField('SKT', 'AA/YY', Icons.calendar_today_outlined)),
-                const SizedBox(width: 16),
-                Expanded(child: _buildTextField('CVV', '***', Icons.lock_outline)),
-              ],
-            ),
-            
-            const SizedBox(height: 48),
-            
-            // Ödeme Butonu
-            SizedBox(
-              width: double.infinity,
-              height: 54,
-              child: ElevatedButton(
-                onPressed: _isProcessing ? null : _processPayment,
-                style: ElevatedButton.styleFrom(
-                  backgroundColor: AppColors.primary,
-                  shape: RoundedRectangleBorder(
-                    borderRadius: BorderRadius.circular(14),
+            const SizedBox(height: 12),
+            Container(
+              padding: const EdgeInsets.all(20),
+              decoration: BoxDecoration(
+                color: AppColors.cardBackground,
+                borderRadius: BorderRadius.circular(18),
+                border: Border.all(color: AppColors.border),
+                boxShadow: [
+                  BoxShadow(
+                    color: Colors.black.withOpacity(0.03),
+                    blurRadius: 14,
+                    offset: const Offset(0, 6),
                   ),
-                ),
-                child: _isProcessing
-                    ? const SizedBox(
-                        width: 24, height: 24,
-                        child: CircularProgressIndicator(color: Colors.white, strokeWidth: 2),
-                      )
-                    : Text(
-                        '₺${widget.debt.amount.toStringAsFixed(2)} Öde',
-                        style: const TextStyle(
-                          fontFamily: 'Inter',
-                          fontSize: 16,
-                          fontWeight: FontWeight.w600,
-                          color: Colors.white,
-                        ),
-                      ),
+                ],
               ),
+              child: Column(
+                children: [
+                  _buildTextField('Kart Üzerindeki İsim', 'Örn: ALİ YILMAZ', Icons.person_outline_rounded),
+                  const SizedBox(height: 16),
+                  _buildTextField('Kart Numarası', '0000 0000 0000 0000', Icons.credit_card_rounded),
+                  const SizedBox(height: 16),
+                  Row(
+                    children: [
+                      Expanded(child: _buildTextField('SKT', 'AA/YY', Icons.calendar_today_rounded)),
+                      const SizedBox(width: 16),
+                      Expanded(child: _buildTextField('CVV', '***', Icons.lock_rounded)),
+                    ],
+                  ),
+                ],
+              ),
+            ),
+
+            const SizedBox(height: 32),
+
+            // ── Ödeme Butonu ──
+            ElevatedButton(
+              onPressed: _isProcessing ? null : _processPayment,
+              child: _isProcessing
+                  ? const SizedBox(
+                width: 22,
+                height: 22,
+                child: CircularProgressIndicator(color: Colors.white, strokeWidth: 2),
+              )
+                  : Text('₺${widget.debt.totalAmount.toStringAsFixed(2)} Öde'),
             ),
           ],
         ),
@@ -165,10 +183,10 @@ class _PaymentPageState extends State<PaymentPage> {
             Container(
               padding: const EdgeInsets.all(24),
               decoration: BoxDecoration(
-                color: AppColors.success.withOpacity(0.1),
+                color: AppColors.debtPaid.withOpacity(0.1),
                 shape: BoxShape.circle,
               ),
-              child: const Icon(Icons.check_circle, size: 80, color: AppColors.success),
+              child: const Icon(Icons.check_circle_rounded, size: 80, color: AppColors.debtPaid),
             ),
             const SizedBox(height: 24),
             Text('Ödeme Başarılı!', style: AppTextStyles.headlineMedium),

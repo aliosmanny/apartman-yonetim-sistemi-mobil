@@ -1,16 +1,17 @@
 import 'package:flutter_bloc/flutter_bloc.dart';
 import '../../domain/repositories/maintenance_repository.dart';
 import 'maintenance_state.dart';
+import 'package:image_picker/image_picker.dart';
 
 class MaintenanceCubit extends Cubit<MaintenanceState> {
   final MaintenanceRepository _repository;
 
   MaintenanceCubit(this._repository) : super(MaintenanceInitial());
 
-  Future<void> fetchRequests() async {
+  Future<void> fetchRequests({String? status, String? category}) async {
     emit(MaintenanceLoading());
     try {
-      final requests = await _repository.getMyRequests();
+      final requests = await _repository.getRequests(status: status, category: category);
       emit(MaintenanceLoaded(requests: requests));
     } catch (e) {
       emit(MaintenanceError(message: 'Talepler yüklenirken hata oluştu: ${e.toString()}'));
@@ -21,17 +22,28 @@ class MaintenanceCubit extends Cubit<MaintenanceState> {
     required String title,
     required String description,
     required String category,
+    String? priority,
+    int? unitId,
+    XFile? image,
   }) async {
-    // Liste ekranındaki mevcut veriyi korumak için state kontrolü yapmıyoruz,
-    // Sadece yeni talep eklenip listeye refresh attıracağız.
-    // Detaylı loading state'i form içinde yönetilebilir.
     try {
       await _repository.createRequest(
         title: title,
         description: description,
         category: category,
+        priority: priority,
+        unitId: unitId,
+        image: image,
       );
-      // Başarılı olursa listeyi yenile
+      await fetchRequests();
+    } catch (e) {
+      throw Exception(e.toString());
+    }
+  }
+
+  Future<void> updateRequestStatus(String id, String status, {String? note}) async {
+    try {
+      await _repository.updateRequestStatus(id, status, note: note);
       await fetchRequests();
     } catch (e) {
       throw Exception(e.toString());

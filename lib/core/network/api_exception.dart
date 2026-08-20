@@ -45,8 +45,8 @@ class ApiException implements Exception {
 
   static String _extractMessage(dynamic data, int? statusCode) {
     if (data is Map<String, dynamic>) {
-      if (data.containsKey('message')) return data['message'] as String;
-      if (data.containsKey('detail')) return data['detail'] as String;
+      if (data.containsKey('message') && data['message'] != null) return data['message'].toString();
+      if (data.containsKey('detail') && data['detail'] != null) return data['detail'].toString();
       if (data.containsKey('non_field_errors')) {
         final errors = data['non_field_errors'];
         if (errors is List && errors.isNotEmpty) return errors.first.toString();
@@ -90,7 +90,8 @@ class ApiException implements Exception {
   Failure toFailure() {
     switch (statusCode) {
       case 401:
-        return const UnauthorizedFailure();
+        // Backend'den gelen gerçek mesajı kullan (örn: "yanlış şifre" vs "oturum sona erdi")
+        return UnauthorizedFailure(message);
       case 403:
         return const ForbiddenFailure();
       case 404:

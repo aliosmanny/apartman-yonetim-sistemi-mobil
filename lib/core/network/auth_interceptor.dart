@@ -80,9 +80,21 @@ class AuthInterceptor extends Interceptor {
       await _secureStorage.saveAccessToken(newAccessToken);
 
       // Özgün isteği yeni token ile tekrar gönder
-      final retryOptions = err.requestOptions;
-      retryOptions.headers['Authorization'] = 'Bearer $newAccessToken';
-      final retryResponse = await _dio.fetch(retryOptions);
+      final retryOptions = Options(
+        method: err.requestOptions.method,
+        headers: {
+          ...err.requestOptions.headers,
+          'Authorization': 'Bearer $newAccessToken',
+        },
+        contentType: err.requestOptions.contentType,
+        responseType: err.requestOptions.responseType,
+      );
+      final retryResponse = await _dio.request(
+        err.requestOptions.path,
+        data: err.requestOptions.data,
+        queryParameters: err.requestOptions.queryParameters,
+        options: retryOptions,
+      );
       handler.resolve(retryResponse);
 
       // Bekleyen istekleri de yeni token ile gönder

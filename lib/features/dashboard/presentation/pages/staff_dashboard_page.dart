@@ -1,143 +1,224 @@
 import 'package:flutter/material.dart';
+import 'package:go_router/go_router.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import '../../../auth/presentation/controllers/auth_cubit.dart';
 import '../../../auth/presentation/controllers/auth_state.dart';
 import '../../../../app/theme/app_colors.dart';
 import '../../../../app/theme/app_text_styles.dart';
+import '../../../../core/di/injection.dart';
+import '../controllers/dashboard_cubit.dart';
 
 class StaffDashboardPage extends StatelessWidget {
   const StaffDashboardPage({super.key});
 
   @override
   Widget build(BuildContext context) {
-    return BlocBuilder<AuthCubit, AuthState>(
-      builder: (context, state) {
-        final user = state is AuthAuthenticated ? state.user : null;
+    return BlocProvider<DashboardCubit>(
+      create: (context) => sl<DashboardCubit>()..fetchStaffDashboard(),
+      child: BlocBuilder<AuthCubit, AuthState>(
+        builder: (context, authState) {
+          final user = authState is AuthAuthenticated ? authState.user : null;
 
-        return Scaffold(
-          backgroundColor: AppColors.background,
-          body: CustomScrollView(
-            slivers: [
-              SliverAppBar(
-                expandedHeight: 150,
-                floating: false,
-                pinned: true,
-                backgroundColor: AppColors.surface,
-                flexibleSpace: FlexibleSpaceBar(
-                  background: Container(
-                    decoration: const BoxDecoration(
-                      gradient: LinearGradient(
-                        colors: [Color(0xFFD97706), Color(0xFFF59E0B)],
-                        begin: Alignment.topLeft,
-                        end: Alignment.bottomRight,
+          return Scaffold(
+            backgroundColor: AppColors.background,
+            body: CustomScrollView(
+              slivers: [
+                SliverAppBar(
+                  expandedHeight: 150,
+                  floating: false,
+                  pinned: true,
+                  elevation: 0,
+                  backgroundColor: const Color(0xFFD97706),
+                  flexibleSpace: FlexibleSpaceBar(
+                    background: ClipRRect(
+                      borderRadius: const BorderRadius.only(
+                        bottomLeft: Radius.circular(28),
+                        bottomRight: Radius.circular(28),
                       ),
-                    ),
-                    padding: const EdgeInsets.fromLTRB(20, 60, 20, 20),
-                    child: Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      mainAxisAlignment: MainAxisAlignment.end,
-                      children: [
-                        Row(
+                      child: Container(
+                        decoration: const BoxDecoration(
+                          gradient: LinearGradient(
+                            colors: [Color(0xFFD97706), Color(0xFFF59E0B)],
+                            begin: Alignment.topLeft,
+                            end: Alignment.bottomRight,
+                          ),
+                        ),
+                        child: Stack(
                           children: [
-                            Expanded(
+                            Positioned(
+                              top: -30,
+                              right: -30,
+                              child: Container(
+                                width: 140,
+                                height: 140,
+                                decoration: BoxDecoration(
+                                  shape: BoxShape.circle,
+                                  color: Colors.white.withOpacity(0.05),
+                                ),
+                              ),
+                            ),
+                            Padding(
+                              padding: const EdgeInsets.fromLTRB(20, 60, 20, 20),
                               child: Column(
                                 crossAxisAlignment: CrossAxisAlignment.start,
+                                mainAxisAlignment: MainAxisAlignment.end,
                                 children: [
-                                  Text(
-                                    'Merhaba, ${user?.firstName ?? ''}! 👷',
-                                    style: const TextStyle(
-                                      fontFamily: 'Inter',
-                                      fontSize: 20,
-                                      fontWeight: FontWeight.w700,
-                                      color: Colors.white,
-                                    ),
-                                  ),
-                                  const SizedBox(height: 4),
-                                  Text(
-                                    user?.role.displayName ?? '',
-                                    style: TextStyle(
-                                      fontFamily: 'Inter',
-                                      fontSize: 13,
-                                      color: Colors.white.withOpacity(0.85),
-                                    ),
+                                  Row(
+                                    crossAxisAlignment: CrossAxisAlignment.center,
+                                    children: [
+                                      Container(
+                                        width: 50,
+                                        height: 50,
+                                        decoration: BoxDecoration(
+                                          color: Colors.white,
+                                          shape: BoxShape.circle,
+                                          boxShadow: [
+                                            BoxShadow(
+                                              color: Colors.black.withOpacity(0.1),
+                                              blurRadius: 8,
+                                              offset: const Offset(0, 4),
+                                            ),
+                                          ],
+                                        ),
+                                        child: const Center(
+                                          child: Icon(Icons.engineering_rounded, color: Color(0xFFD97706), size: 26),
+                                        ),
+                                      ),
+                                      const SizedBox(width: 16),
+                                      Expanded(
+                                        child: Column(
+                                          crossAxisAlignment: CrossAxisAlignment.start,
+                                          children: [
+                                            Text(
+                                              'Merhaba, ${user?.firstName ?? 'Personel'}!',
+                                              style: AppTextStyles.headlineMedium.copyWith(color: Colors.white),
+                                            ),
+                                            const SizedBox(height: 2),
+                                            Text(
+                                              'İş Takip Ekranı',
+                                              style: AppTextStyles.bodyMedium.copyWith(color: Colors.white.withOpacity(0.8)),
+                                            ),
+                                          ],
+                                        ),
+                                      ),
+                                      Container(
+                                        decoration: BoxDecoration(
+                                          color: Colors.white.withOpacity(0.15),
+                                          borderRadius: BorderRadius.circular(12),
+                                        ),
+                                        child: IconButton(
+                                          onPressed: () => context.read<AuthCubit>().logout(),
+                                          icon: const Icon(Icons.logout_rounded, color: Colors.white, size: 20),
+                                          tooltip: 'Çıkış Yap',
+                                        ),
+                                      ),
+                                    ],
                                   ),
                                 ],
                               ),
                             ),
-                            IconButton(
-                              onPressed: () => context.read<AuthCubit>().logout(),
-                              icon: const Icon(Icons.logout, color: Colors.white),
-                              tooltip: 'Çıkış Yap',
-                            ),
                           ],
                         ),
-                      ],
+                      ),
                     ),
                   ),
                 ),
-              ),
-              SliverPadding(
-                padding: const EdgeInsets.all(20),
-                sliver: SliverList(
-                  delegate: SliverChildListDelegate([
-                    // ── Durum Kartları ────────────────
-                    Row(
-                      children: [
-                        Expanded(
-                          child: _StatCard(
-                            label: 'Atanan',
-                            value: '--',
-                            color: AppColors.warning,
-                            icon: Icons.assignment_outlined,
-                          ),
-                        ),
-                        const SizedBox(width: 12),
-                        Expanded(
-                          child: _StatCard(
-                            label: 'Devam Eden',
-                            value: '--',
-                            color: AppColors.primary,
-                            icon: Icons.autorenew,
-                          ),
-                        ),
-                        const SizedBox(width: 12),
-                        Expanded(
-                          child: _StatCard(
-                            label: 'Tamamlanan',
-                            value: '--',
-                            color: AppColors.success,
-                            icon: Icons.check_circle_outline,
-                          ),
-                        ),
-                      ],
-                    ),
+                SliverPadding(
+                  padding: const EdgeInsets.all(20),
+                  sliver: SliverList(
+                    delegate: SliverChildListDelegate([
+                      // ── İstatistik Kartları ─────────────
+                      BlocBuilder<DashboardCubit, DashboardState>(
+                        builder: (context, state) {
+                          if (state is DashboardLoading) {
+                            return const Center(child: CircularProgressIndicator());
+                          } else if (state is DashboardError) {
+                            return Center(child: Text(state.message, style: const TextStyle(color: Colors.red)));
+                          } else if (state is StaffDashboardLoaded) {
+                            final data = state.data;
+                            return Row(
+                              children: [
+                                Expanded(
+                                  child: _StatCard(
+                                    label: 'Bekleyen',
+                                    value: data.pendingCount.toString(),
+                                    color: AppColors.primary,
+                                    icon: Icons.assignment_rounded,
+                                  ),
+                                ),
+                                const SizedBox(width: 12),
+                                Expanded(
+                                  child: _StatCard(
+                                    label: 'Devam Eden',
+                                    value: data.inProgressCount.toString(),
+                                    color: AppColors.maintenanceInProgress,
+                                    icon: Icons.autorenew_rounded,
+                                  ),
+                                ),
+                                const SizedBox(width: 12),
+                                Expanded(
+                                  child: _StatCard(
+                                    label: 'Tamamlanan',
+                                    value: data.completedCount.toString(),
+                                    color: AppColors.maintenanceCompleted,
+                                    icon: Icons.check_circle_rounded,
+                                  ),
+                                ),
+                              ],
+                            );
+                          }
+                          return const SizedBox.shrink();
+                        },
+                      ),
+                      const SizedBox(height: 24),
 
-                    const SizedBox(height: 24),
-
-                    // ── Atanan Talepler ───────────────
-                    Row(
-                      children: [
-                        const Expanded(
-                          child: Text('Atanan Talepler',
-                              style: AppTextStyles.headlineSmall),
-                        ),
-                        TextButton(
-                          onPressed: () {},
-                          child: const Text('Tümü'),
-                        ),
-                      ],
-                    ),
-                    const SizedBox(height: 8),
-                    _EmptyTaskCard(),
-
-                    const SizedBox(height: 80),
-                  ]),
+                      // ── Atanan Talepler ───────────────
+                      Row(
+                        children: [
+                          Expanded(
+                            child: Text('Bugünkü İşlerim', style: AppTextStyles.headlineSmall),
+                          ),
+                          TextButton(
+                            onPressed: () {}, // İleride tasks listesine eklenebilir
+                            child: const Text('Tümü'),
+                          ),
+                        ],
+                      ),
+                      const SizedBox(height: 8),
+                      BlocBuilder<DashboardCubit, DashboardState>(
+                        builder: (context, state) {
+                          if (state is StaffDashboardLoaded) {
+                            if (state.data.recentRequests.isEmpty) {
+                              return _EmptyTaskCard();
+                            }
+                            return Column(
+                              children: state.data.recentRequests.map((task) {
+                                return Padding(
+                                  padding: const EdgeInsets.only(bottom: 12),
+                                  child: _StaffTaskCard(
+                                    id: task.id.toString(),
+                                    title: task.title,
+                                    unit: task.unit ?? 'Ortak Alan',
+                                    status: task.status,
+                                    statusDisplay: task.statusDisplay,
+                                    timeAgo: task.createdAt.split('T').first,
+                                  ),
+                                );
+                              }).toList(),
+                            );
+                          }
+                          return const SizedBox.shrink();
+                        },
+                      ),
+                      const SizedBox(height: 80),
+                    ]),
+                  ),
                 ),
-              ),
-            ],
-          ),
-        );
-      },
+              ],
+            ),
+          );
+        },
+      ),
     );
   }
 }
@@ -160,19 +241,30 @@ class _StatCard extends StatelessWidget {
     return Container(
       padding: const EdgeInsets.all(14),
       decoration: BoxDecoration(
-        color: AppColors.surface,
+        color: AppColors.cardBackground,
         borderRadius: BorderRadius.circular(16),
         border: Border.all(color: AppColors.border),
+        boxShadow: [
+          BoxShadow(
+            color: color.withOpacity(0.06),
+            blurRadius: 12,
+            offset: const Offset(0, 5),
+          ),
+        ],
       ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          Icon(icon, color: color, size: 22),
-          const SizedBox(height: 8),
-          Text(
-            value,
-            style: AppTextStyles.headlineMedium.copyWith(color: color),
+          Container(
+            padding: const EdgeInsets.all(6),
+            decoration: BoxDecoration(
+              color: color.withOpacity(0.1),
+              borderRadius: BorderRadius.circular(8),
+            ),
+            child: Icon(icon, color: color, size: 18),
           ),
+          const SizedBox(height: 10),
+          Text(value, style: AppTextStyles.headlineMedium.copyWith(color: color)),
           const SizedBox(height: 2),
           Text(label, style: AppTextStyles.bodySmall),
         ],
@@ -187,14 +279,20 @@ class _EmptyTaskCard extends StatelessWidget {
     return Container(
       padding: const EdgeInsets.all(24),
       decoration: BoxDecoration(
-        color: AppColors.surface,
-        borderRadius: BorderRadius.circular(16),
+        color: AppColors.cardBackground,
+        borderRadius: BorderRadius.circular(18),
         border: Border.all(color: AppColors.border),
+        boxShadow: [
+          BoxShadow(
+            color: Colors.black.withOpacity(0.02),
+            blurRadius: 10,
+            offset: const Offset(0, 4),
+          ),
+        ],
       ),
       child: Column(
         children: [
-          Icon(Icons.assignment_turned_in_outlined,
-              size: 48, color: AppColors.success.withOpacity(0.5)),
+          Icon(Icons.assignment_turned_in_rounded, size: 48, color: AppColors.maintenanceCompleted.withOpacity(0.5)),
           const SizedBox(height: 12),
           Text('Atanmış iş yok', style: AppTextStyles.titleMedium),
           const SizedBox(height: 4),
@@ -204,6 +302,146 @@ class _EmptyTaskCard extends StatelessWidget {
             style: AppTextStyles.bodySmall.copyWith(height: 1.5),
           ),
         ],
+      ),
+    );
+  }
+}
+
+class _StaffTaskCard extends StatelessWidget {
+  final String id;
+  final String title;
+  final String unit;
+  final String status;
+  final String statusDisplay;
+  final String timeAgo;
+
+  const _StaffTaskCard({
+    required this.id,
+    required this.title,
+    required this.unit,
+    required this.status,
+    required this.statusDisplay,
+    required this.timeAgo,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    final inProgress = status == 'in_progress' || status == 'i';
+    final isPending = status == 'pending' || status == 'p' || status == 'assigned' || status == 'a';
+    
+    Color statusColor = AppColors.maintenancePending;
+    if (inProgress) statusColor = AppColors.maintenanceInProgress;
+    if (!isPending && !inProgress) statusColor = AppColors.maintenanceCompleted;
+
+    return Container(
+      decoration: BoxDecoration(
+        color: AppColors.cardBackground,
+        borderRadius: BorderRadius.circular(18),
+        border: Border.all(color: AppColors.border),
+        boxShadow: [
+          BoxShadow(
+            color: Colors.black.withOpacity(0.02),
+            blurRadius: 10,
+            offset: const Offset(0, 4),
+          ),
+        ],
+      ),
+      child: Material(
+        color: Colors.transparent,
+        child: InkWell(
+          onTap: () {
+            // İleride Task Detail sayfasına ID ile gidecek
+            // context.pushNamed('staffTaskDetail', extra: id);
+          },
+          borderRadius: BorderRadius.circular(18),
+          child: Padding(
+            padding: const EdgeInsets.all(16),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Row(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Container(
+                      padding: const EdgeInsets.all(10),
+                      decoration: BoxDecoration(
+                        color: AppColors.primary.withOpacity(0.1),
+                        borderRadius: BorderRadius.circular(12),
+                      ),
+                      child: const Icon(Icons.build_circle_rounded, color: AppColors.primary),
+                    ),
+                    const SizedBox(width: 12),
+                    Expanded(
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          Row(
+                            mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                            children: [
+                              Expanded(
+                                child: Text(
+                                  title,
+                                  style: AppTextStyles.titleMedium,
+                                  maxLines: 1,
+                                  overflow: TextOverflow.ellipsis,
+                                ),
+                              ),
+                              const SizedBox(width: 8),
+                              Container(
+                                padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+                                decoration: BoxDecoration(
+                                  color: statusColor.withOpacity(0.1),
+                                  borderRadius: BorderRadius.circular(8),
+                                ),
+                                child: Row(
+                                  mainAxisSize: MainAxisSize.min,
+                                  children: [
+                                    Container(
+                                      width: 6,
+                                      height: 6,
+                                      decoration: BoxDecoration(color: statusColor, shape: BoxShape.circle),
+                                    ),
+                                    const SizedBox(width: 5),
+                                    Text(
+                                      statusDisplay,
+                                      style: AppTextStyles.labelSmall.copyWith(color: statusColor, fontWeight: FontWeight.w700),
+                                    ),
+                                  ],
+                                ),
+                              ),
+                            ],
+                          ),
+                        ],
+                      ),
+                    ),
+                  ],
+                ),
+                const SizedBox(height: 12),
+                const Divider(height: 1),
+                const SizedBox(height: 12),
+                Row(
+                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                  children: [
+                    Row(
+                      children: [
+                        const Icon(Icons.apartment_rounded, size: 16, color: AppColors.textTertiary),
+                        const SizedBox(width: 4),
+                        Text(unit, style: AppTextStyles.labelSmall.copyWith(color: AppColors.textSecondary)),
+                      ],
+                    ),
+                    Row(
+                      children: [
+                        const Icon(Icons.access_time_rounded, size: 16, color: AppColors.textTertiary),
+                        const SizedBox(width: 4),
+                        Text(timeAgo, style: AppTextStyles.labelSmall.copyWith(color: AppColors.textTertiary)),
+                      ],
+                    ),
+                  ],
+                ),
+              ],
+            ),
+          ),
+        ),
       ),
     );
   }
