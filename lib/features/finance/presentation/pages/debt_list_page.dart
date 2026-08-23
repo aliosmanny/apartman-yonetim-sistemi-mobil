@@ -5,11 +5,13 @@ import '../../../../app/theme/app_colors.dart';
 import '../../../../app/theme/app_text_styles.dart';
 import '../../../../core/di/injection.dart';
 import '../../domain/models/debt.dart';
+import '../widgets/payment_dialog.dart';
 import '../controllers/finance_cubit.dart';
 import '../controllers/finance_state.dart';
 
 class DebtListPage extends StatelessWidget {
-  const DebtListPage({super.key});
+  final bool showAppBar;
+  const DebtListPage({super.key, this.showAppBar = true});
 
   @override
   Widget build(BuildContext context) {
@@ -17,10 +19,10 @@ class DebtListPage extends StatelessWidget {
       create: (context) => sl<FinanceCubit>()..fetchDebts(),
       child: Scaffold(
         backgroundColor: AppColors.background,
-        appBar: AppBar(
+        appBar: showAppBar ? AppBar(
           title: const Text('Borçlarım ve Ödemeler'),
           centerTitle: false,
-        ),
+        ) : null,
         body: BlocBuilder<FinanceCubit, FinanceState>(
           builder: (context, state) {
             if (state is FinanceLoading || state is FinanceInitial) {
@@ -195,7 +197,13 @@ class _DebtCard extends StatelessWidget {
                 width: double.infinity,
                 child: ElevatedButton(
                   onPressed: () {
-                    context.go('/resident/debts/pay', extra: debt);
+                    showDialog(
+                      context: context,
+                      builder: (ctx) => BlocProvider.value(
+                        value: context.read<FinanceCubit>(),
+                        child: PaymentDialog(debt: debt),
+                      ),
+                    );
                   },
                   style: ElevatedButton.styleFrom(
                     backgroundColor: isOverdue ? AppColors.debtOverdue : AppColors.primary,

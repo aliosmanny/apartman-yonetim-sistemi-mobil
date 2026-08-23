@@ -9,7 +9,8 @@ import '../controllers/maintenance_cubit.dart';
 import '../controllers/maintenance_state.dart';
 
 class MaintenanceListPage extends StatelessWidget {
-  const MaintenanceListPage({super.key});
+  final bool showAppBar;
+  const MaintenanceListPage({super.key, this.showAppBar = true});
 
   @override
   Widget build(BuildContext context) {
@@ -17,10 +18,10 @@ class MaintenanceListPage extends StatelessWidget {
       create: (context) => sl<MaintenanceCubit>()..fetchRequests(),
       child: Scaffold(
         backgroundColor: AppColors.background,
-        appBar: AppBar(
+        appBar: showAppBar ? AppBar(
           title: const Text('Talepler ve Arızalar'),
           centerTitle: false,
-        ),
+        ) : null,
         body: BlocBuilder<MaintenanceCubit, MaintenanceState>(
           builder: (context, state) {
             if (state is MaintenanceLoading || state is MaintenanceInitial) {

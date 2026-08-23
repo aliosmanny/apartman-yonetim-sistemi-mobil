@@ -3,6 +3,10 @@ import '../../data/dto/finance_dto.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import '../../domain/models/debt.dart';
 import '../../domain/models/payment.dart';
+import '../../domain/models/finance_summary.dart';
+import '../../domain/models/due_period.dart';
+import '../../domain/models/income.dart';
+import '../../domain/models/expense.dart';
 import '../../domain/repositories/finance_repository.dart';
 import 'finance_state.dart';
 
@@ -14,8 +18,13 @@ class FinanceCubit extends Cubit<FinanceState> {
   Future<void> fetchDebts() async {
     emit(FinanceLoading());
     try {
-      final debts = await _repository.getDebts();
-      emit(FinanceLoaded(debts: debts));
+      List<Debt> debts = [];
+      try { debts = await _repository.getDebts(); } catch (_) {}
+      
+      List<Payment> payments = [];
+      try { payments = await _repository.getPayments(); } catch (_) {}
+      
+      emit(FinanceLoaded(debts: debts, payments: payments));
     } catch (e) {
       emit(FinanceError(message: 'Borçlar yüklenirken bir hata oluştu: ${e.toString()}'));
     }
@@ -24,17 +33,25 @@ class FinanceCubit extends Cubit<FinanceState> {
   Future<void> fetchManagerFinance() async {
     emit(FinanceLoading());
     try {
-      final summary = await _repository.getSummary();
-      final duePeriods = await _repository.getDuePeriods();
-      final debts = await _repository.getDebts();
-      final incomes = await _repository.getIncomes();
-      final expenses = await _repository.getExpenses();
+      FinanceSummary? summary;
+      try { summary = await _repository.getSummary(); } catch (_) {}
+      
+      List<DuePeriod> duePeriods = [];
+      try { duePeriods = await _repository.getDuePeriods(); } catch (_) {}
+      
+      List<Debt> debts = [];
+      try { debts = await _repository.getDebts(); } catch (_) {}
+      
+      List<Income> incomes = [];
+      try { incomes = await _repository.getIncomes(); } catch (_) {}
+      
+      List<Expense> expenses = [];
+      try { expenses = await _repository.getExpenses(); } catch (_) {}
       
       List<Payment> payments = [];
       try {
         payments = await _repository.getPayments();
       } catch (_) {
-        // Backend'de henüz endpoint yoksa veya hata verirse çökmeyi engellemek için fallback
         payments = debts.expand((d) => d.payments).toList();
       }
 
@@ -42,9 +59,9 @@ class FinanceCubit extends Cubit<FinanceState> {
         summary: summary,
         duePeriods: duePeriods,
         debts: debts,
+        payments: payments,
         incomes: incomes,
         expenses: expenses,
-        payments: payments,
       ));
     } catch (e) {
       emit(FinanceError(message: 'Finans verileri yüklenirken bir hata oluştu: ${e.toString()}'));

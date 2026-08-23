@@ -1,12 +1,17 @@
+import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:flutter/material.dart';
 import '../../../../app/theme/app_colors.dart';
 import '../../../../app/theme/app_text_styles.dart';
+import '../../../../core/di/injection.dart';
 import '../../../maintenance/domain/models/maintenance_request.dart';
+import '../../../maintenance/presentation/controllers/maintenance_cubit.dart';
+import '../../../staff/presentation/controllers/staff_cubit.dart';
+import '../../../staff/domain/models/staff_member.dart';
 
 class ManagerMaintenanceDetailPage extends StatefulWidget {
-  final Map<String, dynamic> item; // request, unit, resident
+  final MaintenanceRequest request;
 
-  const ManagerMaintenanceDetailPage({super.key, required this.item});
+  const ManagerMaintenanceDetailPage({super.key, required this.request});
 
   @override
   State<ManagerMaintenanceDetailPage> createState() => _ManagerMaintenanceDetailPageState();
@@ -15,243 +20,228 @@ class ManagerMaintenanceDetailPage extends StatefulWidget {
 class _ManagerMaintenanceDetailPageState extends State<ManagerMaintenanceDetailPage> {
   late String _selectedStatus;
   late TextEditingController _notesController;
-  String? _selectedStaff;
+  int? _selectedStaffId;
+  late StaffCubit _staffCubit;  // Aynı instance'ı tut (factory her seferinde yeni yaratır!)
+
+  /// Backend kısa kodlarını uzun forma normalize et
+  static String _normalize(String status) {
+    switch (status) {
+      case 'p': return 'pending';
+      case 'a': return 'assigned';
+      case 'i': return 'in_progress';
+      case 'c': return 'completed';
+      case 'x': return 'cancelled';
+      default:  return status;
+    }
+  }
 
   @override
   void initState() {
     super.initState();
-    final request = widget.item['request'] as MaintenanceRequest;
-    _selectedStatus = request.status;
-    _notesController = TextEditingController(text: request.adminNotes ?? '');
+    _selectedStatus = _normalize(widget.request.status);
+    _notesController = TextEditingController(text: widget.request.adminNotes ?? '');
+
+    // Tek bir StaffCubit instance'ı oluştur ve sakla
+    _staffCubit = sl<StaffCubit>();
+    _staffCubit.fetchStaff();
   }
 
   @override
   void dispose() {
     _notesController.dispose();
+    _staffCubit.close();
     super.dispose();
-  }
-
-  Color _statusColor(String status) {
-    switch (status) {
-      case 'pending':
-        return AppColors.maintenancePending;
-      case 'in_progress':
-        return AppColors.maintenanceInProgress;
-      case 'resolved':
-        return AppColors.maintenanceCompleted;
-      case 'rejected':
-        return AppColors.maintenanceCancelled;
-      default:
-        return AppColors.textTertiary;
-    }
-  }
-
-  String _statusLabel(String status) {
-    switch (status) {
-      case 'pending':
-        return 'İşleme Alınmadı';
-      case 'in_progress':
-        return 'İşlemde';
-      case 'resolved':
-        return 'Çözüldü';
-      case 'rejected':
-        return 'İptal Edildi';
-      default:
-        return status;
-    }
   }
 
   @override
   Widget build(BuildContext context) {
-    final request = widget.item['request'] as MaintenanceRequest;
-    final unit = widget.item['unit'] as String;
-    final resident = widget.item['resident'] as String;
-    final statusColor = _statusColor(_selectedStatus);
+    final request = widget.request;
 
-    return Scaffold(
-      backgroundColor: AppColors.background,
-      appBar: AppBar(
-        title: const Text('Talep Detayı'),
-        centerTitle: true,
-      ),
-      body: SingleChildScrollView(
-        padding: const EdgeInsets.all(20),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            // ── Talep Bilgileri ──
-            Container(
-              padding: const EdgeInsets.all(20),
-              decoration: BoxDecoration(
-                color: AppColors.cardBackground,
-                borderRadius: BorderRadius.circular(18),
-                border: Border.all(color: AppColors.border),
-                boxShadow: [
-                  BoxShadow(
-                    color: Colors.black.withOpacity(0.03),
-                    blurRadius: 14,
-                    offset: const Offset(0, 6),
-                  ),
-                ],
-              ),
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Row(
-                    children: [
-                      Container(
-                        padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
-                        decoration: BoxDecoration(
-                          color: AppColors.surfaceVariant,
-                          borderRadius: BorderRadius.circular(8),
+    return BlocProvider<StaffCubit>.value(
+      value: _staffCubit,  // Aynı instance'ı kullan
+      child: Scaffold(
+        backgroundColor: AppColors.background,
+        appBar: AppBar(
+          title: Text(request.title, style: AppTextStyles.titleMedium),
+          centerTitle: true,
+        ),
+        body: SingleChildScrollView(
+          padding: const EdgeInsets.all(20),
+          child: Container(
+            padding: const EdgeInsets.all(20),
+            decoration: BoxDecoration(
+              color: AppColors.surface,
+              borderRadius: BorderRadius.circular(16),
+              border: Border.all(color: AppColors.border),
+            ),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                // ── Durum ───────────────────────────────────
+                _buildLabeledDropdown<String>(
+                  label: 'Durum*',
+                  value: _selectedStatus,
+                  items: const [
+                    DropdownMenuItem(value: 'pending',     child: Text('Beklemede')),
+                    DropdownMenuItem(value: 'assigned',    child: Text('Personel Atandı')),
+                    DropdownMenuItem(value: 'in_progress', child: Text('İşlem Devam Ediyor')),
+                    DropdownMenuItem(value: 'completed',   child: Text('Tamamlandı')),
+                    DropdownMenuItem(value: 'cancelled',   child: Text('İptal Edildi')),
+                  ],
+                  onChanged: (val) {
+                    if (val != null) setState(() => _selectedStatus = val);
+                  },
+                ),
+                const Divider(height: 32),
+
+                // ── Atanan Personel (DB'den) ─────────────────
+                BlocBuilder<StaffCubit, StaffState>(
+                  builder: (ctx, staffState) {
+                    List<StaffMember> staffList = [];
+                    if (staffState is StaffLoaded) {
+                      staffList = staffState.staffList;
+                    }
+
+                    // _selectedStaffId listede yoksa null'a düşür
+                    final validIds = staffList.map((s) => s.id).toSet();
+                    final safeId = validIds.contains(_selectedStaffId) ? _selectedStaffId : null;
+
+                    return _buildLabeledDropdown<int>(
+                      label: 'Atanan Personel',
+                      value: safeId,
+                      hint: staffState is StaffLoading ? 'Yükleniyor...' : 'Personel Seçin',
+                      items: staffList
+                          .map((s) => DropdownMenuItem<int>(
+                                value: s.id,
+                                child: Text(
+                                  '${s.userName} - ${s.roleDisplay}',
+                                  overflow: TextOverflow.ellipsis,
+                                ),
+                              ))
+                          .toList(),
+                      onChanged: (val) => setState(() => _selectedStaffId = val),
+                    );
+                  },
+                ),
+                const Divider(height: 32),
+
+                // ── Salt okunur bilgiler ─────────────────────
+                _infoRow('Talep Başlığı', request.title),
+                const Divider(height: 32),
+                _infoRow('Açıklama', request.description),
+                const Divider(height: 32),
+                _infoRow('Daire', request.unitDisplay ?? 'Bilinmiyor'),
+                const Divider(height: 32),
+                _infoRow('Kategori', request.safeCategoryDisplay),
+                const Divider(height: 32),
+                _infoRow('Talep Sahibi', request.creatorName ?? 'Bilinmiyor'),
+                const Divider(height: 32),
+                _infoRow('Fotoğraf', request.imageUrl != null ? 'Fotoğrafı Gör' : '-'),
+                const Divider(height: 32),
+                _infoRow('Personel Notu / Cevabı', request.adminNotes ?? '-'),
+                const Divider(height: 32),
+                _infoRow('Personel Fotoğrafı', '-'),
+              ],
+            ),
+          ),
+        ),
+        bottomNavigationBar: SafeArea(
+          child: Padding(
+            padding: const EdgeInsets.all(20),
+            child: SizedBox(
+              width: double.infinity,
+              height: 50,
+              child: ElevatedButton(
+                onPressed: () async {
+                  try {
+                    await sl<MaintenanceCubit>().updateRequestStatus(
+                      request.id,
+                      _selectedStatus,           // artık her zaman uzun form
+                      assignedStaffId: _selectedStaffId,
+                    );
+                    if (context.mounted) {
+                      ScaffoldMessenger.of(context).showSnackBar(
+                        const SnackBar(
+                          content: Text('Değişiklikler başarıyla kaydedildi'),
+                          backgroundColor: AppColors.success,
                         ),
-                        child: Text(request.safeCategoryDisplay, style: AppTextStyles.labelSmall),
-                      ),
-                      const SizedBox(width: 8),
-                      // ── Canlı durum rozeti ──
-                      Container(
-                        padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
-                        decoration: BoxDecoration(
-                          color: statusColor.withOpacity(0.1),
-                          borderRadius: BorderRadius.circular(8),
+                      );
+                      Navigator.of(context).pop();
+                    }
+                  } catch (e) {
+                    if (context.mounted) {
+                      ScaffoldMessenger.of(context).showSnackBar(
+                        SnackBar(
+                          content: Text('Hata: $e'),
+                          backgroundColor: AppColors.error,
                         ),
-                        child: Row(
-                          mainAxisSize: MainAxisSize.min,
-                          children: [
-                            Container(
-                              width: 6,
-                              height: 6,
-                              decoration: BoxDecoration(color: statusColor, shape: BoxShape.circle),
-                            ),
-                            const SizedBox(width: 6),
-                            Text(
-                              _statusLabel(_selectedStatus),
-                              style: AppTextStyles.labelSmall.copyWith(color: statusColor, fontWeight: FontWeight.w700),
-                            ),
-                          ],
-                        ),
-                      ),
-                      const Spacer(),
-                      Text(_formatDate(request.createdAt), style: AppTextStyles.labelSmall.copyWith(color: AppColors.textTertiary)),
-                    ],
-                  ),
-                  const SizedBox(height: 16),
-                  Text(request.title, style: AppTextStyles.headlineSmall),
-                  const SizedBox(height: 8),
-                  Text(request.description, style: AppTextStyles.bodyMedium.copyWith(color: AppColors.textSecondary)),
-                  const SizedBox(height: 16),
-                  const Divider(height: 1),
-                  const SizedBox(height: 16),
-                  Row(
-                    children: [
-                      Container(
-                        padding: const EdgeInsets.all(8),
-                        decoration: BoxDecoration(
-                          color: AppColors.primary.withOpacity(0.1),
-                          borderRadius: BorderRadius.circular(10),
-                        ),
-                        child: const Icon(Icons.person_outline_rounded, size: 18, color: AppColors.primary),
-                      ),
-                      const SizedBox(width: 10),
-                      Text(resident, style: AppTextStyles.titleMedium),
-                      const Spacer(),
-                      Text(unit, style: AppTextStyles.labelSmall.copyWith(color: AppColors.textSecondary)),
-                    ],
-                  ),
-                ],
+                      );
+                    }
+                  }
+                },
+                child: const Text('Kaydet'),
               ),
             ),
-            const SizedBox(height: 24),
-
-            // ── Yönetici İşlemleri ──
-            Text('Yönetici İşlemleri', style: AppTextStyles.titleMedium.copyWith(fontWeight: FontWeight.bold)),
-            const SizedBox(height: 12),
-            Container(
-              padding: const EdgeInsets.all(20),
-              decoration: BoxDecoration(
-                color: AppColors.cardBackground,
-                borderRadius: BorderRadius.circular(18),
-                border: Border.all(color: AppColors.border),
-                boxShadow: [
-                  BoxShadow(
-                    color: Colors.black.withOpacity(0.03),
-                    blurRadius: 14,
-                    offset: const Offset(0, 6),
-                  ),
-                ],
-              ),
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Text('Durum', style: AppTextStyles.labelSmall.copyWith(color: AppColors.textSecondary)),
-                  const SizedBox(height: 8),
-                  DropdownButtonFormField<String>(
-                    value: _selectedStatus,
-                    decoration: InputDecoration(
-                      prefixIcon: Icon(Icons.flag_rounded, size: 20, color: statusColor),
-                    ),
-                    items: const [
-                      DropdownMenuItem(value: 'pending', child: Text('İşleme Alınmadı')),
-                      DropdownMenuItem(value: 'in_progress', child: Text('İşlemde')),
-                      DropdownMenuItem(value: 'resolved', child: Text('Çözüldü')),
-                      DropdownMenuItem(value: 'rejected', child: Text('İptal Edildi')),
-                    ],
-                    onChanged: (val) {
-                      if (val != null) setState(() => _selectedStatus = val);
-                    },
-                  ),
-                  const SizedBox(height: 20),
-
-                  Text('Personele Ata', style: AppTextStyles.labelSmall.copyWith(color: AppColors.textSecondary)),
-                  const SizedBox(height: 8),
-                  DropdownButtonFormField<String>(
-                    value: _selectedStaff,
-                    hint: const Text('Personel Seçin'),
-                    decoration: const InputDecoration(
-                      prefixIcon: Icon(Icons.engineering_rounded, size: 20, color: AppColors.textTertiary),
-                    ),
-                    items: const [
-                      DropdownMenuItem(value: 'staff1', child: Text('Hasan Usta (Tesisat)')),
-                      DropdownMenuItem(value: 'staff2', child: Text('Ali Veli (Elektrik)')),
-                    ],
-                    onChanged: (val) {
-                      setState(() => _selectedStaff = val);
-                    },
-                  ),
-                  const SizedBox(height: 20),
-
-                  Text('Yönetici Notu', style: AppTextStyles.labelSmall.copyWith(color: AppColors.textSecondary)),
-                  const SizedBox(height: 8),
-                  TextField(
-                    controller: _notesController,
-                    maxLines: 3,
-                    decoration: const InputDecoration(
-                      hintText: 'Sakinlerin görebileceği notlar...',
-                    ),
-                  ),
-                ],
-              ),
-            ),
-            const SizedBox(height: 24),
-
-            // Stil artık ElevatedButtonTheme'den geliyor — tekrar tanımlamaya gerek yok
-            ElevatedButton(
-              onPressed: () {
-                ScaffoldMessenger.of(context).showSnackBar(
-                  const SnackBar(content: Text('Değişiklikler kaydedildi')),
-                );
-                Navigator.of(context).pop();
-              },
-              child: const Text('Değişiklikleri Kaydet'),
-            ),
-            const SizedBox(height: 40),
-          ],
+          ),
         ),
       ),
     );
   }
 
-  String _formatDate(DateTime date) {
-    return '${date.day.toString().padLeft(2, '0')}.${date.month.toString().padLeft(2, '0')}.${date.year} ${date.hour.toString().padLeft(2, '0')}:${date.minute.toString().padLeft(2, '0')}';
+  Widget _infoRow(String label, String value) {
+    return Row(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Expanded(
+          flex: 2,
+          child: Text(label,
+              style: AppTextStyles.labelLarge
+                  .copyWith(color: AppColors.textPrimary, fontWeight: FontWeight.bold)),
+        ),
+        Expanded(
+          flex: 3,
+          child: Text(value,
+              style: AppTextStyles.bodyMedium.copyWith(color: AppColors.textSecondary)),
+        ),
+      ],
+    );
+  }
+
+  Widget _buildLabeledDropdown<T>({
+    required String label,
+    required T? value,
+    String? hint,
+    required List<DropdownMenuItem<T>> items,
+    required ValueChanged<T?> onChanged,
+  }) {
+    return Row(
+      crossAxisAlignment: CrossAxisAlignment.center,
+      children: [
+        Expanded(
+          flex: 2,
+          child: Text(label,
+              style: AppTextStyles.labelLarge
+                  .copyWith(color: AppColors.textPrimary, fontWeight: FontWeight.bold)),
+        ),
+        Expanded(
+          flex: 3,
+          child: DropdownButtonFormField<T>(
+            value: value,
+            hint: hint != null ? Text(hint) : null,
+            isExpanded: true,
+            decoration: InputDecoration(
+              contentPadding: const EdgeInsets.symmetric(horizontal: 12, vertical: 12),
+              border: OutlineInputBorder(borderRadius: BorderRadius.circular(8)),
+              enabledBorder: OutlineInputBorder(
+                borderRadius: BorderRadius.circular(8),
+                borderSide: const BorderSide(color: AppColors.border),
+              ),
+            ),
+            items: items,
+            onChanged: onChanged,
+          ),
+        ),
+      ],
+    );
   }
 }

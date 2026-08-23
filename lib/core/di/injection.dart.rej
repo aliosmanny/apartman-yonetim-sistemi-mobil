@@ -1,0 +1,24 @@
+--- injection.dart
++++ injection.dart
+@@ -29,6 +29,10 @@
+ import '../../features/documents/data/repositories/document_repository_impl.dart';
+ import '../../features/documents/domain/repositories/document_repository.dart';
+ import '../../features/documents/presentation/controllers/document_cubit.dart';
++import '../../features/users/data/datasources/user_remote_data_source.dart';
++import '../../features/users/data/repositories/user_repository_impl.dart';
++import '../../features/users/domain/repositories/user_repository.dart';
++import '../../features/users/presentation/controllers/user_cubit.dart';
+ 
+ final sl = GetIt.instance;
+ 
+@@ -102,6 +106,10 @@
+   sl.registerLazySingleton<DocumentRepository>(() => DocumentRepositoryImpl(sl()));
+   sl.registerFactory(() => DocumentCubit(sl()));
+ 
++  // Users (User Management)
++  sl.registerLazySingleton<UserRemoteDataSource>(() => UserRemoteDataSourceImpl(sl()));
++  sl.registerLazySingleton<UserRepository>(() => UserRepositoryImpl(sl()));
++  sl.registerFactory(() => UserCubit(sl()));
+ }
+ 
+ 

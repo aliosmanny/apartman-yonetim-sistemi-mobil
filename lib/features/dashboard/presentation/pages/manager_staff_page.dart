@@ -1,44 +1,34 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_bloc/flutter_bloc.dart';
 import '../../../../app/theme/app_colors.dart';
 import '../../../../app/theme/app_text_styles.dart';
 import 'package:go_router/go_router.dart';
+import '../../../../core/di/injection.dart';
+import '../../../staff/presentation/controllers/staff_cubit.dart';
+import '../../../staff/domain/models/staff_member.dart';
 
-class ManagerStaffPage extends StatefulWidget {
+class ManagerStaffPage extends StatelessWidget {
   const ManagerStaffPage({super.key});
 
   @override
-  State<ManagerStaffPage> createState() => _ManagerStaffPageState();
+  Widget build(BuildContext context) {
+    return BlocProvider<StaffCubit>(
+      create: (context) => sl<StaffCubit>()..fetchStaff(),
+      child: const _ManagerStaffPageView(),
+    );
+  }
 }
 
-class _ManagerStaffPageState extends State<ManagerStaffPage> {
-  final List<Map<String, dynamic>> _mockStaff = [
-    {
-      'name': 'Hasan Usta',
-      'role': 'Tesisat / Genel Bakım',
-      'phone': '0555 123 45 67',
-      'status': 'Aktif',
-    },
-    {
-      'name': 'Ali Veli',
-      'role': 'Elektrik Uzmanı',
-      'phone': '0532 987 65 43',
-      'status': 'İzinde',
-    },
-    {
-      'name': 'Fatma Hanım',
-      'role': 'Temizlik Personeli',
-      'phone': '0544 111 22 33',
-      'status': 'Aktif',
-    }
-  ];
+class _ManagerStaffPageView extends StatefulWidget {
+  const _ManagerStaffPageView();
 
+  @override
+  State<_ManagerStaffPageView> createState() => _ManagerStaffPageViewState();
+}
+
+class _ManagerStaffPageViewState extends State<_ManagerStaffPageView> {
   void _addStaff() async {
-    final result = await context.pushNamed('managerAddStaff');
-    if (result != null && result is Map<String, dynamic>) {
-      setState(() {
-        _mockStaff.insert(0, result);
-      });
-    }
+    context.pushNamed('managerStaffForm', extra: {'cubit': context.read<StaffCubit>()});
   }
 
   @override
@@ -46,16 +36,42 @@ class _ManagerStaffPageState extends State<ManagerStaffPage> {
     return Scaffold(
       backgroundColor: AppColors.background,
       appBar: AppBar(
-        title: const Text('Personel Yönetimi'),
+        title: const Text('Personeller'),
         centerTitle: true,
       ),
-      body: ListView.separated(
-        padding: const EdgeInsets.all(20),
-        itemCount: _mockStaff.length,
-        separatorBuilder: (_, __) => const SizedBox(height: 12),
-        itemBuilder: (context, index) {
-          final staff = _mockStaff[index];
-          return _ManagerStaffCard(staff: staff);
+      body: BlocBuilder<StaffCubit, StaffState>(
+        builder: (context, state) {
+          if (state is StaffLoading) {
+            return const Center(child: CircularProgressIndicator());
+          } else if (state is StaffError) {
+            return Center(
+              child: Column(
+                mainAxisAlignment: MainAxisAlignment.center,
+                children: [
+                  Text('Hata: ${state.message}', style: const TextStyle(color: AppColors.error)),
+                  const SizedBox(height: 16),
+                  ElevatedButton(
+                    onPressed: () => context.read<StaffCubit>().fetchStaff(),
+                    child: const Text('Tekrar Dene'),
+                  ),
+                ],
+              ),
+            );
+          } else if (state is StaffLoaded) {
+            final staffList = state.staffList;
+            if (staffList.isEmpty) {
+              return const Center(child: Text('Kayıtlı personel bulunamadı.'));
+            }
+            return ListView.separated(
+              padding: const EdgeInsets.all(20),
+              itemCount: staffList.length,
+              separatorBuilder: (_, __) => const SizedBox(height: 12),
+              itemBuilder: (context, index) {
+                return _ManagerStaffCard(staff: staffList[index]);
+              },
+            );
+          }
+          return const SizedBox();
         },
       ),
       floatingActionButton: FloatingActionButton(
@@ -69,15 +85,23 @@ class _ManagerStaffPageState extends State<ManagerStaffPage> {
 }
 
 class _ManagerStaffCard extends StatelessWidget {
-  final Map<String, dynamic> staff;
+  final StaffMember staff;
 
   const _ManagerStaffCard({required this.staff});
 
   @override
   Widget build(BuildContext context) {
-    final bool isActive = staff['status'] == 'Aktif';
+    final bool isActive = staff.isActive;
 
-    return Container(
+    return InkWell(
+      onTap: () {
+        context.pushNamed('managerStaffForm', extra: {
+          'staff': staff,
+          'cubit': context.read<StaffCubit>(),
+        });
+      },
+      borderRadius: BorderRadius.circular(16),
+      child: Container(
       decoration: BoxDecoration(
         color: AppColors.cardBackground,
         borderRadius: BorderRadius.circular(16),
@@ -96,7 +120,7 @@ class _ManagerStaffCard extends StatelessWidget {
           radius: 24,
           backgroundColor: isActive ? AppColors.primary.withOpacity(0.12) : AppColors.textTertiary.withOpacity(0.2),
           child: Text(
-            staff['name'].substring(0, 1),
+            staff.userName.isNotEmpty ? staff.userName.substring(0, 1) : 'P',
             style: AppTextStyles.titleLarge.copyWith(
               color: isActive ? AppColors.primary : AppColors.textSecondary,
               fontWeight: FontWeight.w700,
@@ -104,7 +128,7 @@ class _ManagerStaffCard extends StatelessWidget {
           ),
         ),
         title: Text(
-          staff['name'],
+          '${staff.userName} (${staff.userPhone})',
           style: AppTextStyles.titleMedium.copyWith(fontWeight: FontWeight.w600),
         ),
         subtitle: Padding(
@@ -112,13 +136,13 @@ class _ManagerStaffCard extends StatelessWidget {
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              Text(staff['role'], style: AppTextStyles.bodySmall),
+              Text(staff.apartmentName, style: AppTextStyles.bodySmall.copyWith(color: AppColors.textSecondary)),
               const SizedBox(height: 4),
               Row(
                 children: [
-                  const Icon(Icons.phone_outlined, size: 14, color: AppColors.textTertiary),
+                  const Icon(Icons.badge_outlined, size: 14, color: AppColors.textTertiary),
                   const SizedBox(width: 4),
-                  Text(staff['phone'], style: AppTextStyles.labelSmall.copyWith(color: AppColors.textSecondary)),
+                  Text(staff.roleDisplay, style: AppTextStyles.labelSmall.copyWith(color: AppColors.textSecondary)),
                 ],
               ),
             ],
@@ -127,18 +151,17 @@ class _ManagerStaffCard extends StatelessWidget {
         trailing: Container(
           padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
           decoration: BoxDecoration(
-            color: isActive ? AppColors.success.withOpacity(0.1) : AppColors.warning.withOpacity(0.1),
+            color: isActive ? AppColors.success.withOpacity(0.1) : AppColors.error.withOpacity(0.1),
             borderRadius: BorderRadius.circular(8),
           ),
-          child: Text(
-            staff['status'],
-            style: AppTextStyles.labelSmall.copyWith(
-              color: isActive ? AppColors.success : AppColors.warning,
-              fontWeight: FontWeight.bold,
-            ),
+          child: Icon(
+            isActive ? Icons.check_circle : Icons.cancel,
+            size: 16,
+            color: isActive ? AppColors.success : AppColors.error,
           ),
         ),
       ),
+    ),
     );
   }
 }

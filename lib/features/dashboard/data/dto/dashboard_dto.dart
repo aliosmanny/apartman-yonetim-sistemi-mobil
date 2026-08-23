@@ -63,6 +63,7 @@ class ManagerDashboardDto {
 
 class ResidentDashboardDto {
   final bool hasUnit;
+  final List<UnitSimpleDto> units;
   final int unpaidCount;
   final int overdueCount;
   final int paidCount;
@@ -74,6 +75,7 @@ class ResidentDashboardDto {
 
   const ResidentDashboardDto({
     required this.hasUnit,
+    this.units = const [],
     required this.unpaidCount,
     required this.overdueCount,
     required this.paidCount,
@@ -85,8 +87,19 @@ class ResidentDashboardDto {
   });
 
   factory ResidentDashboardDto.fromJson(Map<String, dynamic> json) {
+
+    final List<dynamic> rawUnits = json['units'] as List<dynamic>? ?? [];
+    final List<UnitSimpleDto> parsedUnits = rawUnits.map((u) {
+       final id = u['id'] as int? ?? 0;
+       final display = u['display']?.toString() ?? '';
+       final floor = u['floor']?.toString() ?? '';
+       return UnitSimpleDto(id: id, display: '$display (Kat $floor)');
+    }).toList();
+    
     return ResidentDashboardDto(
+      units: parsedUnits,
       hasUnit: json['has_unit'] as bool? ?? false,
+
       unpaidCount: json['unpaid_count'] as int? ?? 0,
       overdueCount: json['overdue_count'] as int? ?? 0,
       paidCount: json['paid_count'] as int? ?? 0,
@@ -195,4 +208,10 @@ class RecentAnnouncementDto {
       publishDate: json['publish_date'] as String?,
     );
   }
+}
+
+class UnitSimpleDto {
+  final int id;
+  final String display;
+  const UnitSimpleDto({required this.id, required this.display});
 }

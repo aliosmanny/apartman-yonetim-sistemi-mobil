@@ -6,7 +6,8 @@ abstract class MaintenanceRemoteDataSource {
   Future<List<MaintenanceDto>> getMaintenanceRequests({String? status, String? category});
   Future<MaintenanceDto> getMaintenanceRequestDetails(String id);
   Future<MaintenanceDto> createMaintenanceRequest(Map<String, dynamic> data, {XFile? image});
-  Future<MaintenanceDto> updateMaintenanceStatus(String id, String status, {String? note});
+  Future<MaintenanceDto> updateMaintenanceStatus(String id, String status, {String? note, int? assignedStaffId});
+  Future<MaintenanceDto> updateAssignedStaff(String id, int staffId);
 }
 
 class MaintenanceRemoteDataSourceImpl implements MaintenanceRemoteDataSource {
@@ -56,20 +57,34 @@ class MaintenanceRemoteDataSourceImpl implements MaintenanceRemoteDataSource {
   }
 
   @override
-  Future<MaintenanceDto> updateMaintenanceStatus(String id, String status, {String? note}) async {
-    final data = <String, dynamic>{
-      'status': status,
-    };
+  Future<MaintenanceDto> updateMaintenanceStatus(String id, String status, {String? note, int? assignedStaffId}) async {
+    // Önce personel atamasını yap (ayrı endpoint)
+    if (assignedStaffId != null) {
+      await updateAssignedStaff(id, assignedStaffId);
+    }
+
+    final data = <String, dynamic>{'status': status};
     if (note != null && note.isNotEmpty) {
       data['note'] = note;
     }
     final response = await _dio.patch('/maintenance-requests/$id/status/', data: data);
     
-    // update statu endpoint'i sadece status günceller. Tam detay dönmeyebilir, dönüyorsa parse edelim:
     if (response.data is Map<String, dynamic> && response.data.containsKey('id')) {
       return MaintenanceDto.fromJson(response.data as Map<String, dynamic>);
     }
-    // Eğer dönmüyorsa güncel datayı tekrar çekelim
+    return getMaintenanceRequestDetails(id);
+  }
+
+  @override
+  Future<MaintenanceDto> updateAssignedStaff(String id, int staffId) async {
+    // /maintenance-requests/{id}/ PATCH endpoint'i assigned_to alanını kabul ediyor
+    final response = await _dio.patch(
+      '/maintenance-requests/$id/',
+      data: {'assigned_to': staffId},
+    );
+    if (response.data is Map<String, dynamic> && response.data.containsKey('id')) {
+      return MaintenanceDto.fromJson(response.data as Map<String, dynamic>);
+    }
     return getMaintenanceRequestDetails(id);
   }
 }

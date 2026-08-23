@@ -1,40 +1,42 @@
 class AppDocument {
-  final String id;
+  final int id;
+  final int? apartmentId;
+  final String? apartmentName;
   final String title;
-  final String type; // 'pdf', 'doc', 'xls' vs.
-  final String size;
-  final DateTime uploadDate;
+  final String? description;
+  final String category;
+  final String? categoryDisplay;
+  final String status;
+  final String? statusDisplay;
+  final String? fileUrl;
+  final int? uploadedById;
+  final String? uploadedByName;
+  final DateTime createdAt;
+  final DateTime updatedAt;
 
   const AppDocument({
     required this.id,
+    this.apartmentId,
+    this.apartmentName,
     required this.title,
-    required this.type,
-    required this.size,
-    required this.uploadDate,
+    this.description,
+    required this.category,
+    this.categoryDisplay,
+    required this.status,
+    this.statusDisplay,
+    this.fileUrl,
+    this.uploadedById,
+    this.uploadedByName,
+    required this.createdAt,
+    required this.updatedAt,
   });
-}
 
-// Mock Data
-final List<AppDocument> mockDocuments = [
-  AppDocument(
-    id: '1',
-    title: '2025 Yılı Karar Defteri',
-    type: 'pdf',
-    size: '2.4 MB',
-    uploadDate: DateTime.now().subtract(const Duration(days: 45)),
-  ),
-  AppDocument(
-    id: '2',
-    title: 'Apartman Yönetim Planı',
-    type: 'pdf',
-    size: '5.1 MB',
-    uploadDate: DateTime.now().subtract(const Duration(days: 120)),
-  ),
-  AppDocument(
-    id: '3',
-    title: 'Temmuz Ayı Gider Tablosu',
-    type: 'xls',
-    size: '1.2 MB',
-    uploadDate: DateTime.now().subtract(const Duration(days: 10)),
-  ),
-];
+  String get fileExtension {
+    if (fileUrl == null) return 'unknown';
+    final parts = fileUrl!.split('.');
+    if (parts.length > 1) {
+      return parts.last.toLowerCase();
+    }
+    return 'unknown';
+  }
+}

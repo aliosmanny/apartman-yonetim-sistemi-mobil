@@ -43,8 +43,14 @@ class MaintenanceRepositoryImpl implements MaintenanceRepository {
   }
 
   @override
-  Future<MaintenanceRequest> updateRequestStatus(String id, String status, {String? note}) async {
-    final dto = await _remoteDataSource.updateMaintenanceStatus(id, status, note: note);
+  Future<MaintenanceRequest> updateRequestStatus(String id, String status, {String? note, int? assignedStaffId}) async {
+    final dto = await _remoteDataSource.updateMaintenanceStatus(id, status, note: note, assignedStaffId: assignedStaffId);
+    return dto.toModel();
+  }
+
+  @override
+  Future<MaintenanceRequest> updateAssignedStaff(String id, int staffId) async {
+    final dto = await _remoteDataSource.updateAssignedStaff(id, staffId);
     return dto.toModel();
   }
 }

@@ -5,7 +5,6 @@ import 'package:go_router/go_router.dart';
 import '../../../auth/presentation/controllers/auth_cubit.dart';
 import '../../../auth/presentation/controllers/auth_state.dart';
 import '../../../finance/presentation/controllers/finance_cubit.dart';
-import '../../../announcements/domain/models/announcement.dart';
 import '../../../../app/theme/app_colors.dart';
 import '../../../../app/theme/app_text_styles.dart';
 import '../../../../core/di/injection.dart';
@@ -18,8 +17,6 @@ class ResidentDashboardPage extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final formatCurrency = NumberFormat.currency(locale: 'tr_TR', symbol: '₺');
-
     return MultiBlocProvider(
       providers: [
         BlocProvider(create: (context) => sl<FinanceCubit>()..fetchDebts()),
@@ -124,6 +121,11 @@ class ResidentDashboardPage extends StatelessWidget {
                   padding: const EdgeInsets.all(20),
                   sliver: SliverList(
                     delegate: SliverChildListDelegate([
+                      
+                      // ── Daire Bilgileri ────────────────────
+                      _UnitInfoCard(),
+                      const SizedBox(height: 12),
+
                       // ── Borç Kartı ────────────────────
                       _DebtCard(),
                       const SizedBox(height: 20),
@@ -138,17 +140,17 @@ class ResidentDashboardPage extends StatelessWidget {
                       Row(
                         children: [
                           Expanded(
-                            child: Text('Son Duyurular', style: AppTextStyles.headlineSmall),
+                            child: Text('Tüm Duyurular', style: AppTextStyles.headlineSmall),
                           ),
                           TextButton(
-                            onPressed: () => context.go('/resident/announcements'),
+                            onPressed: () => context.go('/resident/operations'),
                             child: const Text('Tümü'),
                           ),
                         ],
                       ),
                       const SizedBox(height: 8),
-                      _AnnouncementPlaceholder(),
-                      const SizedBox(height: 80),
+                      _AnnouncementList(),
+
                     ]),
                   ),
                 ),
@@ -157,6 +159,61 @@ class ResidentDashboardPage extends StatelessWidget {
           );
         },
       ),
+    );
+  }
+}
+
+class _UnitInfoCard extends StatelessWidget {
+  @override
+  Widget build(BuildContext context) {
+    return BlocBuilder<DashboardCubit, DashboardState>(
+      builder: (context, state) {
+        if (state is ResidentDashboardLoaded && state.data.units.isNotEmpty) {
+          return Column(
+            children: state.data.units.map((unit) {
+              return Container(
+                margin: const EdgeInsets.only(bottom: 8),
+                padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+                decoration: BoxDecoration(
+                  color: AppColors.cardBackground,
+                  borderRadius: BorderRadius.circular(16),
+                  border: Border.all(color: AppColors.border),
+                  boxShadow: [
+                    BoxShadow(color: Colors.black.withOpacity(0.02), blurRadius: 10, offset: const Offset(0, 4)),
+                  ],
+                ),
+                child: Row(
+                  children: [
+                    Container(
+                      padding: const EdgeInsets.all(10),
+                      decoration: BoxDecoration(
+                        color: const Color(0xFFF3E8FF),
+                        borderRadius: BorderRadius.circular(10),
+                      ),
+                      child: const Icon(Icons.apartment_rounded, color: Color(0xFF9333EA), size: 24),
+                    ),
+                    const SizedBox(width: 14),
+                    Expanded(
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          Text('Daire Bilginiz', style: AppTextStyles.bodySmall.copyWith(color: AppColors.textSecondary)),
+                          const SizedBox(height: 2),
+                          Text(
+                            unit.display,
+                            style: AppTextStyles.titleMedium.copyWith(fontWeight: FontWeight.bold),
+                          ),
+                        ],
+                      ),
+                    ),
+                  ],
+                ),
+              );
+            }).toList(),
+          );
+        }
+        return const SizedBox.shrink();
+      },
     );
   }
 }
@@ -172,9 +229,18 @@ class _DebtCard extends StatelessWidget {
         String amountText = '-- ₺';
         Color statusColor = Colors.white.withOpacity(0.15);
 
+        int unpaidCount = 0;
+        int overdueCount = 0;
+        double totalPaid = 0.0;
+        int paidCount = 0;
+
         if (state is ResidentDashboardLoaded) {
           totalUnpaid = state.data.totalUnpaid;
           hasOverdue = state.data.overdueCount > 0;
+          unpaidCount = state.data.unpaidCount;
+          overdueCount = state.data.overdueCount;
+          totalPaid = state.data.totalPaid;
+          paidCount = state.data.paidCount;
           
           final formatCurrency = NumberFormat.currency(locale: 'tr_TR', symbol: '₺');
           amountText = formatCurrency.format(totalUnpaid);
@@ -194,6 +260,8 @@ class _DebtCard extends StatelessWidget {
           amountText = '0 ₺';
         }
 
+        final formatCurrency = NumberFormat.currency(locale: 'tr_TR', symbol: '₺');
+
         return Container(
           padding: const EdgeInsets.all(20),
           decoration: BoxDecoration(
@@ -202,8 +270,8 @@ class _DebtCard extends StatelessWidget {
             boxShadow: [
               BoxShadow(
                 color: AppColors.primary.withOpacity(0.25),
-                blurRadius: 16,
-                offset: const Offset(0, 6),
+                blurRadius: 15,
+                offset: const Offset(0, 8),
               ),
             ],
           ),
@@ -211,48 +279,49 @@ class _DebtCard extends StatelessWidget {
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
               Row(
+                mainAxisAlignment: MainAxisAlignment.spaceBetween,
                 children: [
-                  Text(
-                    'Toplam Güncel Borç',
-                    style: AppTextStyles.labelMedium.copyWith(color: Colors.white.withOpacity(0.8)),
-                  ),
-                  const Spacer(),
-                  if (state is DashboardLoading)
-                    const SizedBox(
-                      width: 14,
-                      height: 14,
-                      child: CircularProgressIndicator(color: Colors.white, strokeWidth: 2),
-                    )
-                  else
-                    Container(
-                      padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
-                      decoration: BoxDecoration(
-                        color: statusColor,
-                        borderRadius: BorderRadius.circular(8),
-                      ),
-                      child: Text(
-                        statusText,
-                        style: AppTextStyles.labelSmall.copyWith(color: Colors.white, fontWeight: FontWeight.w700),
-                      ),
+                  Text('Toplam Güncel Borç', style: AppTextStyles.bodyMedium.copyWith(color: AppColors.textOnPrimary.withOpacity(0.9))),
+                  Container(
+                    padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
+                    decoration: BoxDecoration(
+                      color: statusColor,
+                      borderRadius: BorderRadius.circular(20),
                     ),
+                    child: Text(
+                      statusText,
+                      style: AppTextStyles.labelSmall.copyWith(color: AppColors.textOnPrimary, fontWeight: FontWeight.bold),
+                    ),
+                  ),
                 ],
               ),
-              const SizedBox(height: 8),
-              Text(
-                amountText,
-                style: AppTextStyles.amountLarge.copyWith(color: Colors.white),
-              ),
-              const SizedBox(height: 4),
+              const SizedBox(height: 12),
+              Text(amountText, style: AppTextStyles.headlineLarge.copyWith(color: AppColors.textOnPrimary)),
+              const SizedBox(height: 6),
               Text(
                 'Tüm ödenmemiş aidat ve giderleriniz',
                 style: AppTextStyles.bodySmall.copyWith(color: Colors.white.withOpacity(0.7)),
               ),
-              const SizedBox(height: 24),
+              
+              const SizedBox(height: 20),
+              
+              if (state is ResidentDashboardLoaded) ...[
+                Row(
+                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                  children: [
+                    _buildStatItem('Ödenmemiş', '₺$totalUnpaid', '$unpaidCount kayıt'),
+                    _buildStatItem('Gecikmiş', '$overdueCount adet', 'Faiz yok'),
+                    _buildStatItem('Ödenen', '₺$totalPaid', '$paidCount kayıt'),
+                  ],
+                ),
+                const SizedBox(height: 24),
+              ],
+
               SizedBox(
                 width: double.infinity,
                 child: ElevatedButton(
                   onPressed: () {
-                    context.go('/resident/debts');
+                    context.go('/resident/finance');
                   },
                   style: ElevatedButton.styleFrom(
                     backgroundColor: Colors.white,
@@ -261,13 +330,26 @@ class _DebtCard extends StatelessWidget {
                     padding: const EdgeInsets.symmetric(vertical: 14),
                     shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
                   ),
-                  child: Text('Detayları Gör / Öde', style: AppTextStyles.buttonMedium.copyWith(fontSize: 15)),
+                  child: Text('Borçlarımı Görüntüle', style: AppTextStyles.buttonMedium.copyWith(fontSize: 15)),
                 ),
               ),
             ],
           ),
         );
       },
+    );
+  }
+
+  Widget _buildStatItem(String label, String value, String subLabel) {
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Text(label, style: AppTextStyles.labelSmall.copyWith(color: Colors.white70)),
+        const SizedBox(height: 4),
+        Text(value, style: AppTextStyles.titleMedium.copyWith(color: Colors.white, fontWeight: FontWeight.bold)),
+        const SizedBox(height: 2),
+        Text(subLabel, style: AppTextStyles.labelSmall.copyWith(color: Colors.white54, fontSize: 10)),
+      ],
     );
   }
 }
@@ -277,8 +359,8 @@ class _ResidentQuickActions extends StatelessWidget {
   Widget build(BuildContext context) {
     final actions = [
       (icon: Icons.build_rounded, label: 'Talep\nOluştur', color: AppColors.warning, route: '/resident/maintenance/create', isPush: true),
-      (icon: Icons.campaign_rounded, label: 'Duyurular', color: AppColors.primary, route: '/resident/announcements', isPush: false),
-      (icon: Icons.folder_rounded, label: 'Belgeler', color: AppColors.secondary, route: '/resident/documents', isPush: true),
+      (icon: Icons.campaign_rounded, label: 'Duyurular', color: AppColors.primary, route: '/resident/operations', isPush: false),
+      (icon: Icons.description_rounded, label: 'Sözleşmem', color: AppColors.secondary, route: '/resident/properties', isPush: false),
       (icon: Icons.person_rounded, label: 'Profilim', color: AppColors.success, route: '/resident/profile', isPush: false),
     ];
 
@@ -334,7 +416,7 @@ class _ResidentQuickActions extends StatelessWidget {
   }
 }
 
-class _AnnouncementPlaceholder extends StatelessWidget {
+class _AnnouncementList extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return BlocBuilder<DashboardCubit, DashboardState>(
@@ -386,68 +468,78 @@ class _AnnouncementPlaceholder extends StatelessWidget {
             );
           }
 
-          final latest = state.data.recentAnnouncements.first;
-          // Duyuru başlığında 'acil' geçiyorsa kırmızı yap (API'de isImportant alanı yok)
-          final isImportant = latest.title.toLowerCase().contains('acil');
+          return ListView.builder(
+            shrinkWrap: true,
+            physics: const NeverScrollableScrollPhysics(),
+            padding: EdgeInsets.zero,
+            itemCount: state.data.recentAnnouncements.length,
+            itemBuilder: (context, index) {
+              final latest = state.data.recentAnnouncements[index];
+              final isImportant = latest.title.toLowerCase().contains('acil');
 
-          return InkWell(
-            onTap: () => context.go('/resident/announcements'),
-            borderRadius: BorderRadius.circular(16),
-            child: Container(
-              padding: const EdgeInsets.all(16),
-              decoration: BoxDecoration(
-                color: AppColors.cardBackground,
-                borderRadius: BorderRadius.circular(16),
-                border: Border.all(
-                  color: isImportant ? AppColors.error.withOpacity(0.5) : AppColors.border,
-                ),
-                boxShadow: [
-                  BoxShadow(
-                    color: (isImportant ? AppColors.error : Colors.black).withOpacity(0.04),
-                    blurRadius: 12,
-                    offset: const Offset(0, 4),
-                  ),
-                ],
-              ),
-              child: Row(
-                children: [
-                  Container(
-                    padding: const EdgeInsets.all(12),
+              return Container(
+                margin: const EdgeInsets.only(bottom: 12),
+                child: InkWell(
+                  onTap: () => context.go('/resident/operations'),
+                  borderRadius: BorderRadius.circular(16),
+                  child: Container(
+                    padding: const EdgeInsets.all(16),
                     decoration: BoxDecoration(
-                      color: isImportant ? AppColors.error.withOpacity(0.1) : AppColors.primary.withOpacity(0.1),
-                      borderRadius: BorderRadius.circular(12),
+                      color: AppColors.cardBackground,
+                      borderRadius: BorderRadius.circular(16),
+                      border: Border.all(
+                        color: isImportant ? AppColors.error.withOpacity(0.5) : AppColors.border,
+                      ),
+                      boxShadow: [
+                        BoxShadow(
+                          color: (isImportant ? AppColors.error : Colors.black).withOpacity(0.04),
+                          blurRadius: 12,
+                          offset: const Offset(0, 4),
+                        ),
+                      ],
                     ),
-                    child: Icon(
-                      isImportant ? Icons.warning_amber_rounded : Icons.campaign_rounded,
-                      color: isImportant ? AppColors.error : AppColors.primary,
-                    ),
-                  ),
-                  const SizedBox(width: 14),
-                  Expanded(
-                    child: Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
+                    child: Row(
                       children: [
-                        Text(
-                          latest.title,
-                          maxLines: 1,
-                          overflow: TextOverflow.ellipsis,
-                          style: AppTextStyles.titleMedium.copyWith(
-                            color: isImportant ? AppColors.error : AppColors.textPrimary,
+                        Container(
+                          padding: const EdgeInsets.all(12),
+                          decoration: BoxDecoration(
+                            color: isImportant ? AppColors.error.withOpacity(0.1) : AppColors.primary.withOpacity(0.1),
+                            borderRadius: BorderRadius.circular(12),
+                          ),
+                          child: Icon(
+                            isImportant ? Icons.warning_amber_rounded : Icons.campaign_rounded,
+                            color: isImportant ? AppColors.error : AppColors.primary,
                           ),
                         ),
-                        const SizedBox(height: 4),
-                        Text(
-                          latest.content ?? 'Detaylar için tıklayın...',
-                          maxLines: 2,
-                          overflow: TextOverflow.ellipsis,
-                          style: AppTextStyles.bodySmall,
+                        const SizedBox(width: 14),
+                        Expanded(
+                          child: Column(
+                            crossAxisAlignment: CrossAxisAlignment.start,
+                            children: [
+                              Text(
+                                latest.title,
+                                maxLines: 1,
+                                overflow: TextOverflow.ellipsis,
+                                style: AppTextStyles.titleMedium.copyWith(
+                                  color: isImportant ? AppColors.error : AppColors.textPrimary,
+                                ),
+                              ),
+                              const SizedBox(height: 4),
+                              Text(
+                                latest.content ?? 'Detaylar için tıklayın...',
+                                maxLines: 2,
+                                overflow: TextOverflow.ellipsis,
+                                style: AppTextStyles.bodySmall,
+                              ),
+                            ],
+                          ),
                         ),
                       ],
                     ),
                   ),
-                ],
-              ),
-            ),
+                ),
+              );
+            },
           );
         }
         return const SizedBox.shrink();

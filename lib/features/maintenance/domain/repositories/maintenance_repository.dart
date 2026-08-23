@@ -12,5 +12,6 @@ abstract class MaintenanceRepository {
     int? unitId, // Sakinler için gerekli
     XFile? image,
   });
-  Future<MaintenanceRequest> updateRequestStatus(String id, String status, {String? note});
+  Future<MaintenanceRequest> updateRequestStatus(String id, String status, {String? note, int? assignedStaffId});
+  Future<MaintenanceRequest> updateAssignedStaff(String id, int staffId);
 }

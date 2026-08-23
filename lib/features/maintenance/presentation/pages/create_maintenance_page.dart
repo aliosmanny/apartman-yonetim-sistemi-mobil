@@ -1,10 +1,15 @@
+import 'dart:io';
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:go_router/go_router.dart';
+import 'package:file_picker/file_picker.dart';
+import 'package:image_picker/image_picker.dart';
 import '../../../../app/theme/app_colors.dart';
 import '../../../../app/theme/app_text_styles.dart';
 import '../../../../core/di/injection.dart';
 import '../controllers/maintenance_cubit.dart';
+import '../../../dashboard/presentation/controllers/dashboard_cubit.dart';
+import '../../../dashboard/presentation/controllers/dashboard_cubit.dart';
 
 class CreateMaintenancePage extends StatefulWidget {
   const CreateMaintenancePage({super.key});
@@ -18,7 +23,11 @@ class _CreateMaintenancePageState extends State<CreateMaintenancePage> {
   String _title = '';
   String _description = '';
   String _category = 'plumbing';
+  int? _selectedUnitId;
+  XFile? _selectedImage;
   bool _isLoading = false;
+
+  final DashboardCubit _dashboardCubit = sl<DashboardCubit>();
 
   final List<Map<String, String>> _categories = [
     {'value': 'plumbing', 'label': 'Tesisat'},
@@ -28,8 +37,20 @@ class _CreateMaintenancePageState extends State<CreateMaintenancePage> {
     {'value': 'other', 'label': 'Diğer'},
   ];
 
+  @override
+  void initState() {
+    super.initState();
+    _dashboardCubit.fetchResidentDashboard();
+  }
+
   void _submit() async {
     if (!_formKey.currentState!.validate()) return;
+    if (_selectedUnitId == null) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text('Lütfen bir daire seçin.')),
+      );
+      return;
+    }
     _formKey.currentState!.save();
 
     setState(() => _isLoading = true);
@@ -39,6 +60,8 @@ class _CreateMaintenancePageState extends State<CreateMaintenancePage> {
         title: _title,
         description: _description,
         category: _category,
+        unitId: _selectedUnitId,
+        image: _selectedImage,
       );
 
       if (!mounted) return;
@@ -57,6 +80,18 @@ class _CreateMaintenancePageState extends State<CreateMaintenancePage> {
         ),
       );
       setState(() => _isLoading = false);
+    }
+  }
+
+  Future<void> _pickImage() async {
+    final result = await FilePicker.platform.pickFiles(
+      type: FileType.image,
+      allowMultiple: false,
+    );
+    if (result != null && result.files.single.path != null) {
+      setState(() {
+        _selectedImage = XFile(result.files.single.path!);
+      });
     }
   }
 
@@ -94,6 +129,40 @@ class _CreateMaintenancePageState extends State<CreateMaintenancePage> {
               ),
               const SizedBox(height: 20),
 
+              Text('Daire Seçin', style: AppTextStyles.inputLabel),
+              const SizedBox(height: 8),
+              BlocBuilder<DashboardCubit, DashboardState>(
+                bloc: _dashboardCubit,
+                builder: (context, state) {
+                  if (state is DashboardLoading) {
+                    return const Center(child: CircularProgressIndicator());
+                  } else if (state is ResidentDashboardLoaded) {
+                    final units = state.data.units;
+                    if (units.isEmpty) {
+                      return const Text('Daire bulunamadı.');
+                    }
+                    return DropdownButtonFormField<int>(
+                      value: _selectedUnitId,
+                      hint: const Text('Seçim yapınız'),
+                      decoration: const InputDecoration(
+                        prefixIcon: Icon(Icons.home_work_rounded, size: 20, color: AppColors.textTertiary),
+                      ),
+                      items: units.map((u) {
+                        return DropdownMenuItem(
+                          value: u.id,
+                          child: Text(u.display),
+                        );
+                      }).toList(),
+                      onChanged: (val) {
+                        if (val != null) setState(() => _selectedUnitId = val);
+                      },
+                    );
+                  }
+                  return const Text('Daireler yüklenemedi.');
+                },
+              ),
+              const SizedBox(height: 20),
+
               Text('Konu / Başlık', style: AppTextStyles.inputLabel),
               const SizedBox(height: 8),
               TextFormField(
@@ -119,15 +188,10 @@ class _CreateMaintenancePageState extends State<CreateMaintenancePage> {
               ),
               const SizedBox(height: 20),
 
-              // Fotoğraf Yükleme (Mock UI)
               Text('Fotoğraf Ekle (İsteğe Bağlı)', style: AppTextStyles.inputLabel),
               const SizedBox(height: 8),
               InkWell(
-                onTap: () {
-                  ScaffoldMessenger.of(context).showSnackBar(
-                    const SnackBar(content: Text('Fotoğraf yükleme yapım aşamasında.')),
-                  );
-                },
+                onTap: _pickImage,
                 borderRadius: BorderRadius.circular(14),
                 child: Container(
                   height: 100,
@@ -137,33 +201,53 @@ class _CreateMaintenancePageState extends State<CreateMaintenancePage> {
                     borderRadius: BorderRadius.circular(14),
                     border: Border.all(color: AppColors.primary.withOpacity(0.25)),
                   ),
-                  child: Column(
-                    mainAxisAlignment: MainAxisAlignment.center,
-                    children: [
-                      Container(
-                        padding: const EdgeInsets.all(8),
-                        decoration: BoxDecoration(
-                          color: AppColors.primary.withOpacity(0.1),
-                          shape: BoxShape.circle,
+                  child: _selectedImage == null
+                      ? Column(
+                          mainAxisAlignment: MainAxisAlignment.center,
+                          children: [
+                            Container(
+                              padding: const EdgeInsets.all(8),
+                              decoration: BoxDecoration(
+                                color: AppColors.primary.withOpacity(0.1),
+                                shape: BoxShape.circle,
+                              ),
+                              child: const Icon(Icons.add_a_photo_rounded, color: AppColors.primary, size: 20),
+                            ),
+                            const SizedBox(height: 8),
+                            Text('Galeriden Seç', style: AppTextStyles.labelMedium.copyWith(color: AppColors.primary)),
+                          ],
+                        )
+                      : ClipRRect(
+                          borderRadius: BorderRadius.circular(14),
+                          child: Image.file(
+                            File(_selectedImage!.path),
+                            fit: BoxFit.cover,
+                            width: double.infinity,
+                            height: double.infinity,
+                          ),
                         ),
-                        child: const Icon(Icons.add_a_photo_rounded, color: AppColors.primary, size: 20),
-                      ),
-                      const SizedBox(height: 8),
-                      Text('Galeriden Seç', style: AppTextStyles.labelMedium.copyWith(color: AppColors.primary)),
-                    ],
-                  ),
                 ),
               ),
+              if (_selectedImage != null) ...[
+                const SizedBox(height: 8),
+                Align(
+                  alignment: Alignment.centerRight,
+                  child: TextButton(
+                    onPressed: () => setState(() => _selectedImage = null),
+                    child: const Text('Fotoğrafı Kaldır', style: TextStyle(color: AppColors.error)),
+                  ),
+                ),
+              ],
               const SizedBox(height: 32),
 
               ElevatedButton(
                 onPressed: _isLoading ? null : _submit,
                 child: _isLoading
                     ? const SizedBox(
-                  width: 22,
-                  height: 22,
-                  child: CircularProgressIndicator(color: Colors.white, strokeWidth: 2),
-                )
+                        width: 22,
+                        height: 22,
+                        child: CircularProgressIndicator(color: Colors.white, strokeWidth: 2),
+                      )
                     : const Text('Talebi Gönder'),
               ),
             ],

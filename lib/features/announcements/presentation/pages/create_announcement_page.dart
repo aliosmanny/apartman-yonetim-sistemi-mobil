@@ -1,9 +1,18 @@
 import 'package:flutter/material.dart';
 import '../../../../app/theme/app_colors.dart';
 import '../../../../app/theme/app_text_styles.dart';
+import '../controllers/announcement_cubit.dart';
+import '../../domain/models/announcement.dart';
 
 class CreateAnnouncementPage extends StatefulWidget {
-  const CreateAnnouncementPage({super.key});
+  final AnnouncementCubit cubit;
+  final Announcement? announcementToEdit;
+
+  const CreateAnnouncementPage({
+    super.key,
+    required this.cubit,
+    this.announcementToEdit,
+  });
 
   @override
   State<CreateAnnouncementPage> createState() => _CreateAnnouncementPageState();
@@ -11,10 +20,29 @@ class CreateAnnouncementPage extends StatefulWidget {
 
 class _CreateAnnouncementPageState extends State<CreateAnnouncementPage> {
   final _formKey = GlobalKey<FormState>();
-  final _titleController = TextEditingController();
-  final _contentController = TextEditingController();
-  String _selectedTarget = 'all'; // all, block_a, block_b
-  bool _isImportant = false;
+  late TextEditingController _titleController;
+  late TextEditingController _contentController;
+  late String _selectedStatus;
+  bool _isSaving = false;
+
+  @override
+  void initState() {
+    super.initState();
+    _titleController = TextEditingController(text: widget.announcementToEdit?.title ?? '');
+    _contentController = TextEditingController(text: widget.announcementToEdit?.content ?? '');
+    
+    final status = widget.announcementToEdit?.status ?? 'published';
+    // Normalize status just in case backend returns short codes
+    if (status == 'Yayında') {
+      _selectedStatus = 'published';
+    } else if (status == 'Arşivlendi') {
+      _selectedStatus = 'archived';
+    } else if (status == 'Taslak') {
+      _selectedStatus = 'draft';
+    } else {
+      _selectedStatus = ['published', 'archived', 'draft'].contains(status) ? status : 'published';
+    }
+  }
 
   @override
   void dispose() {
@@ -23,12 +51,60 @@ class _CreateAnnouncementPageState extends State<CreateAnnouncementPage> {
     super.dispose();
   }
 
+  Future<void> _save() async {
+    if (!_formKey.currentState!.validate()) return;
+
+    setState(() => _isSaving = true);
+    try {
+      if (widget.announcementToEdit != null) {
+        await widget.cubit.updateAnnouncement(
+          widget.announcementToEdit!.id,
+          title: _titleController.text.trim(),
+          content: _contentController.text.trim(),
+          status: _selectedStatus,
+        );
+      } else {
+        await widget.cubit.createAnnouncement(
+          title: _titleController.text.trim(),
+          content: _contentController.text.trim(),
+          status: _selectedStatus,
+        );
+      }
+
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text(widget.announcementToEdit != null ? 'Duyuru güncellendi.' : 'Duyuru başarıyla yayınlandı.'),
+            backgroundColor: AppColors.success,
+          ),
+        );
+        Navigator.pop(context);
+      }
+    } catch (e) {
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text('Hata: $e'),
+            backgroundColor: AppColors.error,
+          ),
+        );
+      }
+    } finally {
+      if (mounted) {
+        setState(() => _isSaving = false);
+      }
+    }
+  }
+
   @override
   Widget build(BuildContext context) {
+    final isEditing = widget.announcementToEdit != null;
+    final aptName = widget.announcementToEdit?.apartmentName ?? 'Gülbahçe Evleri';
+
     return Scaffold(
       backgroundColor: AppColors.background,
       appBar: AppBar(
-        title: const Text('Duyuru Yayınla'),
+        title: Text(isEditing ? 'Duyuruyu Düzenle' : 'Duyuru Yayınla'),
         centerTitle: true,
       ),
       body: SingleChildScrollView(
@@ -38,28 +114,23 @@ class _CreateAnnouncementPageState extends State<CreateAnnouncementPage> {
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              Text('Hedef Kitle', style: AppTextStyles.labelSmall.copyWith(color: AppColors.textSecondary)),
+              Text('Apartman / Site', style: AppTextStyles.labelSmall.copyWith(color: AppColors.textSecondary)),
               const SizedBox(height: 8),
               DropdownButtonFormField<String>(
-                value: _selectedTarget,
+                value: 'default',
                 decoration: const InputDecoration(
                   filled: true,
                   fillColor: AppColors.surface,
                   border: OutlineInputBorder(borderRadius: BorderRadius.all(Radius.circular(12)), borderSide: BorderSide(color: AppColors.border)),
                   enabledBorder: OutlineInputBorder(borderRadius: BorderRadius.all(Radius.circular(12)), borderSide: BorderSide(color: AppColors.border)),
-                  contentPadding: EdgeInsets.symmetric(horizontal: 16, vertical: 14),
                 ),
-                items: const [
-                  DropdownMenuItem(value: 'all', child: Text('Tüm Sakinler')),
-                  DropdownMenuItem(value: 'block_a', child: Text('Sadece A Blok')),
-                  DropdownMenuItem(value: 'block_b', child: Text('Sadece B Blok')),
+                items: [
+                  DropdownMenuItem(value: 'default', child: Text(aptName)),
                 ],
-                onChanged: (val) {
-                  if (val != null) setState(() => _selectedTarget = val);
-                },
+                onChanged: null, // Disabled for now, as user said they will fetch from DB later
               ),
               const SizedBox(height: 20),
-              
+
               Text('Duyuru Başlığı', style: AppTextStyles.labelSmall.copyWith(color: AppColors.textSecondary)),
               const SizedBox(height: 8),
               TextFormField(
@@ -79,7 +150,7 @@ class _CreateAnnouncementPageState extends State<CreateAnnouncementPage> {
               const SizedBox(height: 8),
               TextFormField(
                 controller: _contentController,
-                maxLines: 5,
+                maxLines: 7,
                 decoration: const InputDecoration(
                   hintText: 'Duyuru detaylarını buraya yazın...',
                   filled: true,
@@ -91,22 +162,24 @@ class _CreateAnnouncementPageState extends State<CreateAnnouncementPage> {
               ),
               const SizedBox(height: 20),
 
-              Container(
-                decoration: BoxDecoration(
-                  color: AppColors.surface,
-                  borderRadius: BorderRadius.circular(12),
-                  border: Border.all(color: AppColors.border),
+              Text('Durum', style: AppTextStyles.labelSmall.copyWith(color: AppColors.textSecondary)),
+              const SizedBox(height: 8),
+              DropdownButtonFormField<String>(
+                value: _selectedStatus,
+                decoration: const InputDecoration(
+                  filled: true,
+                  fillColor: AppColors.surface,
+                  border: OutlineInputBorder(borderRadius: BorderRadius.all(Radius.circular(12)), borderSide: BorderSide(color: AppColors.border)),
+                  enabledBorder: OutlineInputBorder(borderRadius: BorderRadius.all(Radius.circular(12)), borderSide: BorderSide(color: AppColors.border)),
                 ),
-                child: CheckboxListTile(
-                  value: _isImportant,
-                  onChanged: (val) {
-                    setState(() => _isImportant = val ?? false);
-                  },
-                  title: const Text('Önemli Duyuru'),
-                  subtitle: const Text('Kullanıcılara push bildirim gönderilir.'),
-                  activeColor: AppColors.primary,
-                  controlAffinity: ListTileControlAffinity.leading,
-                ),
+                items: const [
+                  DropdownMenuItem(value: 'published', child: Text('Yayında')),
+                  DropdownMenuItem(value: 'draft', child: Text('Taslak')),
+                  DropdownMenuItem(value: 'archived', child: Text('Arşivlendi')),
+                ],
+                onChanged: (val) {
+                  if (val != null) setState(() => _selectedStatus = val);
+                },
               ),
               const SizedBox(height: 32),
 
@@ -114,20 +187,15 @@ class _CreateAnnouncementPageState extends State<CreateAnnouncementPage> {
                 width: double.infinity,
                 height: 50,
                 child: ElevatedButton(
-                  onPressed: () {
-                    if (_formKey.currentState!.validate()) {
-                      ScaffoldMessenger.of(context).showSnackBar(
-                        const SnackBar(content: Text('Duyuru başarıyla yayınlandı.')),
-                      );
-                      Navigator.pop(context);
-                    }
-                  },
+                  onPressed: _isSaving ? null : _save,
                   style: ElevatedButton.styleFrom(
                     backgroundColor: AppColors.primary,
                     foregroundColor: Colors.white,
                     shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
                   ),
-                  child: const Text('Yayınla', style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold)),
+                  child: _isSaving
+                      ? const SizedBox(height: 20, width: 20, child: CircularProgressIndicator(color: Colors.white, strokeWidth: 2))
+                      : Text(isEditing ? 'Kaydet' : 'Yayınla', style: const TextStyle(fontSize: 16, fontWeight: FontWeight.bold)),
                 ),
               ),
             ],

@@ -7,6 +7,8 @@ import '../../../../core/di/injection.dart';
 import '../../../maintenance/domain/models/maintenance_request.dart';
 import '../../../maintenance/presentation/controllers/maintenance_cubit.dart';
 import '../../../maintenance/presentation/controllers/maintenance_state.dart';
+import '../../../staff/presentation/controllers/staff_cubit.dart';
+import '../../../staff/domain/models/staff_member.dart';
 
 class ManagerMaintenancePage extends StatefulWidget {
   const ManagerMaintenancePage({super.key});
@@ -30,8 +32,11 @@ class _ManagerMaintenancePageState extends State<ManagerMaintenancePage> {
 
   @override
   Widget build(BuildContext context) {
-    return BlocProvider(
-      create: (context) => sl<MaintenanceCubit>()..fetchRequests(),
+    return MultiBlocProvider(
+      providers: [
+        BlocProvider(create: (context) => sl<MaintenanceCubit>()..fetchRequests()),
+        BlocProvider(create: (context) => sl<StaffCubit>()..fetchStaff()),
+      ],
       child: Scaffold(
         backgroundColor: AppColors.background,
         appBar: AppBar(
@@ -260,13 +265,23 @@ class _ManagerMaintenanceCard extends StatelessWidget {
               child: Row(
                 mainAxisAlignment: MainAxisAlignment.spaceBetween,
                 children: [
-                  Row(
-                    children: [
-                      const Icon(Icons.person_outline_rounded, size: 16, color: AppColors.textTertiary),
-                      const SizedBox(width: 4),
-                      Text('${request.creatorName ?? ''} (${request.unitDisplay ?? ''})', style: AppTextStyles.labelSmall.copyWith(color: AppColors.textSecondary)),
-                    ],
+                  Expanded(
+                    child: Row(
+                      children: [
+                        const Icon(Icons.person_outline_rounded, size: 16, color: AppColors.textTertiary),
+                        const SizedBox(width: 4),
+                        Expanded(
+                          child: Text(
+                            '${request.creatorName ?? ''} (${request.unitDisplay ?? ''})',
+                            style: AppTextStyles.labelSmall.copyWith(color: AppColors.textSecondary),
+                            overflow: TextOverflow.ellipsis,
+                            maxLines: 1,
+                          ),
+                        ),
+                      ],
+                    ),
                   ),
+                  const SizedBox(width: 8),
                   Row(
                     children: [
                       const Icon(Icons.access_time_rounded, size: 16, color: AppColors.textTertiary),
@@ -277,6 +292,24 @@ class _ManagerMaintenanceCard extends StatelessWidget {
                 ],
               ),
             ),
+            if (request.assignedToName != null && request.assignedToName!.isNotEmpty) ...[
+              Padding(
+                padding: const EdgeInsets.fromLTRB(16, 0, 16, 10),
+                child: Row(
+                  children: [
+                    const Icon(Icons.engineering_outlined, size: 16, color: AppColors.primary),
+                    const SizedBox(width: 4),
+                    Expanded(
+                      child: Text(
+                        'Atanan: ${request.assignedToName}',
+                        style: AppTextStyles.labelSmall.copyWith(color: AppColors.primary, fontWeight: FontWeight.w600),
+                        overflow: TextOverflow.ellipsis,
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+            ],
             if (request.status == 'pending' || request.status == 'Beklemede' || request.status == 'p') ...[
               const Divider(height: 1),
               Padding(
@@ -317,79 +350,113 @@ class _ManagerMaintenanceCard extends StatelessWidget {
   }
 
   void _showAssignStaffModal(BuildContext context) {
+    final staffCubit = context.read<StaffCubit>();
+    final maintenanceCubit = context.read<MaintenanceCubit>();
+
     showModalBottomSheet(
       context: context,
       backgroundColor: AppColors.surface,
       shape: const RoundedRectangleBorder(
         borderRadius: BorderRadius.vertical(top: Radius.circular(24)),
       ),
-      builder: (context) {
-        return SafeArea(
-          child: Padding(
-            padding: const EdgeInsets.symmetric(vertical: 12),
-            child: Column(
-              mainAxisSize: MainAxisSize.min,
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Center(
-                  child: Container(
-                    width: 36,
-                    height: 4,
-                    margin: const EdgeInsets.only(bottom: 16),
-                    decoration: BoxDecoration(
-                      color: AppColors.border,
-                      borderRadius: BorderRadius.circular(2),
+      builder: (ctx) {
+        return BlocProvider.value(
+          value: staffCubit,
+          child: SafeArea(
+            child: Padding(
+              padding: const EdgeInsets.symmetric(vertical: 12),
+              child: Column(
+                mainAxisSize: MainAxisSize.min,
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Center(
+                    child: Container(
+                      width: 36,
+                      height: 4,
+                      margin: const EdgeInsets.only(bottom: 16),
+                      decoration: BoxDecoration(
+                        color: AppColors.border,
+                        borderRadius: BorderRadius.circular(2),
+                      ),
                     ),
                   ),
-                ),
-                Padding(
-                  padding: const EdgeInsets.symmetric(horizontal: 20),
-                  child: Text('Personele Ata', style: AppTextStyles.titleLarge),
-                ),
-                const SizedBox(height: 8),
-                _StaffTile(
-                  name: 'Hasan Usta',
-                  role: 'Tesisat / Genel Bakım',
-                  onAssign: () => onStatusChanged('assigned'),
-                ),
-                _StaffTile(
-                  name: 'Ali Veli',
-                  role: 'Elektrik Uzmanı',
-                  onAssign: () => onStatusChanged('assigned'),
-                ),
-              ],
+                  Padding(
+                    padding: const EdgeInsets.symmetric(horizontal: 20),
+                    child: Text('Personele Ata', style: AppTextStyles.titleLarge),
+                  ),
+                  const SizedBox(height: 8),
+                  BlocBuilder<StaffCubit, StaffState>(
+                    builder: (context, state) {
+                      if (state is StaffLoading) {
+                        return const Padding(
+                          padding: EdgeInsets.all(24),
+                          child: Center(child: CircularProgressIndicator()),
+                        );
+                      }
+                      if (state is StaffLoaded) {
+                        final activeStaff = state.staffList.where((s) => s.isActive).toList();
+                        if (activeStaff.isEmpty) {
+                          return const Padding(
+                            padding: EdgeInsets.all(24),
+                            child: Center(child: Text('Aktif personel bulunamadı.')),
+                          );
+                        }
+                        return ConstrainedBox(
+                          constraints: BoxConstraints(
+                            maxHeight: MediaQuery.of(ctx).size.height * 0.4,
+                          ),
+                          child: ListView.builder(
+                            shrinkWrap: true,
+                            itemCount: activeStaff.length,
+                            itemBuilder: (context, index) {
+                              final staff = activeStaff[index];
+                              return ListTile(
+                                leading: CircleAvatar(
+                                  backgroundColor: AppColors.primary.withOpacity(0.12),
+                                  child: Text(
+                                    staff.userName.isNotEmpty ? staff.userName.substring(0, 1) : 'P',
+                                    style: AppTextStyles.titleMedium.copyWith(
+                                      color: AppColors.primary,
+                                      fontWeight: FontWeight.w700,
+                                    ),
+                                  ),
+                                ),
+                                title: Text(staff.userName, style: AppTextStyles.titleMedium),
+                                subtitle: Text(
+                                  '${staff.roleDisplay} • ${staff.apartmentName}',
+                                  style: AppTextStyles.bodySmall,
+                                ),
+                                onTap: () {
+                                  Navigator.pop(ctx);
+                                  maintenanceCubit.assignStaff(
+                                    request.id,
+                                    staff.id,
+                                  );
+                                  ScaffoldMessenger.of(context).showSnackBar(
+                                    SnackBar(
+                                      content: Text('Talep ${staff.userName} adlı personele atandı.'),
+                                      backgroundColor: AppColors.success,
+                                    ),
+                                  );
+                                },
+                              );
+                            },
+                          ),
+                        );
+                      }
+                      if (state is StaffError) {
+                        return Padding(
+                          padding: const EdgeInsets.all(24),
+                          child: Center(child: Text('Hata: ${state.message}', style: const TextStyle(color: AppColors.error))),
+                        );
+                      }
+                      return const SizedBox();
+                    },
+                  ),
+                ],
+              ),
             ),
           ),
-        );
-      },
-    );
-  }
-}
-
-class _StaffTile extends StatelessWidget {
-  final String name;
-  final String role;
-  final VoidCallback onAssign;
-
-  const _StaffTile({required this.name, required this.role, required this.onAssign});
-
-  @override
-  Widget build(BuildContext context) {
-    return ListTile(
-      leading: CircleAvatar(
-        backgroundColor: AppColors.primary.withOpacity(0.12),
-        child: Text(
-          name.substring(0, 1),
-          style: AppTextStyles.titleMedium.copyWith(color: AppColors.primary, fontWeight: FontWeight.w700),
-        ),
-      ),
-      title: Text(name, style: AppTextStyles.titleMedium),
-      subtitle: Text(role, style: AppTextStyles.bodySmall),
-      onTap: () {
-        Navigator.pop(context);
-        onAssign();
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text("Talep $name'ye atandı ve işleme alındı.")),
         );
       },
     );

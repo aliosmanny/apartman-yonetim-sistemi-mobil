@@ -80,43 +80,31 @@ class ManagerMorePage extends StatelessWidget {
             ),
             const SizedBox(height: 24),
 
-            // ── Yönetim İşlemleri ──
+
+            // ── Yönetim ──
             Padding(
               padding: const EdgeInsets.symmetric(horizontal: 20),
               child: Align(
                 alignment: Alignment.centerLeft,
-                child: Text('Yönetim İşlemleri', style: AppTextStyles.labelSmall.copyWith(color: AppColors.textTertiary)),
+                child: Text('Yönetim', style: AppTextStyles.labelSmall.copyWith(color: AppColors.textTertiary)),
               ),
             ),
             const SizedBox(height: 8),
             _MenuGroup(
               children: [
                 _MenuListItem(
-                  icon: Icons.campaign_rounded,
+                  icon: Icons.people_outline_rounded,
                   iconColor: AppColors.primary,
-                  title: 'Duyuru Yayınla',
-                  subtitle: 'Tüm sakinlere veya belirli bloklara duyuru gönderin',
-                  onTap: () => context.pushNamed('createAnnouncement'),
-                ),
-                _MenuListItem(
-                  icon: Icons.upload_file_rounded,
-                  iconColor: AppColors.secondary,
-                  title: 'Belge Yükle',
-                  subtitle: 'Gelir gider tablosu, toplantı kararları vb. yükleyin',
-                  onTap: () => context.pushNamed('managerDocuments'),
-                ),
-                _MenuListItem(
-                  icon: Icons.people_rounded,
-                  iconColor: AppColors.warning,
-                  title: 'Personel Yönetimi',
-                  subtitle: 'Apartman görevlileri ve ustaları yönetin',
-                  onTap: () => context.pushNamed('managerStaff'),
+                  title: 'Kullanıcı Yönetimi',
+                  subtitle: 'Tüm kullanıcıları görüntüle ve yönet',
+                  onTap: () => context.pushNamed('managerUsers'),
                 ),
               ],
             ),
             const SizedBox(height: 24),
 
             // ── Hesap ──
+
             Padding(
               padding: const EdgeInsets.symmetric(horizontal: 20),
               child: Align(

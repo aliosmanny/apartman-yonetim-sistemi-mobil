@@ -41,9 +41,20 @@ class MaintenanceCubit extends Cubit<MaintenanceState> {
     }
   }
 
-  Future<void> updateRequestStatus(String id, String status, {String? note}) async {
+  Future<void> updateRequestStatus(String id, String status, {String? note, int? assignedStaffId}) async {
     try {
-      await _repository.updateRequestStatus(id, status, note: note);
+      await _repository.updateRequestStatus(id, status, note: note, assignedStaffId: assignedStaffId);
+      await fetchRequests();
+    } catch (e) {
+      throw Exception(e.toString());
+    }
+  }
+
+  /// Sadece personel ataması — statüyü otomatik 'assigned' yapar
+  Future<void> assignStaff(String requestId, int staffId) async {
+    try {
+      await _repository.updateAssignedStaff(requestId, staffId);
+      await _repository.updateRequestStatus(requestId, 'assigned');
       await fetchRequests();
     } catch (e) {
       throw Exception(e.toString());
