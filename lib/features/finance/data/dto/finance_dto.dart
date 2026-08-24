@@ -46,7 +46,7 @@ class DebtDto {
   factory DebtDto.fromJson(Map<String, dynamic> json) {
     return DebtDto(
       id: json['id'] as int? ?? 0,
-      unitDisplay: json['transaction_id'] as String? ?? json['unit_display'] as String?,
+      unitDisplay: json['unit_display'] as String?,
       apartmentName: json['apartment_name'] as String?,
       description: json['description'] as String? ?? '',
       totalAmount: double.tryParse(json['total_amount']?.toString() ?? '0') ?? 0,
@@ -282,15 +282,16 @@ class PaymentDto {
   });
 
   factory PaymentDto.fromJson(Map<String, dynamic> json) {
+    final isConfirmed = json['is_confirmed'] as bool? ?? false;
     return PaymentDto(
       id: json['id'] as int? ?? 0,
       debtId: json['debt'] as int?,
-      debtDescription: json['description'] as String? ?? json['debt_description'] as String?,
-      unitDisplay: json['transaction_id'] as String? ?? json['unit_display'] as String?,
+      debtDescription: json['debt_description'] as String? ?? json['description'] as String?,
+      unitDisplay: json['unit_display'] as String?,
       amount: double.tryParse(json['amount']?.toString() ?? '0') ?? 0,
       paymentDate: json['payment_date'] as String? ?? '',
-      status: json['status'] as String? ?? '',
-      statusDisplay: json['status_display'] as String? ?? '',
+      status: isConfirmed ? 'confirmed' : 'pending',
+      statusDisplay: isConfirmed ? 'Onaylandı' : 'Bekliyor',
     );
   }
 
