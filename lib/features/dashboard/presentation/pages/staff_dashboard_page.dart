@@ -1,12 +1,15 @@
 import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
+import 'package:dio/dio.dart';
+import 'package:image_picker/image_picker.dart';
 import '../../../auth/presentation/controllers/auth_cubit.dart';
 import '../../../auth/presentation/controllers/auth_state.dart';
 import '../../../../app/theme/app_colors.dart';
 import '../../../../app/theme/app_text_styles.dart';
 import '../../../../core/di/injection.dart';
 import '../controllers/dashboard_cubit.dart';
+import '../../../maintenance/data/datasources/maintenance_remote_data_source.dart';
 
 class StaffDashboardPage extends StatelessWidget {
   const StaffDashboardPage({super.key});
@@ -349,10 +352,7 @@ class _StaffTaskCard extends StatelessWidget {
       child: Material(
         color: Colors.transparent,
         child: InkWell(
-          onTap: () {
-            // İleride Task Detail sayfasına ID ile gidecek
-            // context.pushNamed('staffTaskDetail', extra: id);
-          },
+          onTap: () => _showEditBottomSheet(context),
           borderRadius: BorderRadius.circular(18),
           child: Padding(
             padding: const EdgeInsets.all(16),
@@ -430,7 +430,7 @@ class _StaffTaskCard extends StatelessWidget {
                       ],
                     ),
                     Row(
-                      children: [
+                       children: [
                         const Icon(Icons.access_time_rounded, size: 16, color: AppColors.textTertiary),
                         const SizedBox(width: 4),
                         Text(timeAgo, style: AppTextStyles.labelSmall.copyWith(color: AppColors.textTertiary)),
@@ -442,6 +442,280 @@ class _StaffTaskCard extends StatelessWidget {
             ),
           ),
         ),
+      ),
+    );
+  }
+
+  void _showEditBottomSheet(BuildContext context) {
+    showModalBottomSheet(
+      context: context,
+      isScrollControlled: true,
+      backgroundColor: Colors.transparent,
+      builder: (_) => _StaffTaskEditSheet(
+        taskId: id,
+        title: title,
+        unit: unit,
+        status: status,
+        statusDisplay: statusDisplay,
+        onUpdated: () {
+          // Dashboard'u yenile
+          context.read<DashboardCubit>().fetchStaffDashboard();
+        },
+      ),
+    );
+  }
+}
+
+// ── Düzenleme Bottom Sheet ────────────────────────────────────
+class _StaffTaskEditSheet extends StatefulWidget {
+  final String taskId;
+  final String title;
+  final String unit;
+  final String status;
+  final String statusDisplay;
+  final VoidCallback onUpdated;
+
+  const _StaffTaskEditSheet({
+    required this.taskId,
+    required this.title,
+    required this.unit,
+    required this.status,
+    required this.statusDisplay,
+    required this.onUpdated,
+  });
+
+  @override
+  State<_StaffTaskEditSheet> createState() => _StaffTaskEditSheetState();
+}
+
+class _StaffTaskEditSheetState extends State<_StaffTaskEditSheet> {
+  final _noteController = TextEditingController();
+  late String _selectedStatus;
+  XFile? _selectedPhoto;
+  bool _isLoading = false;
+
+  final _statusOptions = const [
+    {'value': 'in_progress', 'label': 'İşlem Devam Ediyor'},
+    {'value': 'completed', 'label': 'Tamamlandı'},
+    {'value': 'assigned', 'label': 'Personel Atandı'},
+  ];
+
+  @override
+  void initState() {
+    super.initState();
+    _selectedStatus = widget.status;
+  }
+
+  @override
+  void dispose() {
+    _noteController.dispose();
+    super.dispose();
+  }
+
+  Future<void> _pickPhoto() async {
+    final picker = ImagePicker();
+    final photo = await picker.pickImage(source: ImageSource.gallery, imageQuality: 80);
+    if (photo != null) setState(() => _selectedPhoto = photo);
+  }
+
+  Future<void> _save() async {
+    setState(() => _isLoading = true);
+    try {
+      final ds = sl<MaintenanceRemoteDataSource>();
+
+      // 1. Durum güncelle
+      if (_selectedStatus != widget.status) {
+        await ds.updateMaintenanceStatus(
+          widget.taskId,
+          _selectedStatus,
+          note: _noteController.text.isNotEmpty ? _noteController.text : null,
+        );
+      }
+
+      // 2. Not ve fotoğraf güncelle
+      if (_noteController.text.isNotEmpty || _selectedPhoto != null) {
+        await ds.updateStaffNote(
+          widget.taskId,
+          staffNote: _noteController.text.isNotEmpty ? _noteController.text : null,
+          staffPhoto: _selectedPhoto,
+        );
+      }
+
+      if (mounted) {
+        Navigator.of(context).pop();
+        widget.onUpdated();
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(content: Text('Talep güncellendi'), backgroundColor: Colors.green),
+        );
+      }
+    } catch (e) {
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text('Hata: $e'), backgroundColor: Colors.red),
+        );
+      }
+    } finally {
+      if (mounted) setState(() => _isLoading = false);
+    }
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return DraggableScrollableSheet(
+      initialChildSize: 0.85,
+      minChildSize: 0.5,
+      maxChildSize: 0.95,
+      builder: (_, scrollController) => Container(
+        decoration: const BoxDecoration(
+          color: Colors.white,
+          borderRadius: BorderRadius.vertical(top: Radius.circular(24)),
+        ),
+        child: Column(
+          children: [
+            // Handle
+            Center(
+              child: Container(
+                margin: const EdgeInsets.symmetric(vertical: 12),
+                width: 40,
+                height: 4,
+                decoration: BoxDecoration(color: Colors.grey.shade300, borderRadius: BorderRadius.circular(2)),
+              ),
+            ),
+            // Header
+            Padding(
+              padding: const EdgeInsets.symmetric(horizontal: 20),
+              child: Row(
+                children: [
+                  const Icon(Icons.edit_note_rounded, color: AppColors.primary),
+                  const SizedBox(width: 8),
+                  Text('Talebi Düzenle', style: AppTextStyles.headlineSmall),
+                ],
+              ),
+            ),
+            const Divider(height: 24),
+            // Form
+            Expanded(
+              child: ListView(
+                controller: scrollController,
+                padding: const EdgeInsets.symmetric(horizontal: 20),
+                children: [
+                  // Read-only bilgiler
+                  _InfoRow(label: 'Daire', value: widget.unit),
+                  _InfoRow(label: 'Talep Başlığı', value: widget.title),
+                  _InfoRow(label: 'Mevcut Durum', value: widget.statusDisplay),
+                  const SizedBox(height: 16),
+
+                  // Durum güncelle
+                  Text('Durum Güncelle', style: AppTextStyles.titleMedium),
+                  const SizedBox(height: 8),
+                  Container(
+                    decoration: BoxDecoration(
+                      border: Border.all(color: Colors.grey.shade300),
+                      borderRadius: BorderRadius.circular(12),
+                    ),
+                    padding: const EdgeInsets.symmetric(horizontal: 12),
+                    child: DropdownButtonHideUnderline(
+                      child: DropdownButton<String>(
+                        value: _statusOptions.any((o) => o['value'] == _selectedStatus) ? _selectedStatus : null,
+                        isExpanded: true,
+                        hint: const Text('Durum seçin'),
+                        items: _statusOptions.map((o) => DropdownMenuItem(
+                          value: o['value'],
+                          child: Text(o['label']!),
+                        )).toList(),
+                        onChanged: (v) => setState(() => _selectedStatus = v ?? _selectedStatus),
+                      ),
+                    ),
+                  ),
+                  const SizedBox(height: 16),
+
+                  // Personel Notu
+                  Text('Personel Notu / Cevabı', style: AppTextStyles.titleMedium),
+                  const SizedBox(height: 8),
+                  TextField(
+                    controller: _noteController,
+                    maxLines: 4,
+                    decoration: InputDecoration(
+                      hintText: 'Notunuzu buraya yazın...',
+                      border: OutlineInputBorder(borderRadius: BorderRadius.circular(12)),
+                      contentPadding: const EdgeInsets.all(12),
+                    ),
+                  ),
+                  const SizedBox(height: 16),
+
+                  // Personel Fotoğrafı
+                  Text('Personel Fotoğrafı', style: AppTextStyles.titleMedium),
+                  const SizedBox(height: 8),
+                  GestureDetector(
+                    onTap: _pickPhoto,
+                    child: Container(
+                      height: 100,
+                      decoration: BoxDecoration(
+                        border: Border.all(color: Colors.grey.shade300),
+                        borderRadius: BorderRadius.circular(12),
+                        color: Colors.grey.shade50,
+                      ),
+                      child: _selectedPhoto != null
+                          ? ClipRRect(
+                              borderRadius: BorderRadius.circular(12),
+                              child: Image.network(_selectedPhoto!.path, fit: BoxFit.cover),
+                            )
+                          : Column(
+                              mainAxisAlignment: MainAxisAlignment.center,
+                              children: [
+                                Icon(Icons.upload_rounded, size: 32, color: Colors.grey.shade400),
+                                const SizedBox(height: 4),
+                                Text('Dosya Seç', style: AppTextStyles.bodySmall.copyWith(color: Colors.grey.shade500)),
+                              ],
+                            ),
+                    ),
+                  ),
+                  const SizedBox(height: 24),
+
+                  // Kaydet Butonu
+                  SizedBox(
+                    width: double.infinity,
+                    child: ElevatedButton(
+                      onPressed: _isLoading ? null : _save,
+                      style: ElevatedButton.styleFrom(
+                        backgroundColor: AppColors.primary,
+                        padding: const EdgeInsets.symmetric(vertical: 16),
+                        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+                      ),
+                      child: _isLoading
+                          ? const SizedBox(width: 20, height: 20, child: CircularProgressIndicator(strokeWidth: 2, color: Colors.white))
+                          : const Text('Kaydet ve Düzenlemeyi Bitir', style: TextStyle(color: Colors.white, fontWeight: FontWeight.w600)),
+                    ),
+                  ),
+                  const SizedBox(height: 24),
+                ],
+              ),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+}
+
+class _InfoRow extends StatelessWidget {
+  final String label;
+  final String value;
+  const _InfoRow({required this.label, required this.value});
+
+  @override
+  Widget build(BuildContext context) {
+    return Padding(
+      padding: const EdgeInsets.only(bottom: 12),
+      child: Row(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          SizedBox(
+            width: 130,
+            child: Text(label, style: AppTextStyles.bodyMedium.copyWith(color: AppColors.textSecondary)),
+          ),
+          Expanded(child: Text(value, style: AppTextStyles.bodyMedium.copyWith(fontWeight: FontWeight.w500))),
+        ],
       ),
     );
   }

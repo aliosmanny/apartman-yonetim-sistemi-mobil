@@ -8,6 +8,7 @@ abstract class MaintenanceRemoteDataSource {
   Future<MaintenanceDto> createMaintenanceRequest(Map<String, dynamic> data, {XFile? image});
   Future<MaintenanceDto> updateMaintenanceStatus(String id, String status, {String? note, int? assignedStaffId});
   Future<MaintenanceDto> updateAssignedStaff(String id, int staffId);
+  Future<MaintenanceDto> updateStaffNote(String id, {String? staffNote, XFile? staffPhoto});
 }
 
 class MaintenanceRemoteDataSourceImpl implements MaintenanceRemoteDataSource {
@@ -84,6 +85,26 @@ class MaintenanceRemoteDataSourceImpl implements MaintenanceRemoteDataSource {
     );
     if (response.data is Map<String, dynamic> && response.data.containsKey('id')) {
       return MaintenanceDto.fromJson(response.data as Map<String, dynamic>);
+    }
+    return getMaintenanceRequestDetails(id);
+  }
+
+  @override
+  Future<MaintenanceDto> updateStaffNote(String id, {String? staffNote, XFile? staffPhoto}) async {
+    if (staffPhoto != null) {
+      final formData = FormData.fromMap({
+        if (staffNote != null) 'staff_note': staffNote,
+        'staff_photo': await MultipartFile.fromFile(staffPhoto.path, filename: staffPhoto.name),
+      });
+      final response = await _dio.patch('/maintenance-requests/$id/', data: formData);
+      if (response.data is Map<String, dynamic> && response.data.containsKey('id')) {
+        return MaintenanceDto.fromJson(response.data as Map<String, dynamic>);
+      }
+    } else if (staffNote != null) {
+      final response = await _dio.patch('/maintenance-requests/$id/', data: {'staff_note': staffNote});
+      if (response.data is Map<String, dynamic> && response.data.containsKey('id')) {
+        return MaintenanceDto.fromJson(response.data as Map<String, dynamic>);
+      }
     }
     return getMaintenanceRequestDetails(id);
   }
