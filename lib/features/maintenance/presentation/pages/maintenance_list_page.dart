@@ -10,92 +10,98 @@ import '../controllers/maintenance_state.dart';
 
 class MaintenanceListPage extends StatelessWidget {
   final bool showAppBar;
-  const MaintenanceListPage({super.key, this.showAppBar = true});
+  final List<MaintenanceRequest>? filteredRequests;
+  const MaintenanceListPage({super.key, this.showAppBar = true, this.filteredRequests});
 
   @override
   Widget build(BuildContext context) {
-    return BlocProvider(
-      create: (context) => sl<MaintenanceCubit>()..fetchRequests(),
-      child: Scaffold(
-        backgroundColor: AppColors.background,
-        appBar: showAppBar ? AppBar(
-          title: const Text('Talepler ve Arızalar'),
-          centerTitle: false,
-        ) : null,
-        body: BlocBuilder<MaintenanceCubit, MaintenanceState>(
-          builder: (context, state) {
-            if (state is MaintenanceLoading || state is MaintenanceInitial) {
-              return const Center(child: CircularProgressIndicator());
-            }
+    final scaffold = Scaffold(
+      backgroundColor: AppColors.background,
+      appBar: showAppBar ? AppBar(
+        title: const Text('Talepler ve Arızalar'),
+        centerTitle: false,
+      ) : null,
+      body: BlocBuilder<MaintenanceCubit, MaintenanceState>(
+        builder: (context, state) {
+          if (state is MaintenanceLoading || state is MaintenanceInitial) {
+            return const Center(child: CircularProgressIndicator());
+          }
 
-            if (state is MaintenanceError) {
+          if (state is MaintenanceError) {
+            return Center(
+              child: Column(
+                mainAxisAlignment: MainAxisAlignment.center,
+                children: [
+                  const Icon(Icons.error_outline_rounded, size: 48, color: AppColors.error),
+                  const SizedBox(height: 16),
+                  Text(state.message, style: AppTextStyles.bodyMedium),
+                  const SizedBox(height: 16),
+                  ElevatedButton(
+                    onPressed: () => context.read<MaintenanceCubit>().fetchRequests(),
+                    child: const Text('Tekrar Dene'),
+                  )
+                ],
+              ),
+            );
+          }
+
+          if (state is MaintenanceLoaded) {
+            final requests = filteredRequests ?? state.requests;
+            if (requests.isEmpty) {
               return Center(
                 child: Column(
                   mainAxisAlignment: MainAxisAlignment.center,
                   children: [
-                    const Icon(Icons.error_outline_rounded, size: 48, color: AppColors.error),
+                    const Icon(Icons.sentiment_satisfied_alt_rounded, size: 64, color: AppColors.textTertiary),
                     const SizedBox(height: 16),
-                    Text(state.message, style: AppTextStyles.bodyMedium),
-                    const SizedBox(height: 16),
-                    ElevatedButton(
-                      onPressed: () => context.read<MaintenanceCubit>().fetchRequests(),
-                      child: const Text('Tekrar Dene'),
-                    )
+                    Text('Hiç talebiniz bulunmuyor.',
+                        style: AppTextStyles.headlineMedium.copyWith(color: AppColors.textSecondary)),
                   ],
                 ),
               );
             }
 
-            if (state is MaintenanceLoaded) {
-              final requests = state.requests;
-              if (requests.isEmpty) {
-                return Center(
-                  child: Column(
-                    mainAxisAlignment: MainAxisAlignment.center,
-                    children: [
-                      const Icon(Icons.sentiment_satisfied_alt_rounded, size: 64, color: AppColors.textTertiary),
-                      const SizedBox(height: 16),
-                      Text('Hiç talebiniz bulunmuyor.',
-                          style: AppTextStyles.headlineMedium.copyWith(color: AppColors.textSecondary)),
-                    ],
-                  ),
-                );
-              }
-
-              return RefreshIndicator(
-                onRefresh: () => context.read<MaintenanceCubit>().fetchRequests(),
-                child: ListView.separated(
-                  padding: const EdgeInsets.fromLTRB(20, 20, 20, 100),
-                  itemCount: requests.length,
-                  separatorBuilder: (_, __) => const SizedBox(height: 16),
-                  itemBuilder: (context, index) {
-                    final req = requests[index];
-                    return _RequestCard(request: req);
-                  },
-                ),
-              );
-            }
-
-            return const SizedBox.shrink();
-          },
-        ),
-        floatingActionButton: Builder(
-          builder: (fabContext) {
-            return FloatingActionButton(
-              onPressed: () async {
-                // Güvenli context kullanımı ve sayfa yönlendirmesi
-                await GoRouter.of(fabContext).push('/resident/maintenance/create');
-                if (fabContext.mounted) {
-                  fabContext.read<MaintenanceCubit>().fetchRequests();
-                }
-              },
-              backgroundColor: AppColors.primary,
-              shape: const CircleBorder(),
-              child: const Icon(Icons.add, color: Colors.white),
+            return RefreshIndicator(
+              onRefresh: () => context.read<MaintenanceCubit>().fetchRequests(),
+              child: ListView.separated(
+                padding: const EdgeInsets.fromLTRB(20, 20, 20, 100),
+                itemCount: requests.length,
+                separatorBuilder: (_, __) => const SizedBox(height: 16),
+                itemBuilder: (context, index) {
+                  final req = requests[index];
+                  return _RequestCard(request: req);
+                },
+              ),
             );
-          },
-        ),
+          }
+
+          return const SizedBox.shrink();
+        },
       ),
+      floatingActionButton: Builder(
+        builder: (fabContext) {
+          return FloatingActionButton(
+            onPressed: () async {
+              // Güvenli context kullanımı ve sayfa yönlendirmesi
+              await GoRouter.of(fabContext).push('/resident/maintenance/create');
+              if (fabContext.mounted) {
+                fabContext.read<MaintenanceCubit>().fetchRequests();
+              }
+            },
+            backgroundColor: AppColors.primary,
+            shape: const CircleBorder(),
+            child: const Icon(Icons.add, color: Colors.white),
+          );
+        },
+      ),
+    );
+
+    if (filteredRequests != null) {
+      return scaffold;
+    }
+    return BlocProvider(
+      create: (context) => sl<MaintenanceCubit>()..fetchRequests(),
+      child: scaffold,
     );
   }
 }

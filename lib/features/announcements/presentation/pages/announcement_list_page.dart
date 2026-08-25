@@ -9,42 +9,48 @@ import '../controllers/announcement_state.dart';
 
 class AnnouncementListPage extends StatelessWidget {
   final bool showAppBar;
-  const AnnouncementListPage({super.key, this.showAppBar = true});
+  final List<Announcement>? filteredAnnouncements;
+  const AnnouncementListPage({super.key, this.showAppBar = true, this.filteredAnnouncements});
 
   @override
   Widget build(BuildContext context) {
+    final scaffold = Scaffold(
+      backgroundColor: AppColors.background,
+      appBar: showAppBar ? AppBar(
+        title: const Text('Duyurular'),
+        centerTitle: true,
+      ) : null,
+      body: BlocBuilder<AnnouncementCubit, AnnouncementState>(
+        builder: (context, state) {
+          if (state is AnnouncementLoading) {
+            return const Center(child: CircularProgressIndicator());
+          } else if (state is AnnouncementError) {
+            return Center(child: Text(state.message, style: const TextStyle(color: AppColors.error)));
+          } else if (state is AnnouncementLoaded) {
+            final announcements = filteredAnnouncements ?? state.announcements;
+            if (announcements.isEmpty) {
+              return const Center(child: Text('Henüz duyuru bulunmamaktadır.'));
+            }
+            return ListView.separated(
+              padding: const EdgeInsets.all(20),
+              itemCount: announcements.length,
+              separatorBuilder: (_, __) => const SizedBox(height: 16),
+              itemBuilder: (context, index) {
+                return _AnnouncementCard(announcement: announcements[index]);
+              },
+            );
+          }
+          return const SizedBox();
+        },
+      ),
+    );
+
+    if (filteredAnnouncements != null) {
+      return scaffold;
+    }
     return BlocProvider(
       create: (context) => sl<AnnouncementCubit>()..fetchAnnouncements(status: 'published'),
-      child: Scaffold(
-        backgroundColor: AppColors.background,
-        appBar: showAppBar ? AppBar(
-          title: const Text('Duyurular'),
-          centerTitle: true,
-        ) : null,
-        body: BlocBuilder<AnnouncementCubit, AnnouncementState>(
-          builder: (context, state) {
-            if (state is AnnouncementLoading) {
-              return const Center(child: CircularProgressIndicator());
-            } else if (state is AnnouncementError) {
-              return Center(child: Text(state.message, style: const TextStyle(color: AppColors.error)));
-            } else if (state is AnnouncementLoaded) {
-              final announcements = state.announcements;
-              if (announcements.isEmpty) {
-                return const Center(child: Text('Henüz duyuru bulunmamaktadır.'));
-              }
-              return ListView.separated(
-                padding: const EdgeInsets.all(20),
-                itemCount: announcements.length,
-                separatorBuilder: (_, __) => const SizedBox(height: 16),
-                itemBuilder: (context, index) {
-                  return _AnnouncementCard(announcement: announcements[index]);
-                },
-              );
-            }
-            return const SizedBox();
-          },
-        ),
-      ),
+      child: scaffold,
     );
   }
 }
