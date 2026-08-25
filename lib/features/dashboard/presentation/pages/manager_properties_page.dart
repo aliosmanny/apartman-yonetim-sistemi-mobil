@@ -38,6 +38,9 @@ class _ManagerPropertiesPageState extends State<ManagerPropertiesPage> with Sing
   // Kiracılar Filtreleri (Tab 4)
   String _selectedTenantApartment = 'all';
 
+  // Sözleşmeler Filtreleri (Tab 5)
+  String _selectedContractStatus = 'all';
+
   @override
   void initState() {
     super.initState();
@@ -112,6 +115,7 @@ class _ManagerPropertiesPageState extends State<ManagerPropertiesPage> with Sing
         String tempUnitBlock = _selectedUnitBlock;
         String tempOwnerApt = _selectedOwnerApartment;
         String tempTenantApt = _selectedTenantApartment;
+        String tempContractStatus = _selectedContractStatus;
 
         return StatefulBuilder(
           builder: (context, setBottomSheetState) {
@@ -251,6 +255,30 @@ class _ManagerPropertiesPageState extends State<ManagerPropertiesPage> with Sing
                   ),
                 ],
               );
+            } else if (index == 5) {
+              // KİRA SÖZLEŞMELERİ
+              final statuses = const [
+                {'value': 'all', 'label': 'Tümü'},
+                {'value': 'active', 'label': 'Aktif'},
+                {'value': 'expired', 'label': 'Süresi Doldu'},
+              ];
+
+              count = state.contracts.where((c) {
+                return tempContractStatus == 'all' || c.status == tempContractStatus;
+              }).length;
+
+              filterContent = Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Text('Sözleşme Durumu süzgecine göre', style: AppTextStyles.titleMedium.copyWith(fontWeight: FontWeight.bold)),
+                  const SizedBox(height: 10),
+                  _buildListCard(
+                    items: statuses,
+                    selectedValue: tempContractStatus,
+                    onChanged: (val) => setBottomSheetState(() => tempContractStatus = val),
+                  ),
+                ],
+              );
             }
 
             return Container(
@@ -294,6 +322,8 @@ class _ManagerPropertiesPageState extends State<ManagerPropertiesPage> with Sing
                                 tempOwnerApt = 'all';
                               } else if (index == 4) {
                                 tempTenantApt = 'all';
+                              } else if (index == 5) {
+                                tempContractStatus = 'all';
                               }
                             });
                           },
@@ -332,6 +362,8 @@ class _ManagerPropertiesPageState extends State<ManagerPropertiesPage> with Sing
                               _selectedOwnerApartment = tempOwnerApt;
                             } else if (index == 4) {
                               _selectedTenantApartment = tempTenantApt;
+                            } else if (index == 5) {
+                              _selectedContractStatus = tempContractStatus;
                             }
                           });
                           Navigator.pop(context);
@@ -371,7 +403,7 @@ class _ManagerPropertiesPageState extends State<ManagerPropertiesPage> with Sing
               builder: (context, state) {
                 if (state is! PropertiesLoaded) return const SizedBox();
                 final index = _tabController.index;
-                if (index >= 5) return const SizedBox();
+                if (index > 5) return const SizedBox();
 
                 bool hasFilter = false;
                 if (index == 0) hasFilter = _selectedApartmentCity != 'all' || _selectedApartmentDistrict != 'all';
@@ -379,6 +411,7 @@ class _ManagerPropertiesPageState extends State<ManagerPropertiesPage> with Sing
                 if (index == 2) hasFilter = _selectedUnitUsage != 'all' || _selectedUnitApartment != 'all' || _selectedUnitBlock != 'all';
                 if (index == 3) hasFilter = _selectedOwnerApartment != 'all';
                 if (index == 4) hasFilter = _selectedTenantApartment != 'all';
+                if (index == 5) hasFilter = _selectedContractStatus != 'all';
 
                 return Padding(
                   padding: const EdgeInsets.only(right: 12.0),
@@ -445,6 +478,10 @@ class _ManagerPropertiesPageState extends State<ManagerPropertiesPage> with Sing
                 return _selectedTenantApartment == 'all' || t.apartmentName == _selectedTenantApartment;
               }).toList();
 
+              final filteredContracts = state.contracts.where((c) {
+                return _selectedContractStatus == 'all' || c.status == _selectedContractStatus;
+              }).toList();
+
               return TabBarView(
                 controller: _tabController,
                 children: [
@@ -453,7 +490,7 @@ class _ManagerPropertiesPageState extends State<ManagerPropertiesPage> with Sing
                   _buildUnits(filteredUnits),
                   _buildOwners(filteredOwners),
                   _buildTenants(filteredTenants),
-                  const LeaseContractListPage(),
+                  LeaseContractListPage(filteredContracts: filteredContracts),
                 ],
               );
             }

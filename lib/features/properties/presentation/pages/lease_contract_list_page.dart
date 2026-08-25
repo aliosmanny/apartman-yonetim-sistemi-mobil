@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import '../../../../app/theme/app_colors.dart';
 import '../../../../app/theme/app_text_styles.dart';
+import '../../domain/models/models.dart';
 import '../controllers/properties_cubit.dart';
 import '../controllers/properties_state.dart';
 import 'package:intl/intl.dart';
@@ -9,7 +10,8 @@ import 'package:url_launcher/url_launcher.dart';
 import 'package:go_router/go_router.dart';
 
 class LeaseContractListPage extends StatelessWidget {
-  const LeaseContractListPage({super.key});
+  final List<AppLeaseContract>? filteredContracts;
+  const LeaseContractListPage({super.key, this.filteredContracts});
 
   @override
   Widget build(BuildContext context) {
@@ -24,7 +26,7 @@ class LeaseContractListPage extends StatelessWidget {
           return Center(child: Text(state.message, style: const TextStyle(color: Colors.red)));
         }
         
-        final contracts = state is PropertiesLoaded ? state.contracts : [];
+        final contracts = filteredContracts ?? (state is PropertiesLoaded ? state.contracts : <AppLeaseContract>[]);
 
         if (contracts.isEmpty) {
 
