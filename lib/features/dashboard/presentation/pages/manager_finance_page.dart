@@ -496,6 +496,7 @@ class _ManagerFinanceViewState extends State<_ManagerFinanceView> {
         shape: const CircleBorder(),
         child: const Icon(Icons.add, color: AppColors.textOnPrimary),
       ),
+      ),
     );
   }
 
