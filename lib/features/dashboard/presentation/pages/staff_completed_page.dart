@@ -1,75 +1,92 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_bloc/flutter_bloc.dart';
+import 'package:intl/intl.dart';
 import '../../../../app/theme/app_colors.dart';
 import '../../../../app/theme/app_text_styles.dart';
+import '../../../../core/di/injection.dart';
 import '../../../maintenance/domain/models/maintenance_request.dart';
+import '../../../maintenance/presentation/controllers/maintenance_cubit.dart';
+import '../../../maintenance/presentation/controllers/maintenance_state.dart';
 
-class StaffCompletedPage extends StatefulWidget {
+class StaffCompletedPage extends StatelessWidget {
   const StaffCompletedPage({super.key});
 
   @override
-  State<StaffCompletedPage> createState() => _StaffCompletedPageState();
-}
-
-class _StaffCompletedPageState extends State<StaffCompletedPage> {
-  late final List<MaintenanceRequest> _mockTasks;
-
-  @override
-  void initState() {
-    super.initState();
-    _mockTasks = [
-      MaintenanceRequest(
-        id: 't3',
-        title: 'Boru Patlaması',
-        description: 'B Blok zemin kat ana su borusu sızıntısı.',
-        status: 'resolved',
-        category: 'plumbing',
-        createdAt: DateTime.now().subtract(const Duration(days: 5)),
-        resolvedAt: DateTime.now().subtract(const Duration(days: 4)),
-      ),
-      MaintenanceRequest(
-        id: 't4',
-        title: 'Merdiven Temizliği',
-        description: 'C Blok merdivenlerinin detaylı yıkanması.',
-        status: 'resolved',
-        category: 'cleaning',
-        createdAt: DateTime.now().subtract(const Duration(days: 8)),
-        resolvedAt: DateTime.now().subtract(const Duration(days: 8)),
-      ),
-    ];
-  }
-
-  @override
   Widget build(BuildContext context) {
-    return Scaffold(
-      backgroundColor: AppColors.background,
-      appBar: AppBar(
-        title: const Text('Tamamlanan İşler'),
-        centerTitle: true,
-      ),
-      body: _mockTasks.isEmpty
-          ? Center(
-        child: Column(
-          mainAxisAlignment: MainAxisAlignment.center,
-          children: [
-            Icon(Icons.history_rounded, size: 64, color: AppColors.textTertiary.withOpacity(0.5)),
-            const SizedBox(height: 16),
-            Text(
-              'Henüz tamamlanmış işiniz yok',
-              style: AppTextStyles.titleMedium.copyWith(color: AppColors.textTertiary),
-            ),
-          ],
+    return BlocProvider(
+      create: (context) => sl<MaintenanceCubit>()..fetchRequests(),
+      child: Scaffold(
+        backgroundColor: AppColors.background,
+        appBar: AppBar(
+          title: const Text('Tamamlanan İşler'),
+          centerTitle: true,
         ),
-      )
-          : ListView.builder(
-        padding: const EdgeInsets.all(20),
-        itemCount: _mockTasks.length,
-        itemBuilder: (context, index) {
-          final task = _mockTasks[index];
-          return Padding(
-            padding: const EdgeInsets.only(bottom: 12),
-            child: _StaffCompletedCard(task: task),
-          );
-        },
+        body: BlocBuilder<MaintenanceCubit, MaintenanceState>(
+          builder: (context, state) {
+            if (state is MaintenanceLoading || state is MaintenanceInitial) {
+              return const Center(child: CircularProgressIndicator());
+            }
+
+            if (state is MaintenanceError) {
+              return Center(
+                child: Column(
+                  mainAxisAlignment: MainAxisAlignment.center,
+                  children: [
+                    const Icon(Icons.error_outline_rounded, size: 48, color: AppColors.error),
+                    const SizedBox(height: 16),
+                    Text(state.message, style: AppTextStyles.bodyMedium),
+                    const SizedBox(height: 16),
+                    ElevatedButton(
+                      onPressed: () => context.read<MaintenanceCubit>().fetchRequests(),
+                      child: const Text('Tekrar Dene'),
+                    ),
+                  ],
+                ),
+              );
+            }
+
+            if (state is MaintenanceLoaded) {
+              // Tamamlanmış veya iptal edilmiş işler
+              final completedTasks = state.requests.where((r) {
+                final s = r.status.toLowerCase();
+                return s == 'completed' || s == 'resolved' || s == 'cancelled' || s == 'rejected' || s == 'c' || s == 'x';
+              }).toList();
+
+              if (completedTasks.isEmpty) {
+                return Center(
+                  child: Column(
+                    mainAxisAlignment: MainAxisAlignment.center,
+                    children: [
+                      Icon(Icons.history_rounded, size: 64, color: AppColors.textTertiary.withOpacity(0.5)),
+                      const SizedBox(height: 16),
+                      Text(
+                        'Henüz tamamlanmış işiniz yok',
+                        style: AppTextStyles.titleMedium.copyWith(color: AppColors.textTertiary),
+                      ),
+                    ],
+                  ),
+                );
+              }
+
+              return RefreshIndicator(
+                onRefresh: () => context.read<MaintenanceCubit>().fetchRequests(),
+                child: ListView.builder(
+                  padding: const EdgeInsets.all(20),
+                  itemCount: completedTasks.length,
+                  itemBuilder: (context, index) {
+                    final task = completedTasks[index];
+                    return Padding(
+                      padding: const EdgeInsets.only(bottom: 12),
+                      child: _StaffCompletedCard(task: task),
+                    );
+                  },
+                ),
+              );
+            }
+
+            return const SizedBox.shrink();
+          },
+        ),
       ),
     );
   }
@@ -83,6 +100,10 @@ class _StaffCompletedCard extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     const statusColor = AppColors.maintenanceCompleted;
+    final dateStr = DateFormat('dd MMM yyyy HH:mm').format(task.createdAt);
+    final resolvedStr = task.resolvedAt != null
+        ? DateFormat('dd MMM yyyy HH:mm').format(task.resolvedAt!)
+        : null;
 
     return Container(
       decoration: BoxDecoration(
@@ -108,10 +129,10 @@ class _StaffCompletedCard extends StatelessWidget {
                 Container(
                   padding: const EdgeInsets.all(10),
                   decoration: BoxDecoration(
-                    color: statusColor.withOpacity(0.1),
+                    color: AppColors.success.withOpacity(0.1),
                     borderRadius: BorderRadius.circular(12),
                   ),
-                  child: const Icon(Icons.check_circle_rounded, color: statusColor),
+                  child: const Icon(Icons.check_circle_rounded, color: AppColors.success),
                 ),
                 const SizedBox(width: 12),
                 Expanded(
@@ -142,12 +163,19 @@ class _StaffCompletedCard extends StatelessWidget {
                                 Container(
                                   width: 6,
                                   height: 6,
-                                  decoration: const BoxDecoration(color: statusColor, shape: BoxShape.circle),
+                                  decoration: BoxDecoration(color: statusColor, shape: BoxShape.circle),
                                 ),
                                 const SizedBox(width: 5),
                                 Text(
-                                  'Tamamlandı',
-                                  style: AppTextStyles.labelSmall.copyWith(color: statusColor, fontWeight: FontWeight.w700),
+                                  task.status == 'cancelled' || task.status == 'rejected' || task.status == 'x'
+                                      ? 'İptal Edildi'
+                                      : 'Tamamlandı',
+                                  style: AppTextStyles.labelSmall.copyWith(
+                                    color: task.status == 'cancelled' || task.status == 'rejected' || task.status == 'x'
+                                        ? AppColors.error
+                                        : statusColor,
+                                    fontWeight: FontWeight.w700,
+                                  ),
                                 ),
                               ],
                             ),
@@ -172,18 +200,31 @@ class _StaffCompletedCard extends StatelessWidget {
             Row(
               mainAxisAlignment: MainAxisAlignment.spaceBetween,
               children: [
-                Row(
-                  children: [
-                    const Icon(Icons.apartment_rounded, size: 16, color: AppColors.textTertiary),
-                    const SizedBox(width: 4),
-                    Text('A Blok D:12', style: AppTextStyles.labelSmall.copyWith(color: AppColors.textSecondary)),
-                  ],
+                Expanded(
+                  child: Row(
+                    children: [
+                      const Icon(Icons.apartment_rounded, size: 16, color: AppColors.textTertiary),
+                      const SizedBox(width: 4),
+                      Expanded(
+                        child: Text(
+                          task.unitDisplay ?? task.apartmentName ?? 'Genel Ortak Alan',
+                          style: AppTextStyles.labelSmall.copyWith(color: AppColors.textSecondary),
+                          maxLines: 1,
+                          overflow: TextOverflow.ellipsis,
+                        ),
+                      ),
+                    ],
+                  ),
                 ),
+                const SizedBox(width: 8),
                 Row(
                   children: [
-                    const Icon(Icons.event_available_rounded, size: 16, color: AppColors.textTertiary),
+                    const Icon(Icons.access_time_rounded, size: 16, color: AppColors.textTertiary),
                     const SizedBox(width: 4),
-                    Text(_formatDate(task.resolvedAt ?? task.createdAt), style: AppTextStyles.labelSmall.copyWith(color: AppColors.textTertiary)),
+                    Text(
+                      resolvedStr != null ? 'Çözüm: $resolvedStr' : 'Oluşturulma: $dateStr',
+                      style: AppTextStyles.labelSmall.copyWith(color: AppColors.textTertiary),
+                    ),
                   ],
                 ),
               ],
@@ -192,9 +233,5 @@ class _StaffCompletedCard extends StatelessWidget {
         ),
       ),
     );
-  }
-
-  String _formatDate(DateTime date) {
-    return '${date.day.toString().padLeft(2, '0')}.${date.month.toString().padLeft(2, '0')}.${date.year}';
   }
 }

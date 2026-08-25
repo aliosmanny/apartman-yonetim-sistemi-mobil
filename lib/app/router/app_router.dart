@@ -65,6 +65,11 @@ import '../../features/documents/presentation/pages/document_list_page.dart';
 import '../../features/dashboard/presentation/pages/manager_add_document_page.dart';
 import '../../features/documents/presentation/controllers/document_cubit.dart';
 import '../../features/dashboard/presentation/pages/staff_dashboard_page.dart';
+import '../../features/dashboard/presentation/pages/staff_assigned_page.dart';
+import '../../features/dashboard/presentation/pages/staff_completed_page.dart';
+import '../../features/dashboard/presentation/pages/staff_profile_page.dart';
+import '../../features/dashboard/presentation/pages/staff_edit_profile_page.dart';
+import '../../features/dashboard/presentation/pages/staff_settings_page.dart';
 
 
 import '../../features/users/presentation/pages/user_list_page.dart';
@@ -450,25 +455,34 @@ GoRoute(path: 'staff', name: 'managerStaff', builder: (_, __) => const ManagerSt
             GoRoute(
               path: '/staff/assigned',
               name: RouteNames.staffAssigned,
-              builder: (_, __) =>
-                  const _PlaceholderPage(title: 'Atanan İşler'),
+              builder: (_, __) => const StaffAssignedPage(),
             ),
             GoRoute(
               path: '/staff/completed',
               name: RouteNames.staffCompleted,
-              builder: (_, __) =>
-                  const _PlaceholderPage(title: 'Tamamlananlar'),
+              builder: (_, __) => const StaffCompletedPage(),
             ),
             GoRoute(
               path: '/staff/notifications',
               name: RouteNames.staffNotifications,
-              builder: (_, __) =>
-                  const _PlaceholderPage(title: 'Bildirimler'),
+              builder: (_, __) => const _PlaceholderPage(title: 'Bildirimler'),
             ),
             GoRoute(
               path: '/staff/profile',
               name: RouteNames.staffProfile,
-              builder: (_, __) => const _PlaceholderPage(title: 'Profil'),
+              builder: (_, __) => const StaffProfilePage(),
+              routes: [
+                GoRoute(
+                  path: 'edit',
+                  name: 'staffEditProfile',
+                  builder: (_, __) => const StaffEditProfilePage(),
+                ),
+                GoRoute(
+                  path: 'settings',
+                  name: 'staffSettings',
+                  builder: (_, __) => const StaffSettingsPage(),
+                ),
+              ],
             ),
           ],
         ),

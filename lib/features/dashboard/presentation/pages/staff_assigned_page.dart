@@ -1,75 +1,93 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:go_router/go_router.dart';
+import 'package:intl/intl.dart';
 import '../../../../app/theme/app_colors.dart';
 import '../../../../app/theme/app_text_styles.dart';
+import '../../../../core/di/injection.dart';
 import '../../../maintenance/domain/models/maintenance_request.dart';
+import '../../../maintenance/presentation/controllers/maintenance_cubit.dart';
+import '../../../maintenance/presentation/controllers/maintenance_state.dart';
 
-class StaffAssignedPage extends StatefulWidget {
+class StaffAssignedPage extends StatelessWidget {
   const StaffAssignedPage({super.key});
 
   @override
-  State<StaffAssignedPage> createState() => _StaffAssignedPageState();
-}
-
-class _StaffAssignedPageState extends State<StaffAssignedPage> {
-  late final List<MaintenanceRequest> _mockTasks;
-
-  @override
-  void initState() {
-    super.initState();
-    _mockTasks = [
-      MaintenanceRequest(
-        id: 't1',
-        title: 'Asansör Çalışmıyor',
-        description: 'A Blok asansörü 3. katta takılı kaldı, kapıları kapanmıyor.',
-        status: 'in_progress',
-        category: 'elevator',
-        createdAt: DateTime.now().subtract(const Duration(hours: 2)),
-        adminNotes: 'Acil müdahale gerekli.',
-      ),
-      MaintenanceRequest(
-        id: 't2',
-        title: 'Ortak Alan Ampul Değişimi',
-        description: 'B Blok girişindeki ampuller patlamış.',
-        status: 'pending',
-        category: 'electrical',
-        createdAt: DateTime.now().subtract(const Duration(hours: 5)),
-      ),
-    ];
-  }
-
-  @override
   Widget build(BuildContext context) {
-    return Scaffold(
-      backgroundColor: AppColors.background,
-      appBar: AppBar(
-        title: const Text('Bana Atanan İşler'),
-        centerTitle: true,
-      ),
-      body: _mockTasks.isEmpty
-          ? Center(
-        child: Column(
-          mainAxisAlignment: MainAxisAlignment.center,
-          children: [
-            Icon(Icons.assignment_turned_in_rounded, size: 64, color: AppColors.textTertiary.withOpacity(0.5)),
-            const SizedBox(height: 16),
-            Text(
-              'Şu an bekleyen işiniz yok',
-              style: AppTextStyles.titleMedium.copyWith(color: AppColors.textTertiary),
-            ),
-          ],
+    return BlocProvider(
+      create: (context) => sl<MaintenanceCubit>()..fetchRequests(),
+      child: Scaffold(
+        backgroundColor: AppColors.background,
+        appBar: AppBar(
+          title: const Text('Bana Atanan İşler'),
+          centerTitle: true,
         ),
-      )
-          : ListView.builder(
-        padding: const EdgeInsets.all(20),
-        itemCount: _mockTasks.length,
-        itemBuilder: (context, index) {
-          final task = _mockTasks[index];
-          return Padding(
-            padding: const EdgeInsets.only(bottom: 12),
-            child: _StaffAssignedCard(task: task),
-          );
-        },
+        body: BlocBuilder<MaintenanceCubit, MaintenanceState>(
+          builder: (context, state) {
+            if (state is MaintenanceLoading || state is MaintenanceInitial) {
+              return const Center(child: CircularProgressIndicator());
+            }
+
+            if (state is MaintenanceError) {
+              return Center(
+                child: Column(
+                  mainAxisAlignment: MainAxisAlignment.center,
+                  children: [
+                    const Icon(Icons.error_outline_rounded, size: 48, color: AppColors.error),
+                    const SizedBox(height: 16),
+                    Text(state.message, style: AppTextStyles.bodyMedium),
+                    const SizedBox(height: 16),
+                    ElevatedButton(
+                      onPressed: () => context.read<MaintenanceCubit>().fetchRequests(),
+                      child: const Text('Tekrar Dene'),
+                    ),
+                  ],
+                ),
+              );
+            }
+
+            if (state is MaintenanceLoaded) {
+              // Devam eden veya yeni atananlar (Tamamlanmamış ve iptal edilmemiş işler)
+              final assignedTasks = state.requests.where((r) {
+                final s = r.status.toLowerCase();
+                return s != 'completed' && s != 'resolved' && s != 'cancelled' && s != 'rejected' && s != 'c' && s != 'x';
+              }).toList();
+
+              if (assignedTasks.isEmpty) {
+                return Center(
+                  child: Column(
+                    mainAxisAlignment: MainAxisAlignment.center,
+                    children: [
+                      Icon(Icons.assignment_turned_in_rounded, size: 64, color: AppColors.textTertiary.withOpacity(0.5)),
+                      const SizedBox(height: 16),
+                      Text(
+                        'Şu an bekleyen işiniz yok',
+                        style: AppTextStyles.titleMedium.copyWith(color: AppColors.textTertiary),
+                      ),
+                    ],
+                  ),
+                );
+              }
+
+              return RefreshIndicator(
+                onRefresh: () => context.read<MaintenanceCubit>().fetchRequests(),
+                child: ListView.builder(
+                  padding: const EdgeInsets.all(20),
+                  itemCount: assignedTasks.length,
+                  itemBuilder: (context, index) {
+                    final task = assignedTasks[index];
+                    return Padding(
+                      padding: const EdgeInsets.only(bottom: 12),
+                      child: _StaffAssignedCard(task: task),
+                    );
+                  },
+                ),
+              );
+            }
+
+            return const SizedBox.shrink();
+          },
+        ),
       ),
     );
   }
@@ -82,8 +100,10 @@ class _StaffAssignedCard extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final bool inProgress = task.status == 'in_progress';
+    final bool inProgress = task.status == 'in_progress' || task.status == 'i' || task.status == 'assigned' || task.status == 'a';
     final Color statusColor = inProgress ? AppColors.maintenanceInProgress : AppColors.maintenancePending;
+
+    final dateStr = DateFormat('dd MMM yyyy HH:mm').format(task.createdAt);
 
     return Container(
       decoration: BoxDecoration(
@@ -100,6 +120,7 @@ class _StaffAssignedCard extends StatelessWidget {
       ),
       child: InkWell(
         onTap: () {
+          // GoRouter parametresi
           context.pushNamed('staffTaskDetail', extra: task);
         },
         borderRadius: BorderRadius.circular(18),
@@ -178,23 +199,36 @@ class _StaffAssignedCard extends StatelessWidget {
               Row(
                 mainAxisAlignment: MainAxisAlignment.spaceBetween,
                 children: [
-                  Row(
-                    children: [
-                      const Icon(Icons.apartment_rounded, size: 16, color: AppColors.textTertiary),
-                      const SizedBox(width: 4),
-                      Text('A Blok D:12', style: AppTextStyles.labelSmall.copyWith(color: AppColors.textSecondary)),
-                    ],
+                  Expanded(
+                    child: Row(
+                      children: [
+                        const Icon(Icons.apartment_rounded, size: 16, color: AppColors.textTertiary),
+                        const SizedBox(width: 4),
+                        Expanded(
+                          child: Text(
+                            task.unitDisplay ?? task.apartmentName ?? 'Genel Ortak Alan',
+                            style: AppTextStyles.labelSmall.copyWith(color: AppColors.textSecondary),
+                            maxLines: 1,
+                            overflow: TextOverflow.ellipsis,
+                          ),
+                        ),
+                      ],
+                    ),
                   ),
+                  const SizedBox(width: 8),
                   Row(
                     children: [
                       const Icon(Icons.access_time_rounded, size: 16, color: AppColors.textTertiary),
                       const SizedBox(width: 4),
-                      Text('Bugün, 14:30', style: AppTextStyles.labelSmall.copyWith(color: AppColors.textTertiary)),
+                      Text(
+                        dateStr,
+                        style: AppTextStyles.labelSmall.copyWith(color: AppColors.textTertiary),
+                      ),
                     ],
                   ),
                 ],
               ),
-              if (task.adminNotes != null) ...[
+              if (task.adminNotes != null && task.adminNotes!.isNotEmpty) ...[
                 const SizedBox(height: 12),
                 Container(
                   width: double.infinity,
