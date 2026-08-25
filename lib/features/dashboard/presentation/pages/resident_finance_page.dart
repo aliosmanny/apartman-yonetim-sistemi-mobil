@@ -16,8 +16,7 @@ class ResidentFinancePage extends StatefulWidget {
   State<ResidentFinancePage> createState() => _ResidentFinancePageState();
 }
 
-class _ResidentFinancePageState extends State<ResidentFinancePage> with SingleTickerProviderStateMixin {
-  late final TabController _tabController;
+class _ResidentFinancePageState extends State<ResidentFinancePage> {
   late final FinanceCubit _cubit;
 
   String _selectedDebtStatus = 'all';
@@ -27,15 +26,10 @@ class _ResidentFinancePageState extends State<ResidentFinancePage> with SingleTi
   void initState() {
     super.initState();
     _cubit = sl<FinanceCubit>()..fetchDebts();
-    _tabController = TabController(length: 2, vsync: this);
-    _tabController.addListener(() {
-      setState(() {});
-    });
   }
 
   @override
   void dispose() {
-    _tabController.dispose();
     _cubit.close();
     super.dispose();
   }
@@ -207,69 +201,80 @@ class _ResidentFinancePageState extends State<ResidentFinancePage> with SingleTi
   Widget build(BuildContext context) {
     return BlocProvider.value(
       value: _cubit,
-      child: Scaffold(
-        backgroundColor: AppColors.background,
-        appBar: AppBar(
-          title: const Text('Finans & Aidat Yönetimi'),
-          actions: [
-            BlocBuilder<FinanceCubit, FinanceState>(
-              builder: (context, state) {
-                if (state is! FinanceLoaded) return const SizedBox();
-                final index = _tabController.index;
-                if (index == 1) return const SizedBox(); // Hide filter icon on Payments tab
+      child: DefaultTabController(
+        length: 2,
+        child: Scaffold(
+          backgroundColor: AppColors.background,
+          appBar: AppBar(
+            title: const Text('Finans & Aidat Yönetimi'),
+            actions: [
+              Builder(
+                builder: (context) {
+                  final tabController = DefaultTabController.of(context);
+                  return AnimatedBuilder(
+                    animation: tabController,
+                    builder: (context, _) {
+                      final index = tabController.index;
+                      if (index == 1) return const SizedBox(); // Hide filter icon on Payments tab
 
-                final hasFilter = _selectedDebtStatus != 'all' || _selectedDebtApartment != 'all';
-                return Padding(
-                  padding: const EdgeInsets.only(right: 12.0),
-                  child: IconButton(
-                    onPressed: () => _showFilterBottomSheet(context, state),
-                    icon: Icon(
-                      Icons.filter_list_rounded,
-                      color: hasFilter ? AppColors.primary : AppColors.textSecondary,
-                    ),
-                    style: IconButton.styleFrom(
-                      backgroundColor: hasFilter ? AppColors.primary.withOpacity(0.1) : Colors.transparent,
-                      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
-                    ),
-                  ),
-                );
-              },
-            ),
-          ],
-          bottom: TabBar(
-            controller: _tabController,
-            tabs: const [
-              Tab(text: 'Borçlar'),
-              Tab(text: 'Ödemeler'),
+                      return BlocBuilder<FinanceCubit, FinanceState>(
+                        builder: (context, state) {
+                          if (state is! FinanceLoaded) return const SizedBox();
+                          final hasFilter = _selectedDebtStatus != 'all' || _selectedDebtApartment != 'all';
+                          return Padding(
+                            padding: const EdgeInsets.only(right: 12.0),
+                            child: IconButton(
+                              onPressed: () => _showFilterBottomSheet(context, state),
+                              icon: Icon(
+                                Icons.filter_list_rounded,
+                                color: hasFilter ? AppColors.primary : AppColors.textSecondary,
+                              ),
+                              style: IconButton.styleFrom(
+                                backgroundColor: hasFilter ? AppColors.primary.withOpacity(0.1) : Colors.transparent,
+                                shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+                              ),
+                            ),
+                          );
+                        },
+                      );
+                    },
+                  );
+                },
+              ),
             ],
+            bottom: const TabBar(
+              tabs: [
+                Tab(text: 'Borçlar'),
+                Tab(text: 'Ödemeler'),
+              ],
+            ),
           ),
-        ),
-        body: BlocBuilder<FinanceCubit, FinanceState>(
-          builder: (context, state) {
-            if (state is FinanceLoading || state is FinanceInitial) {
-              return const Center(child: CircularProgressIndicator());
-            } else if (state is FinanceError) {
-              return Center(child: Text(state.message, style: const TextStyle(color: Colors.red)));
-            } else if (state is FinanceLoaded) {
-              final filteredDebts = state.debts.where((d) {
-                final matchesApt = _selectedDebtApartment == 'all' || d.apartmentName == _selectedDebtApartment;
-                final matchesStatus = _selectedDebtStatus == 'all' ||
-                    (_selectedDebtStatus == 'paid' && d.isPaid) ||
-                    (_selectedDebtStatus == 'unpaid' && !d.isPaid && !d.isOverdue) ||
-                    (_selectedDebtStatus == 'overdue' && d.isOverdue);
-                return matchesApt && matchesStatus;
-              }).toList();
+          body: BlocBuilder<FinanceCubit, FinanceState>(
+            builder: (context, state) {
+              if (state is FinanceLoading || state is FinanceInitial) {
+                return const Center(child: CircularProgressIndicator());
+              } else if (state is FinanceError) {
+                return Center(child: Text(state.message, style: const TextStyle(color: Colors.red)));
+              } else if (state is FinanceLoaded) {
+                final filteredDebts = state.debts.where((d) {
+                  final matchesApt = _selectedDebtApartment == 'all' || d.apartmentName == _selectedDebtApartment;
+                  final matchesStatus = _selectedDebtStatus == 'all' ||
+                      (_selectedDebtStatus == 'paid' && d.isPaid) ||
+                      (_selectedDebtStatus == 'unpaid' && !d.isPaid && !d.isOverdue) ||
+                      (_selectedDebtStatus == 'overdue' && d.isOverdue);
+                  return matchesApt && matchesStatus;
+                }).toList();
 
-              return TabBarView(
-                controller: _tabController,
-                children: [
-                  DebtListPage(showAppBar: false, filteredDebts: filteredDebts),
-                  const _ResidentPaymentList(),
-                ],
-              );
-            }
-            return const SizedBox.shrink();
-          },
+                return TabBarView(
+                  children: [
+                    DebtListPage(showAppBar: false, filteredDebts: filteredDebts),
+                    const _ResidentPaymentList(),
+                  ],
+                );
+              }
+              return const SizedBox.shrink();
+            },
+          ),
         ),
       ),
     );

@@ -165,61 +165,60 @@ class _ResidentPropertiesPageState extends State<ResidentPropertiesPage> {
   Widget build(BuildContext context) {
     return BlocProvider(
       create: (_) => sl<PropertiesCubit>()..fetchContracts(),
-      child: Scaffold(
-        backgroundColor: AppColors.background,
-        appBar: AppBar(
-          title: const Text('Yapı & Sakin Yönetimi'),
-          actions: [
-            Builder(
-              builder: (context) {
-                return BlocBuilder<PropertiesCubit, PropertiesState>(
-                  builder: (context, state) {
-                    if (state is! PropertiesLoaded) return const SizedBox();
-                    final hasFilter = _selectedContractStatus != 'all';
-                    return Padding(
-                      padding: const EdgeInsets.only(right: 12.0),
-                      child: IconButton(
-                        onPressed: () => _showFilterBottomSheet(context, state),
-                        icon: Icon(
-                          Icons.filter_list_rounded,
-                          color: hasFilter ? AppColors.primary : AppColors.textSecondary,
-                        ),
-                        style: IconButton.styleFrom(
-                          backgroundColor: hasFilter ? AppColors.primary.withOpacity(0.1) : Colors.transparent,
-                          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
-                        ),
+      child: DefaultTabController(
+        length: 1,
+        child: Scaffold(
+          backgroundColor: AppColors.background,
+          appBar: AppBar(
+            title: const Text('Yapı & Sakin Yönetimi'),
+            actions: [
+              BlocBuilder<PropertiesCubit, PropertiesState>(
+                builder: (context, state) {
+                  if (state is! PropertiesLoaded) return const SizedBox();
+                  final hasFilter = _selectedContractStatus != 'all';
+                  return Padding(
+                    padding: const EdgeInsets.only(right: 12.0),
+                    child: IconButton(
+                      onPressed: () => _showFilterBottomSheet(context, state),
+                      icon: Icon(
+                        Icons.filter_list_rounded,
+                        color: hasFilter ? AppColors.primary : AppColors.textSecondary,
                       ),
-                    );
-                  },
+                      style: IconButton.styleFrom(
+                        backgroundColor: hasFilter ? AppColors.primary.withOpacity(0.1) : Colors.transparent,
+                        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+                      ),
+                    ),
+                  );
+                },
+              ),
+            ],
+            bottom: const TabBar(
+              tabs: [
+                Tab(text: 'Kira Sözleşmeleri'),
+              ],
+            ),
+          ),
+          body: BlocBuilder<PropertiesCubit, PropertiesState>(
+            builder: (context, state) {
+              if (state is PropertiesLoading) {
+                return const Center(child: CircularProgressIndicator());
+              } else if (state is PropertiesError) {
+                return Center(child: Text('Hata: ${state.message}'));
+              } else if (state is PropertiesLoaded) {
+                final filteredContracts = state.contracts.where((c) {
+                  return _selectedContractStatus == 'all' || c.status == _selectedContractStatus;
+                }).toList();
+  
+                return TabBarView(
+                  children: [
+                    LeaseContractListPage(filteredContracts: filteredContracts),
+                  ],
                 );
               }
-            ),
-          ],
-          bottom: const TabBar(
-            tabs: [
-              Tab(text: 'Kira Sözleşmeleri'),
-            ],
+              return const SizedBox();
+            },
           ),
-        ),
-        body: BlocBuilder<PropertiesCubit, PropertiesState>(
-          builder: (context, state) {
-            if (state is PropertiesLoading) {
-              return const Center(child: CircularProgressIndicator());
-            } else if (state is PropertiesError) {
-              return Center(child: Text('Hata: ${state.message}'));
-            } else if (state is PropertiesLoaded) {
-              final filteredContracts = state.contracts.where((c) {
-                return _selectedContractStatus == 'all' || c.status == _selectedContractStatus;
-              }).toList();
-
-              return TabBarView(
-                children: [
-                  LeaseContractListPage(filteredContracts: filteredContracts),
-                ],
-              );
-            }
-            return const SizedBox();
-          },
         ),
       ),
     );
