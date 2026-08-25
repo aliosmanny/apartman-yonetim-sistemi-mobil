@@ -18,6 +18,8 @@ class UserListPage extends StatefulWidget {
 class _UserListPageState extends State<UserListPage> {
   late final UserCubit _cubit;
   String _searchQuery = '';
+  String _selectedRole = 'all';
+  String _selectedIsActive = 'all';
 
   @override
   void initState() {
@@ -29,6 +31,202 @@ class _UserListPageState extends State<UserListPage> {
   void dispose() {
     _cubit.close();
     super.dispose();
+  }
+
+  void _showFilterBottomSheet(BuildContext context, List<AppUser> allUsers) {
+    showModalBottomSheet(
+      context: context,
+      isScrollControlled: true,
+      backgroundColor: Colors.transparent,
+      builder: (context) {
+        String tempRole = _selectedRole;
+        String tempIsActive = _selectedIsActive;
+
+        final roles = const [
+          {'value': 'all', 'label': 'Tümü'},
+          {'value': 'system_admin', 'label': 'Sistem Yöneticisi'},
+          {'value': 'apartment_manager', 'label': 'Apartman / Site Yöneticisi'},
+          {'value': 'owner', 'label': 'Kat Maliki'},
+          {'value': 'tenant', 'label': 'Kiracı'},
+          {'value': 'staff', 'label': 'Personel'},
+          {'value': 'former_system_admin', 'label': 'Eski Sistem Yöneticisi'},
+          {'value': 'former_apartment_manager', 'label': 'Eski Apartman / Site Yöneticisi'},
+          {'value': 'former_owner', 'label': 'Eski Kat Maliki'},
+          {'value': 'former_tenant', 'label': 'Eski Kiracı'},
+          {'value': 'former_staff', 'label': 'Eski Personel'},
+        ];
+
+        return StatefulBuilder(
+          builder: (context, setBottomSheetState) {
+            final count = allUsers.where((u) {
+              final matchesRole = tempRole == 'all' || u.role == tempRole;
+              final matchesIsActive = tempIsActive == 'all' ||
+                  (tempIsActive == 'yes' && u.isActive) ||
+                  (tempIsActive == 'no' && !u.isActive);
+              return matchesRole && matchesIsActive;
+            }).length;
+
+            return Container(
+              height: MediaQuery.of(context).size.height * 0.85,
+              decoration: const BoxDecoration(
+                color: Colors.white,
+                borderRadius: BorderRadius.vertical(top: Radius.circular(24)),
+              ),
+              child: Column(
+                children: [
+                  Center(
+                    child: Container(
+                      margin: const EdgeInsets.symmetric(vertical: 12),
+                      width: 40,
+                      height: 4,
+                      decoration: BoxDecoration(
+                        color: Colors.grey.shade300,
+                        borderRadius: BorderRadius.circular(2),
+                      ),
+                    ),
+                  ),
+                  Padding(
+                    padding: const EdgeInsets.symmetric(horizontal: 20),
+                    child: Row(
+                      mainAxisAlignment: MainAxisAlignment.between,
+                      children: [
+                        Text('Kullanıcı Filtresi', style: AppTextStyles.headlineSmall),
+                        TextButton(
+                          onPressed: () {
+                            setBottomSheetState(() {
+                              tempRole = 'all';
+                              tempIsActive = 'all';
+                            });
+                          },
+                          child: const Text('Temizle', style: TextStyle(color: AppColors.error)),
+                        ),
+                      ],
+                    ),
+                  ),
+                  const Divider(height: 24),
+                  Expanded(
+                    child: ListView(
+                      padding: const EdgeInsets.symmetric(horizontal: 20),
+                      children: [
+                        Text('Rol süzgecine göre', style: AppTextStyles.titleMedium.copyWith(fontWeight: FontWeight.bold)),
+                        const SizedBox(height: 10),
+                        Container(
+                          decoration: BoxDecoration(
+                            border: Border.all(color: Colors.grey.shade200),
+                            borderRadius: BorderRadius.circular(16),
+                          ),
+                          child: ListView.separated(
+                            shrinkWrap: true,
+                            physics: const NeverScrollableScrollPhysics(),
+                            itemCount: roles.length,
+                            separatorBuilder: (_, __) => Divider(height: 1, color: Colors.grey.shade200),
+                            itemBuilder: (context, idx) {
+                              final role = roles[idx];
+                              final isSelected = tempRole == role['value'];
+                              return ListTile(
+                                dense: true,
+                                title: Text(
+                                  role['label']!,
+                                  style: TextStyle(
+                                    color: isSelected ? AppColors.primary : AppColors.textPrimary,
+                                    fontWeight: isSelected ? FontWeight.bold : FontWeight.normal,
+                                  ),
+                                ),
+                                trailing: isSelected 
+                                    ? const Icon(Icons.check_circle_rounded, color: AppColors.primary)
+                                    : null,
+                                onTap: () {
+                                  setBottomSheetState(() {
+                                    tempRole = role['value']!;
+                                  });
+                                },
+                              );
+                            },
+                          ),
+                        ),
+                        const SizedBox(height: 24),
+                        Text('Sisteme Giriş İzni (Zorunlu) süzgecine göre', style: AppTextStyles.titleMedium.copyWith(fontWeight: FontWeight.bold)),
+                        const SizedBox(height: 12),
+                        Row(
+                          children: [
+                            _buildSegmentBtn(
+                              label: 'Tümü', 
+                              isSelected: tempIsActive == 'all',
+                              onTap: () => setBottomSheetState(() => tempIsActive = 'all'),
+                            ),
+                            const SizedBox(width: 8),
+                            _buildSegmentBtn(
+                              label: 'Evet', 
+                              isSelected: tempIsActive == 'yes',
+                              onTap: () => setBottomSheetState(() => tempIsActive = 'yes'),
+                            ),
+                            const SizedBox(width: 8),
+                            _buildSegmentBtn(
+                              label: 'Hayır', 
+                              isSelected: tempIsActive == 'no',
+                              onTap: () => setBottomSheetState(() => tempIsActive = 'no'),
+                            ),
+                          ],
+                        ),
+                        const SizedBox(height: 40),
+                      ],
+                    ),
+                  ),
+                  Padding(
+                    padding: const EdgeInsets.all(20),
+                    child: SizedBox(
+                      width: double.infinity,
+                      child: ElevatedButton(
+                        onPressed: () {
+                          setState(() {
+                            _selectedRole = tempRole;
+                            _selectedIsActive = tempIsActive;
+                          });
+                          Navigator.pop(context);
+                        },
+                        style: ElevatedButton.styleFrom(
+                          backgroundColor: AppColors.primary,
+                          padding: const EdgeInsets.symmetric(vertical: 16),
+                          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+                        ),
+                        child: Text(
+                          'Sayıları göster ($count)',
+                          style: const TextStyle(color: Colors.white, fontWeight: FontWeight.bold, fontSize: 16),
+                        ),
+                      ),
+                    ),
+                  ),
+                ],
+              ),
+            );
+          },
+        );
+      },
+    );
+  }
+
+  Widget _buildSegmentBtn({required String label, required bool isSelected, required VoidCallback onTap}) {
+    return Expanded(
+      child: GestureDetector(
+        onTap: onTap,
+        child: Container(
+          alignment: Alignment.center,
+          padding: const EdgeInsets.symmetric(vertical: 12),
+          decoration: BoxDecoration(
+            color: isSelected ? AppColors.primary.withOpacity(0.1) : Colors.white,
+            border: Border.all(color: isSelected ? AppColors.primary : Colors.grey.shade300),
+            borderRadius: BorderRadius.circular(12),
+          ),
+          child: Text(
+            label,
+            style: TextStyle(
+              color: isSelected ? AppColors.primary : AppColors.textSecondary,
+              fontWeight: isSelected ? FontWeight.bold : FontWeight.normal,
+            ),
+          ),
+        ),
+      ),
+    );
   }
 
   @override
@@ -44,20 +242,45 @@ class _UserListPageState extends State<UserListPage> {
         body: Column(
           children: [
             Padding(
-              padding: const EdgeInsets.all(20.0),
-              child: TextField(
-                decoration: const InputDecoration(
-                  hintText: 'Arama yapın...',
-                  prefixIcon: Icon(Icons.search),
-                  filled: true,
-                  fillColor: AppColors.surface,
-                  border: OutlineInputBorder(borderRadius: BorderRadius.all(Radius.circular(12)), borderSide: BorderSide.none),
-                ),
-                onChanged: (val) {
-                  setState(() {
-                    _searchQuery = val.toLowerCase();
-                  });
-                },
+              padding: const EdgeInsets.symmetric(horizontal: 20.0, vertical: 10.0),
+              child: Row(
+                children: [
+                  Expanded(
+                    child: TextField(
+                      decoration: const InputDecoration(
+                        hintText: 'Arama yapın...',
+                        prefixIcon: Icon(Icons.search),
+                        filled: true,
+                        fillColor: AppColors.surface,
+                        border: OutlineInputBorder(borderRadius: BorderRadius.all(Radius.circular(12)), borderSide: BorderSide.none),
+                      ),
+                      onChanged: (val) {
+                        setState(() {
+                          _searchQuery = val.toLowerCase();
+                        });
+                      },
+                    ),
+                  ),
+                  const SizedBox(width: 12),
+                  BlocBuilder<UserCubit, UserState>(
+                    builder: (context, state) {
+                      final allUsers = state is UserLoaded ? state.users : <AppUser>[];
+                      final hasFilter = _selectedRole != 'all' || _selectedIsActive != 'all';
+                      return IconButton(
+                        onPressed: state is UserLoaded ? () => _showFilterBottomSheet(context, allUsers) : null,
+                        icon: Icon(
+                          Icons.filter_list_rounded,
+                          color: hasFilter ? AppColors.primary : AppColors.textSecondary,
+                        ),
+                        style: IconButton.styleFrom(
+                          backgroundColor: hasFilter ? AppColors.primary.withOpacity(0.1) : AppColors.surface,
+                          padding: const EdgeInsets.all(12),
+                          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+                        ),
+                      );
+                    },
+                  ),
+                ],
               ),
             ),
             Expanded(
@@ -69,9 +292,17 @@ class _UserListPageState extends State<UserListPage> {
                     return Center(child: Text('Hata: ${state.message}', style: const TextStyle(color: AppColors.error)));
                   } else if (state is UserLoaded) {
                     final users = state.users.where((u) {
-                      return u.fullName.toLowerCase().contains(_searchQuery) ||
-                             u.phone.contains(_searchQuery) ||
-                             (u.email?.toLowerCase().contains(_searchQuery) ?? false);
+                      final matchesSearch = u.fullName.toLowerCase().contains(_searchQuery) ||
+                          u.phone.contains(_searchQuery) ||
+                          (u.email?.toLowerCase().contains(_searchQuery) ?? false);
+                      
+                      final matchesRole = _selectedRole == 'all' || u.role == _selectedRole;
+                      
+                      final matchesIsActive = _selectedIsActive == 'all' ||
+                          (_selectedIsActive == 'yes' && u.isActive) ||
+                          (_selectedIsActive == 'no' && !u.isActive);
+
+                      return matchesSearch && matchesRole && matchesIsActive;
                     }).toList();
 
                     if (users.isEmpty) {
