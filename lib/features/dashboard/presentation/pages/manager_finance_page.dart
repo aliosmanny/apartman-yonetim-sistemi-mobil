@@ -34,38 +34,21 @@ class _ManagerFinanceView extends StatefulWidget {
   State<_ManagerFinanceView> createState() => _ManagerFinanceViewState();
 }
 
-class _ManagerFinanceViewState extends State<_ManagerFinanceView> with SingleTickerProviderStateMixin {
-  late final TabController _tabController;
-
+class _ManagerFinanceViewState extends State<_ManagerFinanceView> {
   // Aidat Dönemleri Filtreleri (Tab 0)
   String _selectedDuePeriodApartment = 'all';
-
+  
   // Borçlar Filtreleri (Tab 1)
   String _selectedDebtStatus = 'all';
   String _selectedDebtApartment = 'all';
-
+  
   // Gelirler Filtreleri (Tab 3)
   String _selectedIncomeCategory = 'all';
   String _selectedIncomeApartment = 'all';
-
+  
   // Giderler Filtreleri (Tab 4)
   String _selectedExpenseCategory = 'all';
   String _selectedExpenseApartment = 'all';
-
-  @override
-  void initState() {
-    super.initState();
-    _tabController = TabController(length: 5, vsync: this);
-    _tabController.addListener(() {
-      setState(() {});
-    });
-  }
-
-  @override
-  void dispose() {
-    _tabController.dispose();
-    super.dispose();
-  }
 
   void _showDeleteDialog(BuildContext context, String type, String id, String title) {
     showDialog(
@@ -132,7 +115,7 @@ class _ManagerFinanceViewState extends State<_ManagerFinanceView> with SingleTic
   }
 
   void _showFilterBottomSheet(BuildContext context, FinanceLoaded state) {
-    final index = _tabController.index;
+    final index = DefaultTabController.of(context).index;
     showModalBottomSheet(
       context: context,
       isScrollControlled: true,
@@ -375,118 +358,128 @@ class _ManagerFinanceViewState extends State<_ManagerFinanceView> with SingleTic
 
   @override
   Widget build(BuildContext context) {
-    return Scaffold(
-      backgroundColor: AppColors.background,
-      appBar: AppBar(
-        title: const Text('Finans Yönetimi'),
-        centerTitle: true,
-        actions: [
-          BlocBuilder<FinanceCubit, FinanceState>(
-            builder: (context, state) {
-              if (state is! FinanceLoaded) return const SizedBox();
-              final index = _tabController.index;
-              if (index == 2) return const SizedBox();
+    return DefaultTabController(
+      length: 5,
+      child: Scaffold(
+        backgroundColor: AppColors.background,
+        appBar: AppBar(
+          title: const Text('Finans Yönetimi'),
+          centerTitle: true,
+          actions: [
+            Builder(
+              builder: (context) {
+                final tabController = DefaultTabController.of(context);
+                return AnimatedBuilder(
+                  animation: tabController,
+                  builder: (context, _) {
+                    return BlocBuilder<FinanceCubit, FinanceState>(
+                      builder: (context, state) {
+                        if (state is! FinanceLoaded) return const SizedBox();
+                        final index = tabController.index;
+                        if (index == 2) return const SizedBox();
 
-              bool hasFilter = false;
-              if (index == 0) hasFilter = _selectedDuePeriodApartment != 'all';
-              if (index == 1) hasFilter = _selectedDebtStatus != 'all' || _selectedDebtApartment != 'all';
-              if (index == 3) hasFilter = _selectedIncomeCategory != 'all' || _selectedIncomeApartment != 'all';
-              if (index == 4) hasFilter = _selectedExpenseCategory != 'all' || _selectedExpenseApartment != 'all';
+                        bool hasFilter = false;
+                        if (index == 0) hasFilter = _selectedDuePeriodApartment != 'all';
+                        if (index == 1) hasFilter = _selectedDebtStatus != 'all' || _selectedDebtApartment != 'all';
+                        if (index == 3) hasFilter = _selectedIncomeCategory != 'all' || _selectedIncomeApartment != 'all';
+                        if (index == 4) hasFilter = _selectedExpenseCategory != 'all' || _selectedExpenseApartment != 'all';
 
-              return Padding(
-                padding: const EdgeInsets.only(right: 12.0),
-                child: IconButton(
-                  onPressed: () => _showFilterBottomSheet(context, state),
-                  icon: Icon(
-                    Icons.filter_list_rounded,
-                    color: hasFilter ? AppColors.primary : AppColors.textSecondary,
-                  ),
-                  style: IconButton.styleFrom(
-                    backgroundColor: hasFilter ? AppColors.primary.withOpacity(0.1) : Colors.transparent,
-                    shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
-                  ),
-                ),
+                        return Padding(
+                          padding: const EdgeInsets.only(right: 12.0),
+                          child: IconButton(
+                            onPressed: () => _showFilterBottomSheet(context, state),
+                            icon: Icon(
+                              Icons.filter_list_rounded,
+                              color: hasFilter ? AppColors.primary : AppColors.textSecondary,
+                            ),
+                            style: IconButton.styleFrom(
+                              backgroundColor: hasFilter ? AppColors.primary.withOpacity(0.1) : Colors.transparent,
+                              shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+                            ),
+                          ),
+                        );
+                      },
+                    );
+                  },
+                );
+              },
+            ),
+          ],
+        ),
+        body: BlocBuilder<FinanceCubit, FinanceState>(
+          builder: (context, state) {
+            if (state is FinanceLoading || state is FinanceInitial) {
+              return const Center(child: CircularProgressIndicator());
+            } else if (state is FinanceError) {
+              return Center(
+                child: Text(state.message, style: AppTextStyles.bodyMedium.copyWith(color: AppColors.error)),
               );
-            },
-          ),
-        ],
-      ),
-      body: BlocBuilder<FinanceCubit, FinanceState>(
-        builder: (context, state) {
-          if (state is FinanceLoading || state is FinanceInitial) {
-            return const Center(child: CircularProgressIndicator());
-          } else if (state is FinanceError) {
-            return Center(
-              child: Text(state.message, style: AppTextStyles.bodyMedium.copyWith(color: AppColors.error)),
-            );
-          } else if (state is FinanceLoaded) {
-            final filteredDuePeriods = state.duePeriods.where((p) {
-              return _selectedDuePeriodApartment == 'all' || p.apartmentName == _selectedDuePeriodApartment;
-            }).toList();
+            } else if (state is FinanceLoaded) {
+              final filteredDuePeriods = state.duePeriods.where((p) {
+                return _selectedDuePeriodApartment == 'all' || p.apartmentName == _selectedDuePeriodApartment;
+              }).toList();
 
-            final filteredDebts = state.debts.where((d) {
-              final matchesApt = _selectedDebtApartment == 'all' || d.apartmentName == _selectedDebtApartment;
-              final matchesStatus = _selectedDebtStatus == 'all' ||
-                  (_selectedDebtStatus == 'paid' && d.isPaid) ||
-                  (_selectedDebtStatus == 'unpaid' && !d.isPaid && !d.isOverdue) ||
-                  (_selectedDebtStatus == 'overdue' && d.isOverdue);
-              return matchesApt && matchesStatus;
-            }).toList();
+              final filteredDebts = state.debts.where((d) {
+                final matchesApt = _selectedDebtApartment == 'all' || d.apartmentName == _selectedDebtApartment;
+                final matchesStatus = _selectedDebtStatus == 'all' ||
+                    (_selectedDebtStatus == 'paid' && d.isPaid) ||
+                    (_selectedDebtStatus == 'unpaid' && !d.isPaid && !d.isOverdue) ||
+                    (_selectedDebtStatus == 'overdue' && d.isOverdue);
+                return matchesApt && matchesStatus;
+              }).toList();
 
-            final filteredIncomes = state.incomes.where((i) {
-              final matchesApt = _selectedIncomeApartment == 'all' || i.apartmentName == _selectedIncomeApartment;
-              final matchesCat = _selectedIncomeCategory == 'all' || i.categoryDisplay == _selectedIncomeCategory;
-              return matchesApt && matchesCat;
-            }).toList();
+              final filteredIncomes = state.incomes.where((i) {
+                final matchesApt = _selectedIncomeApartment == 'all' || i.apartmentName == _selectedIncomeApartment;
+                final matchesCat = _selectedIncomeCategory == 'all' || i.categoryDisplay == _selectedIncomeCategory;
+                return matchesApt && matchesCat;
+              }).toList();
 
-            final filteredExpenses = state.expenses.where((e) {
-              final matchesApt = _selectedExpenseApartment == 'all' || e.apartmentName == _selectedExpenseApartment;
-              final matchesCat = _selectedExpenseCategory == 'all' || e.categoryDisplay == _selectedExpenseCategory;
-              return matchesApt && matchesCat;
-            }).toList();
+              final filteredExpenses = state.expenses.where((e) {
+                final matchesApt = _selectedExpenseApartment == 'all' || e.apartmentName == _selectedExpenseApartment;
+                final matchesCat = _selectedExpenseCategory == 'all' || e.categoryDisplay == _selectedExpenseCategory;
+                return matchesApt && matchesCat;
+              }).toList();
 
-            return NestedScrollView(
-              headerSliverBuilder: (context, innerBoxIsScrolled) {
-                return [
-                  SliverToBoxAdapter(
-                    child: _buildSummaryCard(state.summary),
-                  ),
-                  SliverPersistentHeader(
-                    pinned: true,
-                    delegate: _SliverAppBarDelegate(
-                      TabBar(
-                        controller: _tabController,
-                        isScrollable: true,
-                        indicatorColor: AppColors.primary,
-                        labelColor: AppColors.primary,
-                        unselectedLabelColor: AppColors.textSecondary,
-                        tabs: const [
-                          Tab(text: 'Aidat Dönemleri'),
-                          Tab(text: 'Borçlar'),
-                          Tab(text: 'Ödemeler'),
-                          Tab(text: 'Gelirler'),
-                          Tab(text: 'Giderler'),
-                        ],
+              return NestedScrollView(
+                headerSliverBuilder: (context, innerBoxIsScrolled) {
+                  return [
+                    SliverToBoxAdapter(
+                      child: _buildSummaryCard(state.summary),
+                    ),
+                    SliverPersistentHeader(
+                      pinned: true,
+                      delegate: _SliverAppBarDelegate(
+                        const TabBar(
+                          isScrollable: true,
+                          indicatorColor: AppColors.primary,
+                          labelColor: AppColors.primary,
+                          unselectedLabelColor: AppColors.textSecondary,
+                          tabs: [
+                            Tab(text: 'Aidat Dönemleri'),
+                            Tab(text: 'Borçlar'),
+                            Tab(text: 'Ödemeler'),
+                            Tab(text: 'Gelirler'),
+                            Tab(text: 'Giderler'),
+                          ],
+                        ),
                       ),
                     ),
-                  ),
-                ];
-              },
-              body: TabBarView(
-                controller: _tabController,
-                children: [
-                  _buildDuePeriodsTab(context, filteredDuePeriods),
-                  _buildDebtsTab(context, filteredDebts),
-                  _buildPaymentsTab(context, state.payments),
-                  _buildIncomesTab(context, filteredIncomes),
-                  _buildExpensesTab(context, filteredExpenses),
-                ],
-              ),
-            );
-          }
-          return const SizedBox.shrink();
-        },
-      ),
+                  ];
+                },
+                body: TabBarView(
+                  children: [
+                    _buildDuePeriodsTab(context, filteredDuePeriods),
+                    _buildDebtsTab(context, filteredDebts),
+                    _buildPaymentsTab(context, state.payments),
+                    _buildIncomesTab(context, filteredIncomes),
+                    _buildExpensesTab(context, filteredExpenses),
+                  ],
+                ),
+              );
+            }
+            return const SizedBox.shrink();
+          },
+        ),
       floatingActionButton: FloatingActionButton(
         onPressed: () async {
           final result = await context.push('/manager/finance/add', extra: context.read<FinanceCubit>());

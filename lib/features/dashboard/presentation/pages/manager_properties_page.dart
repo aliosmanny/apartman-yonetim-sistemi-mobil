@@ -16,9 +16,8 @@ class ManagerPropertiesPage extends StatefulWidget {
   State<ManagerPropertiesPage> createState() => _ManagerPropertiesPageState();
 }
 
-class _ManagerPropertiesPageState extends State<ManagerPropertiesPage> with SingleTickerProviderStateMixin {
+class _ManagerPropertiesPageState extends State<ManagerPropertiesPage> {
   late final PropertiesCubit _cubit;
-  late final TabController _tabController;
 
   // Apartman Filtreleri (Tab 0)
   String _selectedApartmentCity = 'all';
@@ -45,15 +44,10 @@ class _ManagerPropertiesPageState extends State<ManagerPropertiesPage> with Sing
   void initState() {
     super.initState();
     _cubit = sl<PropertiesCubit>()..fetchAll();
-    _tabController = TabController(length: 6, vsync: this);
-    _tabController.addListener(() {
-      setState(() {});
-    });
   }
 
   @override
   void dispose() {
-    _tabController.dispose();
     _cubit.close();
     super.dispose();
   }
@@ -100,7 +94,7 @@ class _ManagerPropertiesPageState extends State<ManagerPropertiesPage> with Sing
   }
 
   void _showFilterBottomSheet(BuildContext context, PropertiesLoaded state) {
-    final index = _tabController.index;
+    final index = DefaultTabController.of(context).index;
     showModalBottomSheet(
       context: context,
       isScrollControlled: true,
@@ -393,109 +387,120 @@ class _ManagerPropertiesPageState extends State<ManagerPropertiesPage> with Sing
   Widget build(BuildContext context) {
     return BlocProvider.value(
       value: _cubit,
-      child: Scaffold(
-        backgroundColor: AppColors.background,
-        appBar: AppBar(
-          title: const Text('Yapı & Sakin Yönetimi'),
-          centerTitle: true,
-          actions: [
-            BlocBuilder<PropertiesCubit, PropertiesState>(
-              builder: (context, state) {
-                if (state is! PropertiesLoaded) return const SizedBox();
-                final index = _tabController.index;
-                if (index > 5) return const SizedBox();
-
-                bool hasFilter = false;
-                if (index == 0) hasFilter = _selectedApartmentCity != 'all' || _selectedApartmentDistrict != 'all';
-                if (index == 1) hasFilter = _selectedBlockApartment != 'all';
-                if (index == 2) hasFilter = _selectedUnitUsage != 'all' || _selectedUnitApartment != 'all' || _selectedUnitBlock != 'all';
-                if (index == 3) hasFilter = _selectedOwnerApartment != 'all';
-                if (index == 4) hasFilter = _selectedTenantApartment != 'all';
-                if (index == 5) hasFilter = _selectedContractStatus != 'all';
-
-                return Padding(
-                  padding: const EdgeInsets.only(right: 12.0),
-                  child: IconButton(
-                    onPressed: () => _showFilterBottomSheet(context, state),
-                    icon: Icon(
-                      Icons.filter_list_rounded,
-                      color: hasFilter ? AppColors.primary : AppColors.textSecondary,
-                    ),
-                    style: IconButton.styleFrom(
-                      backgroundColor: hasFilter ? AppColors.primary.withOpacity(0.1) : Colors.transparent,
-                      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
-                    ),
-                  ),
-                );
-              },
-            ),
-          ],
-          bottom: TabBar(
-            controller: _tabController,
-            isScrollable: true,
-            labelColor: AppColors.primary,
-            unselectedLabelColor: AppColors.textSecondary,
-            indicatorColor: AppColors.primary,
-            tabs: const [
-              Tab(text: 'Apartmanlar'),
-              Tab(text: 'Bloklar'),
-              Tab(text: 'Daireler'),
-              Tab(text: 'Kat Malikleri'),
-              Tab(text: 'Kiracılar'),
-              Tab(text: 'Sözleşmeler'),
+      child: DefaultTabController(
+        length: 6,
+        child: Scaffold(
+          backgroundColor: AppColors.background,
+          appBar: AppBar(
+            title: const Text('Yapı & Sakin Yönetimi'),
+            centerTitle: true,
+            actions: [
+              Builder(
+                builder: (context) {
+                  final tabController = DefaultTabController.of(context);
+                  return AnimatedBuilder(
+                    animation: tabController,
+                    builder: (context, _) {
+                      return BlocBuilder<PropertiesCubit, PropertiesState>(
+                        builder: (context, state) {
+                          if (state is! PropertiesLoaded) return const SizedBox();
+                          final index = tabController.index;
+                          if (index > 5) return const SizedBox();
+  
+                          bool hasFilter = false;
+                          if (index == 0) hasFilter = _selectedApartmentCity != 'all' || _selectedApartmentDistrict != 'all';
+                          if (index == 1) hasFilter = _selectedBlockApartment != 'all';
+                          if (index == 2) hasFilter = _selectedUnitUsage != 'all' || _selectedUnitApartment != 'all' || _selectedUnitBlock != 'all';
+                          if (index == 3) hasFilter = _selectedOwnerApartment != 'all';
+                          if (index == 4) hasFilter = _selectedTenantApartment != 'all';
+                          if (index == 5) hasFilter = _selectedContractStatus != 'all';
+  
+                          return Padding(
+                            padding: const EdgeInsets.only(right: 12.0),
+                            child: IconButton(
+                              onPressed: () => _showFilterBottomSheet(context, state),
+                              icon: Icon(
+                                Icons.filter_list_rounded,
+                                color: hasFilter ? AppColors.primary : AppColors.textSecondary,
+                              ),
+                              style: IconButton.styleFrom(
+                                backgroundColor: hasFilter ? AppColors.primary.withOpacity(0.1) : Colors.transparent,
+                                shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+                              ),
+                            ),
+                          );
+                        },
+                      );
+                    },
+                  );
+                },
+              ),
             ],
+            bottom: const TabBar(
+              isScrollable: true,
+              labelColor: AppColors.primary,
+              unselectedLabelColor: AppColors.textSecondary,
+              indicatorColor: AppColors.primary,
+              tabs: [
+                Tab(text: 'Apartmanlar'),
+                Tab(text: 'Bloklar'),
+                Tab(text: 'Daireler'),
+                Tab(text: 'Kat Malikleri'),
+                Tab(text: 'Kiracılar'),
+                Tab(text: 'Sözleşmeler'),
+              ],
+            ),
           ),
-        ),
-        body: BlocBuilder<PropertiesCubit, PropertiesState>(
-          builder: (context, state) {
-            if (state is PropertiesLoading) {
-              return const Center(child: CircularProgressIndicator());
-            } else if (state is PropertiesError) {
-              return Center(child: Text('Hata: ${state.message}'));
-            } else if (state is PropertiesLoaded) {
-              final filteredApartments = state.apartments.where((a) {
-                final matchesCity = _selectedApartmentCity == 'all' || a.province == _selectedApartmentCity;
-                final matchesDistrict = _selectedApartmentDistrict == 'all' || a.district == _selectedApartmentDistrict;
-                return matchesCity && matchesDistrict;
-              }).toList();
-
-              final filteredBlocks = state.blocks.where((b) {
-                return _selectedBlockApartment == 'all' || b.apartmentName == _selectedBlockApartment;
-              }).toList();
-
-              final filteredUnits = state.units.where((u) {
-                final matchesUsage = _selectedUnitUsage == 'all' || u.usageStatus == _selectedUnitUsage;
-                final matchesApt = _selectedUnitApartment == 'all' || u.apartmentName == _selectedUnitApartment;
-                final matchesBlock = _selectedUnitBlock == 'all' || '${u.apartmentName} - ${u.blockName}' == _selectedUnitBlock;
-                return matchesUsage && matchesApt && matchesBlock;
-              }).toList();
-
-              final filteredOwners = state.owners.where((o) {
-                return _selectedOwnerApartment == 'all' || o.apartmentName == _selectedOwnerApartment;
-              }).toList();
-
-              final filteredTenants = state.tenants.where((t) {
-                return _selectedTenantApartment == 'all' || t.apartmentName == _selectedTenantApartment;
-              }).toList();
-
-              final filteredContracts = state.contracts.where((c) {
-                return _selectedContractStatus == 'all' || c.status == _selectedContractStatus;
-              }).toList();
-
-              return TabBarView(
-                controller: _tabController,
-                children: [
-                  _buildApartments(filteredApartments),
-                  _buildBlocks(filteredBlocks),
-                  _buildUnits(filteredUnits),
-                  _buildOwners(filteredOwners),
-                  _buildTenants(filteredTenants),
-                  LeaseContractListPage(filteredContracts: filteredContracts),
-                ],
-              );
-            }
-            return const SizedBox();
-          },
+          body: BlocBuilder<PropertiesCubit, PropertiesState>(
+            builder: (context, state) {
+              if (state is PropertiesLoading) {
+                return const Center(child: CircularProgressIndicator());
+              } else if (state is PropertiesError) {
+                return Center(child: Text('Hata: ${state.message}'));
+              } else if (state is PropertiesLoaded) {
+                final filteredApartments = state.apartments.where((a) {
+                  final matchesCity = _selectedApartmentCity == 'all' || a.province == _selectedApartmentCity;
+                  final matchesDistrict = _selectedApartmentDistrict == 'all' || a.district == _selectedApartmentDistrict;
+                  return matchesCity && matchesDistrict;
+                }).toList();
+  
+                final filteredBlocks = state.blocks.where((b) {
+                  return _selectedBlockApartment == 'all' || b.apartmentName == _selectedBlockApartment;
+                }).toList();
+  
+                final filteredUnits = state.units.where((u) {
+                  final matchesUsage = _selectedUnitUsage == 'all' || u.usageStatus == _selectedUnitUsage;
+                  final matchesApt = _selectedUnitApartment == 'all' || u.apartmentName == _selectedUnitApartment;
+                  final matchesBlock = _selectedUnitBlock == 'all' || '${u.apartmentName} - ${u.blockName}' == _selectedUnitBlock;
+                  return matchesUsage && matchesApt && matchesBlock;
+                }).toList();
+  
+                final filteredOwners = state.owners.where((o) {
+                  return _selectedOwnerApartment == 'all' || o.apartmentName == _selectedOwnerApartment;
+                }).toList();
+  
+                final filteredTenants = state.tenants.where((t) {
+                  return _selectedTenantApartment == 'all' || t.apartmentName == _selectedTenantApartment;
+                }).toList();
+  
+                final filteredContracts = state.contracts.where((c) {
+                  return _selectedContractStatus == 'all' || c.status == _selectedContractStatus;
+                }).toList();
+  
+                return TabBarView(
+                  children: [
+                    _buildApartments(filteredApartments),
+                    _buildBlocks(filteredBlocks),
+                    _buildUnits(filteredUnits),
+                    _buildOwners(filteredOwners),
+                    _buildTenants(filteredTenants),
+                    LeaseContractListPage(filteredContracts: filteredContracts),
+                  ],
+                );
+              }
+              return const SizedBox();
+            },
+          ),
         ),
       ),
     );
