@@ -37,10 +37,28 @@ class _ManagerFinanceView extends StatefulWidget {
 class _ManagerFinanceViewState extends State<_ManagerFinanceView> with SingleTickerProviderStateMixin {
   late final TabController _tabController;
 
+  // Aidat Dönemleri Filtreleri (Tab 0)
+  String _selectedDuePeriodApartment = 'all';
+
+  // Borçlar Filtreleri (Tab 1)
+  String _selectedDebtStatus = 'all';
+  String _selectedDebtApartment = 'all';
+
+  // Gelirler Filtreleri (Tab 3)
+  String _selectedIncomeCategory = 'all';
+  String _selectedIncomeApartment = 'all';
+
+  // Giderler Filtreleri (Tab 4)
+  String _selectedExpenseCategory = 'all';
+  String _selectedExpenseApartment = 'all';
+
   @override
   void initState() {
     super.initState();
     _tabController = TabController(length: 5, vsync: this);
+    _tabController.addListener(() {
+      setState(() {});
+    });
   }
 
   @override
@@ -72,6 +90,289 @@ class _ManagerFinanceViewState extends State<_ManagerFinanceView> with SingleTic
     );
   }
 
+  List<Map<String, String>> _toOptions(Iterable<String> list) {
+    return list.map((e) => {'value': e, 'label': e == 'all' ? 'Tümü' : e}).toList();
+  }
+
+  Widget _buildListCard({
+    required List<Map<String, String>> items,
+    required String selectedValue,
+    required ValueChanged<String> onChanged,
+  }) {
+    return Container(
+      decoration: BoxDecoration(
+        border: Border.all(color: Colors.grey.shade200),
+        borderRadius: BorderRadius.circular(16),
+      ),
+      child: ListView.separated(
+        shrinkWrap: true,
+        physics: const NeverScrollableScrollPhysics(),
+        itemCount: items.length,
+        separatorBuilder: (_, __) => Divider(height: 1, color: Colors.grey.shade200),
+        itemBuilder: (context, idx) {
+          final item = items[idx];
+          final isSelected = selectedValue == item['value'];
+          return ListTile(
+            dense: true,
+            title: Text(
+              item['label']!,
+              style: TextStyle(
+                color: isSelected ? AppColors.primary : AppColors.textPrimary,
+                fontWeight: isSelected ? FontWeight.bold : FontWeight.normal,
+              ),
+            ),
+            trailing: isSelected 
+                ? const Icon(Icons.check_circle_rounded, color: AppColors.primary)
+                : null,
+            onTap: () => onChanged(item['value']!),
+          );
+        },
+      ),
+    );
+  }
+
+  void _showFilterBottomSheet(BuildContext context, FinanceLoaded state) {
+    final index = _tabController.index;
+    showModalBottomSheet(
+      context: context,
+      isScrollControlled: true,
+      backgroundColor: Colors.transparent,
+      builder: (context) {
+        String tempDueApt = _selectedDuePeriodApartment;
+        String tempDebtStatus = _selectedDebtStatus;
+        String tempDebtApt = _selectedDebtApartment;
+        String tempIncCat = _selectedIncomeCategory;
+        String tempIncApt = _selectedIncomeApartment;
+        String tempExpCat = _selectedExpenseCategory;
+        String tempExpApt = _selectedExpenseApartment;
+
+        return StatefulBuilder(
+          builder: (context, setBottomSheetState) {
+            int count = 0;
+            Widget filterContent = const SizedBox();
+
+            if (index == 0) {
+              // AİDAT DÖNEMLERİ
+              final apartments = ['all', ...state.duePeriods.map((p) => p.apartmentName).toSet()];
+              count = state.duePeriods.where((p) {
+                return tempDueApt == 'all' || p.apartmentName == tempDueApt;
+              }).length;
+
+              filterContent = Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Text('Apartman / Site süzgecine göre', style: AppTextStyles.titleMedium.copyWith(fontWeight: FontWeight.bold)),
+                  const SizedBox(height: 10),
+                  _buildListCard(
+                    items: _toOptions(apartments),
+                    selectedValue: tempDueApt,
+                    onChanged: (val) => setBottomSheetState(() => tempDueApt = val),
+                  ),
+                ],
+              );
+            } else if (index == 1) {
+              // BORÇLAR
+              final statuses = const [
+                {'value': 'all', 'label': 'Tümü'},
+                {'value': 'unpaid', 'label': 'Ödenmedi'},
+                {'value': 'paid', 'label': 'Ödendi'},
+                {'value': 'overdue', 'label': 'Gecikmiş'},
+              ];
+              final apartments = ['all', ...state.debts.map((d) => d.apartmentName).whereType<String>().toSet()];
+              
+              count = state.debts.where((d) {
+                final matchesApt = tempDebtApt == 'all' || d.apartmentName == tempDebtApt;
+                final matchesStatus = tempDebtStatus == 'all' ||
+                    (tempDebtStatus == 'paid' && d.isPaid) ||
+                    (tempDebtStatus == 'unpaid' && !d.isPaid && !d.isOverdue) ||
+                    (tempDebtStatus == 'overdue' && d.isOverdue);
+                return matchesApt && matchesStatus;
+              }).length;
+
+              filterContent = Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Text('Borç Durumu süzgecine göre', style: AppTextStyles.titleMedium.copyWith(fontWeight: FontWeight.bold)),
+                  const SizedBox(height: 10),
+                  _buildListCard(
+                    items: statuses,
+                    selectedValue: tempDebtStatus,
+                    onChanged: (val) => setBottomSheetState(() => tempDebtStatus = val),
+                  ),
+                  const SizedBox(height: 24),
+                  Text('Apartman / Site süzgecine göre', style: AppTextStyles.titleMedium.copyWith(fontWeight: FontWeight.bold)),
+                  const SizedBox(height: 10),
+                  _buildListCard(
+                    items: _toOptions(apartments),
+                    selectedValue: tempDebtApt,
+                    onChanged: (val) => setBottomSheetState(() => tempDebtApt = val),
+                  ),
+                ],
+              );
+            } else if (index == 3) {
+              // GELİRLER
+              final categories = ['all', ...state.incomes.map((i) => i.categoryDisplay).toSet()];
+              final apartments = ['all', ...state.incomes.map((i) => i.apartmentName).whereType<String>().toSet()];
+
+              count = state.incomes.where((i) {
+                final matchesApt = tempIncApt == 'all' || i.apartmentName == tempIncApt;
+                final matchesCat = tempIncCat == 'all' || i.categoryDisplay == tempIncCat;
+                return matchesApt && matchesCat;
+              }).length;
+
+              filterContent = Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Text('Kategori süzgecine göre', style: AppTextStyles.titleMedium.copyWith(fontWeight: FontWeight.bold)),
+                  const SizedBox(height: 10),
+                  _buildListCard(
+                    items: _toOptions(categories),
+                    selectedValue: tempIncCat,
+                    onChanged: (val) => setBottomSheetState(() => tempIncCat = val),
+                  ),
+                  const SizedBox(height: 24),
+                  Text('Apartman / Site süzgecine göre', style: AppTextStyles.titleMedium.copyWith(fontWeight: FontWeight.bold)),
+                  const SizedBox(height: 10),
+                  _buildListCard(
+                    items: _toOptions(apartments),
+                    selectedValue: tempIncApt,
+                    onChanged: (val) => setBottomSheetState(() => tempIncApt = val),
+                  ),
+                ],
+              );
+            } else if (index == 4) {
+              // GİDERLER
+              final categories = ['all', ...state.expenses.map((e) => e.categoryDisplay).toSet()];
+              final apartments = ['all', ...state.expenses.map((e) => e.apartmentName).whereType<String>().toSet()];
+
+              count = state.expenses.where((e) {
+                final matchesApt = tempExpApt == 'all' || e.apartmentName == tempExpApt;
+                final matchesCat = tempExpCat == 'all' || e.categoryDisplay == tempExpCat;
+                return matchesApt && matchesCat;
+              }).length;
+
+              filterContent = Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Text('Kategori süzgecine göre', style: AppTextStyles.titleMedium.copyWith(fontWeight: FontWeight.bold)),
+                  const SizedBox(height: 10),
+                  _buildListCard(
+                    items: _toOptions(categories),
+                    selectedValue: tempExpCat,
+                    onChanged: (val) => setBottomSheetState(() => tempExpCat = val),
+                  ),
+                  const SizedBox(height: 24),
+                  Text('Apartman / Site süzgecine göre', style: AppTextStyles.titleMedium.copyWith(fontWeight: FontWeight.bold)),
+                  const SizedBox(height: 10),
+                  _buildListCard(
+                    items: _toOptions(apartments),
+                    selectedValue: tempExpApt,
+                    onChanged: (val) => setBottomSheetState(() => tempExpApt = val),
+                  ),
+                ],
+              );
+            }
+
+            return Container(
+              height: MediaQuery.of(context).size.height * 0.85,
+              decoration: const BoxDecoration(
+                color: Colors.white,
+                borderRadius: BorderRadius.vertical(top: Radius.circular(24)),
+              ),
+              child: Column(
+                children: [
+                  Center(
+                    child: Container(
+                      margin: const EdgeInsets.symmetric(vertical: 12),
+                      width: 40,
+                      height: 4,
+                      decoration: BoxDecoration(
+                        color: Colors.grey.shade300,
+                        borderRadius: BorderRadius.circular(2),
+                      ),
+                    ),
+                  ),
+                  Padding(
+                    padding: const EdgeInsets.symmetric(horizontal: 20),
+                    child: Row(
+                      mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                      children: [
+                        Text('Filtrele', style: AppTextStyles.headlineSmall),
+                        TextButton(
+                          onPressed: () {
+                            setBottomSheetState(() {
+                              if (index == 0) {
+                                tempDueApt = 'all';
+                              } else if (index == 1) {
+                                tempDebtStatus = 'all';
+                                tempDebtApt = 'all';
+                              } else if (index == 3) {
+                                tempIncCat = 'all';
+                                tempIncApt = 'all';
+                              } else if (index == 4) {
+                                tempExpCat = 'all';
+                                tempExpApt = 'all';
+                              }
+                            });
+                          },
+                          child: const Text('Temizle', style: TextStyle(color: AppColors.error)),
+                        ),
+                      ],
+                    ),
+                  ),
+                  const Divider(height: 24),
+                  Expanded(
+                    child: ListView(
+                      padding: const EdgeInsets.symmetric(horizontal: 20),
+                      children: [
+                        filterContent,
+                        const SizedBox(height: 40),
+                      ],
+                    ),
+                  ),
+                  Padding(
+                    padding: const EdgeInsets.all(20),
+                    child: SizedBox(
+                      width: double.infinity,
+                      child: ElevatedButton(
+                        onPressed: () {
+                          setState(() {
+                            if (index == 0) {
+                              _selectedDuePeriodApartment = tempDueApt;
+                            } else if (index == 1) {
+                              _selectedDebtStatus = tempDebtStatus;
+                              _selectedDebtApartment = tempDebtApt;
+                            } else if (index == 3) {
+                              _selectedIncomeCategory = tempIncCat;
+                              _selectedIncomeApartment = tempIncApt;
+                            } else if (index == 4) {
+                              _selectedExpenseCategory = tempExpCat;
+                              _selectedExpenseApartment = tempExpApt;
+                            }
+                          });
+                          Navigator.pop(context);
+                        },
+                        style: ElevatedButton.styleFrom(
+                          backgroundColor: AppColors.primary,
+                          padding: const EdgeInsets.symmetric(vertical: 16),
+                          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+                        ),
+                        child: Text(
+                          'Sayıları göster ($count)',
+                          style: const TextStyle(color: Colors.white, fontWeight: FontWeight.bold, fontSize: 16),
+                        ),
+                      ),
+                    ),
+                  ),
+                ],
+              ),
+            );
+          },
+        );
+      },
+    );
+  }
+
   @override
   Widget build(BuildContext context) {
     return Scaffold(
@@ -79,6 +380,36 @@ class _ManagerFinanceViewState extends State<_ManagerFinanceView> with SingleTic
       appBar: AppBar(
         title: const Text('Finans Yönetimi'),
         centerTitle: true,
+        actions: [
+          BlocBuilder<FinanceCubit, FinanceState>(
+            builder: (context, state) {
+              if (state is! FinanceLoaded) return const SizedBox();
+              final index = _tabController.index;
+              if (index == 2) return const SizedBox();
+
+              bool hasFilter = false;
+              if (index == 0) hasFilter = _selectedDuePeriodApartment != 'all';
+              if (index == 1) hasFilter = _selectedDebtStatus != 'all' || _selectedDebtApartment != 'all';
+              if (index == 3) hasFilter = _selectedIncomeCategory != 'all' || _selectedIncomeApartment != 'all';
+              if (index == 4) hasFilter = _selectedExpenseCategory != 'all' || _selectedExpenseApartment != 'all';
+
+              return Padding(
+                padding: const EdgeInsets.only(right: 12.0),
+                child: IconButton(
+                  onPressed: () => _showFilterBottomSheet(context, state),
+                  icon: Icon(
+                    Icons.filter_list_rounded,
+                    color: hasFilter ? AppColors.primary : AppColors.textSecondary,
+                  ),
+                  style: IconButton.styleFrom(
+                    backgroundColor: hasFilter ? AppColors.primary.withOpacity(0.1) : Colors.transparent,
+                    shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+                  ),
+                ),
+              );
+            },
+          ),
+        ],
       ),
       body: BlocBuilder<FinanceCubit, FinanceState>(
         builder: (context, state) {
@@ -89,6 +420,31 @@ class _ManagerFinanceViewState extends State<_ManagerFinanceView> with SingleTic
               child: Text(state.message, style: AppTextStyles.bodyMedium.copyWith(color: AppColors.error)),
             );
           } else if (state is FinanceLoaded) {
+            final filteredDuePeriods = state.duePeriods.where((p) {
+              return _selectedDuePeriodApartment == 'all' || p.apartmentName == _selectedDuePeriodApartment;
+            }).toList();
+
+            final filteredDebts = state.debts.where((d) {
+              final matchesApt = _selectedDebtApartment == 'all' || d.apartmentName == _selectedDebtApartment;
+              final matchesStatus = _selectedDebtStatus == 'all' ||
+                  (_selectedDebtStatus == 'paid' && d.isPaid) ||
+                  (_selectedDebtStatus == 'unpaid' && !d.isPaid && !d.isOverdue) ||
+                  (_selectedDebtStatus == 'overdue' && d.isOverdue);
+              return matchesApt && matchesStatus;
+            }).toList();
+
+            final filteredIncomes = state.incomes.where((i) {
+              final matchesApt = _selectedIncomeApartment == 'all' || i.apartmentName == _selectedIncomeApartment;
+              final matchesCat = _selectedIncomeCategory == 'all' || i.categoryDisplay == _selectedIncomeCategory;
+              return matchesApt && matchesCat;
+            }).toList();
+
+            final filteredExpenses = state.expenses.where((e) {
+              final matchesApt = _selectedExpenseApartment == 'all' || e.apartmentName == _selectedExpenseApartment;
+              final matchesCat = _selectedExpenseCategory == 'all' || e.categoryDisplay == _selectedExpenseCategory;
+              return matchesApt && matchesCat;
+            }).toList();
+
             return NestedScrollView(
               headerSliverBuilder: (context, innerBoxIsScrolled) {
                 return [
@@ -119,11 +475,11 @@ class _ManagerFinanceViewState extends State<_ManagerFinanceView> with SingleTic
               body: TabBarView(
                 controller: _tabController,
                 children: [
-                  _buildDuePeriodsTab(context, state.duePeriods),
-                  _buildDebtsTab(context, state.debts),
+                  _buildDuePeriodsTab(context, filteredDuePeriods),
+                  _buildDebtsTab(context, filteredDebts),
                   _buildPaymentsTab(context, state.payments),
-                  _buildIncomesTab(context, state.incomes),
-                  _buildExpensesTab(context, state.expenses),
+                  _buildIncomesTab(context, filteredIncomes),
+                  _buildExpensesTab(context, filteredExpenses),
                 ],
               ),
             );

@@ -88,7 +88,7 @@ class _UserListPageState extends State<UserListPage> {
                   Padding(
                     padding: const EdgeInsets.symmetric(horizontal: 20),
                     child: Row(
-                      mainAxisAlignment: MainAxisAlignment.between,
+                      mainAxisAlignment: MainAxisAlignment.spaceBetween,
                       children: [
                         Text('Kullanıcı Filtresi', style: AppTextStyles.headlineSmall),
                         TextButton(

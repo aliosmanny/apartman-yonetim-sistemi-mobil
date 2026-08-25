@@ -19,6 +19,57 @@ class ManagerMaintenancePage extends StatefulWidget {
 
 class _ManagerMaintenancePageState extends State<ManagerMaintenancePage> {
   int _currentIndex = 0; // 0: Açık, 1: İşlemde, 2: Çözüldü
+  String _selectedStatus = 'all';
+  String _selectedCategory = 'all';
+
+  String _normalizeStatusDisplay(MaintenanceRequest r) {
+    final status = (r.statusDisplay ?? r.status).toLowerCase();
+    if (status == 'pending' || status == 'beklemede' || status == 'p') {
+      return 'Beklemede';
+    }
+    if (status == 'assigned' || status == 'personel atandı' || status == 'a') {
+      return 'Personel Atandı';
+    }
+    if (status == 'in_progress' || status == 'işlem devam ediyor' || status == 'devam ediyor' || status == 'i') {
+      return 'İşlem Devam Ediyor';
+    }
+    if (status == 'completed' || status == 'tamamlandı' || status == 'resolved' || status == 'c') {
+      return 'Tamamlandı';
+    }
+    if (status == 'cancelled' || status == 'iptal edildi' || status == 'rejected') {
+      return 'İptal Edildi';
+    }
+    return r.statusDisplay ?? r.status;
+  }
+
+  String _normalizeCategoryDisplay(MaintenanceRequest r) {
+    final category = (r.categoryDisplay ?? r.category).toLowerCase();
+    if (category == 'electricity' || category == 'electrical' || category == 'elektrik' || category == 'e') {
+      if (r.title.toLowerCase().contains('asansör')) {
+        return 'Asansör';
+      }
+      return 'Elektrik';
+    }
+    if (category == 'plumbing' || category == 'su tesisatı' || category == 'su' || category == 'p') {
+      if (r.title.toLowerCase().contains('otopark')) {
+        return 'Otopark';
+      }
+      return 'Su Tesisatı';
+    }
+    if (category == 'elevator' || category == 'asansör') return 'Asansör';
+    if (category == 'cleaning' || category == 'temizlik' || category == 'c') {
+      if (r.title.toLowerCase().contains('ortak')) {
+        return 'Ortak Alan';
+      }
+      return 'Temizlik';
+    }
+    if (category == 'security' || category == 'güvenlik' || category == 's') return 'Güvenlik';
+    if (category == 'common_area' || category == 'ortak alan') return 'Ortak Alan';
+    if (category == 'garden' || category == 'bahçe' || category == 'g') return 'Bahçe';
+    if (category == 'parking' || category == 'otopark') return 'Otopark';
+    if (category == 'other' || category == 'diğer' || category == 'o') return 'Diğer';
+    return r.categoryDisplay ?? r.category;
+  }
 
   List<MaintenanceRequest> _getFilteredRequests(List<MaintenanceRequest> requests) {
     if (_currentIndex == 0) {
@@ -28,6 +79,162 @@ class _ManagerMaintenancePageState extends State<ManagerMaintenancePage> {
       return requests.where((r) => r.status == 'in_progress' || r.status == 'assigned' || r.status == 'i' || r.status == 'a' || r.status == 'Devam Ediyor').toList();
     }
     return requests.where((r) => r.status == 'completed' || r.status == 'cancelled' || r.status == 'resolved' || r.status == 'rejected' || r.status == 'Tamamlandı' || r.status == 'İptal Edildi' || r.status == 'c').toList();
+  }
+
+  List<Map<String, String>> _toOptions(Iterable<String> list) {
+    return list.map((e) => {'value': e, 'label': e == 'all' ? 'Tümü' : e}).toList();
+  }
+
+  Widget _buildListCard({
+    required List<Map<String, String>> items,
+    required String selectedValue,
+    required ValueChanged<String> onChanged,
+  }) {
+    return Container(
+      decoration: BoxDecoration(
+        border: Border.all(color: Colors.grey.shade200),
+        borderRadius: BorderRadius.circular(16),
+      ),
+      child: ListView.separated(
+        shrinkWrap: true,
+        physics: const NeverScrollableScrollPhysics(),
+        itemCount: items.length,
+        separatorBuilder: (_, __) => Divider(height: 1, color: Colors.grey.shade200),
+        itemBuilder: (context, idx) {
+          final item = items[idx];
+          final isSelected = selectedValue == item['value'];
+          return ListTile(
+            dense: true,
+            title: Text(
+              item['label']!,
+              style: TextStyle(
+                color: isSelected ? AppColors.primary : AppColors.textPrimary,
+                fontWeight: isSelected ? FontWeight.bold : FontWeight.normal,
+              ),
+            ),
+            trailing: isSelected 
+                ? const Icon(Icons.check_circle_rounded, color: AppColors.primary)
+                : null,
+            onTap: () => onChanged(item['value']!),
+          );
+        },
+      ),
+    );
+  }
+
+  void _showFilterBottomSheet(BuildContext context, MaintenanceLoaded state) {
+    showModalBottomSheet(
+      context: context,
+      isScrollControlled: true,
+      backgroundColor: Colors.transparent,
+      builder: (context) {
+        String tempStatus = _selectedStatus;
+        String tempCategory = _selectedCategory;
+
+        final statuses = ['all', ...state.requests.map((r) => _normalizeStatusDisplay(r)).toSet()];
+        final categories = ['all', ...state.requests.map((r) => _normalizeCategoryDisplay(r)).toSet()];
+
+        return StatefulBuilder(
+          builder: (context, setBottomSheetState) {
+            final count = state.requests.where((r) {
+              final matchesSegment = _getFilteredRequests(state.requests).contains(r);
+              final matchesStatus = tempStatus == 'all' || _normalizeStatusDisplay(r) == tempStatus;
+              final matchesCat = tempCategory == 'all' || _normalizeCategoryDisplay(r) == tempCategory;
+              return matchesSegment && matchesStatus && matchesCat;
+            }).length;
+
+            return Container(
+              height: MediaQuery.of(context).size.height * 0.85,
+              decoration: const BoxDecoration(
+                color: Colors.white,
+                borderRadius: BorderRadius.vertical(top: Radius.circular(24)),
+              ),
+              child: Column(
+                children: [
+                  Center(
+                    child: Container(
+                      margin: const EdgeInsets.symmetric(vertical: 12),
+                      width: 40,
+                      height: 4,
+                      decoration: BoxDecoration(
+                        color: Colors.grey.shade300,
+                        borderRadius: BorderRadius.circular(2),
+                      ),
+                    ),
+                  ),
+                  Padding(
+                    padding: const EdgeInsets.symmetric(horizontal: 20),
+                    child: Row(
+                      mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                      children: [
+                        Text('Filtrele', style: AppTextStyles.headlineSmall),
+                        TextButton(
+                          onPressed: () {
+                            setBottomSheetState(() {
+                              tempStatus = 'all';
+                              tempCategory = 'all';
+                            });
+                          },
+                          child: const Text('Temizle', style: TextStyle(color: AppColors.error)),
+                        ),
+                      ],
+                    ),
+                  ),
+                  const Divider(height: 24),
+                  Expanded(
+                    child: ListView(
+                      padding: const EdgeInsets.symmetric(horizontal: 20),
+                      children: [
+                        Text('Durum süzgecine göre', style: AppTextStyles.titleMedium.copyWith(fontWeight: FontWeight.bold)),
+                        const SizedBox(height: 10),
+                        _buildListCard(
+                          items: _toOptions(statuses),
+                          selectedValue: tempStatus,
+                          onChanged: (val) => setBottomSheetState(() => tempStatus = val),
+                        ),
+                        const SizedBox(height: 24),
+                        Text('Kategori süzgecine göre', style: AppTextStyles.titleMedium.copyWith(fontWeight: FontWeight.bold)),
+                        const SizedBox(height: 10),
+                        _buildListCard(
+                          items: _toOptions(categories),
+                          selectedValue: tempCategory,
+                          onChanged: (val) => setBottomSheetState(() => tempCategory = val),
+                        ),
+                        const SizedBox(height: 40),
+                      ],
+                    ),
+                  ),
+                  Padding(
+                    padding: const EdgeInsets.all(20),
+                    child: SizedBox(
+                      width: double.infinity,
+                      child: ElevatedButton(
+                        onPressed: () {
+                          setState(() {
+                            _selectedStatus = tempStatus;
+                            _selectedCategory = tempCategory;
+                          });
+                          Navigator.pop(context);
+                        },
+                        style: ElevatedButton.styleFrom(
+                          backgroundColor: AppColors.primary,
+                          padding: const EdgeInsets.symmetric(vertical: 16),
+                          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+                        ),
+                        child: Text(
+                          'Sayıları göster ($count)',
+                          style: const TextStyle(color: Colors.white, fontWeight: FontWeight.bold, fontSize: 16),
+                        ),
+                      ),
+                    ),
+                  ),
+                ],
+              ),
+            );
+          },
+        );
+      },
+    );
   }
 
   @override
@@ -42,6 +249,28 @@ class _ManagerMaintenancePageState extends State<ManagerMaintenancePage> {
         appBar: AppBar(
           title: const Text('Talepler ve Arızalar'),
           centerTitle: true,
+          actions: [
+            BlocBuilder<MaintenanceCubit, MaintenanceState>(
+              builder: (context, state) {
+                if (state is! MaintenanceLoaded) return const SizedBox();
+                final hasFilter = _selectedStatus != 'all' || _selectedCategory != 'all';
+                return Padding(
+                  padding: const EdgeInsets.only(right: 12.0),
+                  child: IconButton(
+                    onPressed: () => _showFilterBottomSheet(context, state),
+                    icon: Icon(
+                      Icons.filter_list_rounded,
+                      color: hasFilter ? AppColors.primary : AppColors.textSecondary,
+                    ),
+                    style: IconButton.styleFrom(
+                      backgroundColor: hasFilter ? AppColors.primary.withOpacity(0.1) : Colors.transparent,
+                      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+                    ),
+                  ),
+                );
+              },
+            ),
+          ],
         ),
         body: Column(
           children: [
@@ -74,7 +303,12 @@ class _ManagerMaintenancePageState extends State<ManagerMaintenancePage> {
                       child: Text(state.message, style: AppTextStyles.bodyMedium.copyWith(color: AppColors.error)),
                     );
                   } else if (state is MaintenanceLoaded) {
-                    final filtered = _getFilteredRequests(state.requests);
+                    final segmentRequests = _getFilteredRequests(state.requests);
+                    final filtered = segmentRequests.where((r) {
+                      final matchesStatus = _selectedStatus == 'all' || _normalizeStatusDisplay(r) == _selectedStatus;
+                      final matchesCat = _selectedCategory == 'all' || _normalizeCategoryDisplay(r) == _selectedCategory;
+                      return matchesStatus && matchesCat;
+                    }).toList();
                     
                     if (filtered.isEmpty) {
                       return Center(
