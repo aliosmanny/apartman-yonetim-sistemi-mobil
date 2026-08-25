@@ -11,10 +11,85 @@ import '../controllers/finance_state.dart';
 
 class DebtListPage extends StatelessWidget {
   final bool showAppBar;
-  const DebtListPage({super.key, this.showAppBar = true});
+  final List<Debt>? filteredDebts;
+  const DebtListPage({super.key, this.showAppBar = true, this.filteredDebts});
 
   @override
   Widget build(BuildContext context) {
+    final Widget mainBody = BlocBuilder<FinanceCubit, FinanceState>(
+      builder: (context, state) {
+        if (state is FinanceLoading || state is FinanceInitial) {
+          return const Center(child: CircularProgressIndicator());
+        }
+
+        if (state is FinanceError) {
+          return Center(
+            child: Column(
+              mainAxisAlignment: MainAxisAlignment.center,
+              children: [
+                const Icon(Icons.error_outline_rounded, size: 48, color: AppColors.error),
+                const SizedBox(height: 16),
+                Text(state.message, style: AppTextStyles.bodyMedium),
+                const SizedBox(height: 16),
+                ElevatedButton(
+                  onPressed: () => context.read<FinanceCubit>().fetchDebts(),
+                  child: const Text('Tekrar Dene'),
+                )
+              ],
+            ),
+          );
+        }
+
+        if (state is FinanceLoaded) {
+          final debts = filteredDebts != null ? List<Debt>.from(filteredDebts!) : List<Debt>.from(state.debts);
+          if (debts.isEmpty) {
+            return Center(
+              child: Column(
+                mainAxisAlignment: MainAxisAlignment.center,
+                children: [
+                  Icon(Icons.check_circle_rounded, size: 64, color: AppColors.debtPaid),
+                  const SizedBox(height: 16),
+                  Text('Harika! Hiç borcunuz yok.',
+                      style: AppTextStyles.headlineMedium.copyWith(color: AppColors.textPrimary)),
+                ],
+              ),
+            );
+          }
+
+          // Ödenmemişleri en üste, tarihi geçmişleri en başa al
+          debts.sort((a, b) {
+            if (a.isPaid != b.isPaid) return a.isPaid ? 1 : -1;
+            return a.dueDate.compareTo(b.dueDate);
+          });
+
+          return RefreshIndicator(
+            onRefresh: () => context.read<FinanceCubit>().fetchDebts(),
+            child: ListView.builder(
+              padding: const EdgeInsets.all(20),
+              itemCount: debts.length,
+              itemBuilder: (context, index) {
+                final debt = debts[index];
+                return _DebtCard(debt: debt);
+              },
+            ),
+          );
+        }
+
+        return const SizedBox.shrink();
+      },
+    );
+
+    if (filteredDebts != null) {
+      return Scaffold(
+        backgroundColor: AppColors.background,
+        appBar: showAppBar ? AppBar(
+          title: const Text('Borçlarım ve Ödemeler'),
+          centerTitle: false,
+        ) : null,
+        body: mainBody,
+      );
+    }
+
     return BlocProvider(
       create: (context) => sl<FinanceCubit>()..fetchDebts(),
       child: Scaffold(
@@ -23,68 +98,7 @@ class DebtListPage extends StatelessWidget {
           title: const Text('Borçlarım ve Ödemeler'),
           centerTitle: false,
         ) : null,
-        body: BlocBuilder<FinanceCubit, FinanceState>(
-          builder: (context, state) {
-            if (state is FinanceLoading || state is FinanceInitial) {
-              return const Center(child: CircularProgressIndicator());
-            }
-
-            if (state is FinanceError) {
-              return Center(
-                child: Column(
-                  mainAxisAlignment: MainAxisAlignment.center,
-                  children: [
-                    const Icon(Icons.error_outline_rounded, size: 48, color: AppColors.error),
-                    const SizedBox(height: 16),
-                    Text(state.message, style: AppTextStyles.bodyMedium),
-                    const SizedBox(height: 16),
-                    ElevatedButton(
-                      onPressed: () => context.read<FinanceCubit>().fetchDebts(),
-                      child: const Text('Tekrar Dene'),
-                    )
-                  ],
-                ),
-              );
-            }
-
-            if (state is FinanceLoaded) {
-              final debts = state.debts;
-              if (debts.isEmpty) {
-                return Center(
-                  child: Column(
-                    mainAxisAlignment: MainAxisAlignment.center,
-                    children: [
-                      Icon(Icons.check_circle_rounded, size: 64, color: AppColors.debtPaid),
-                      const SizedBox(height: 16),
-                      Text('Harika! Hiç borcunuz yok.',
-                          style: AppTextStyles.headlineMedium.copyWith(color: AppColors.textPrimary)),
-                    ],
-                  ),
-                );
-              }
-
-              // Ödenmemişleri en üste, tarihi geçmişleri en başa al
-              debts.sort((a, b) {
-                if (a.isPaid != b.isPaid) return a.isPaid ? 1 : -1;
-                return a.dueDate.compareTo(b.dueDate);
-              });
-
-              return RefreshIndicator(
-                onRefresh: () => context.read<FinanceCubit>().fetchDebts(),
-                child: ListView.builder(
-                  padding: const EdgeInsets.all(20),
-                  itemCount: debts.length,
-                  itemBuilder: (context, index) {
-                    final debt = debts[index];
-                    return _DebtCard(debt: debt);
-                  },
-                ),
-              );
-            }
-
-            return const SizedBox.shrink();
-          },
-        ),
+        body: mainBody,
       ),
     );
   }
