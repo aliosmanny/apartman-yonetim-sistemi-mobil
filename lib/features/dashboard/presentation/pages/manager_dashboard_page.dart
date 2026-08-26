@@ -10,9 +10,28 @@ import '../controllers/dashboard_cubit.dart';
 import '../../../notifications/presentation/controllers/notification_cubit.dart';
 import '../../../../core/di/injection.dart';
 import 'package:intl/intl.dart'; // Para birimi formatlama için eklendi
+import '../../../properties/presentation/controllers/properties_cubit.dart';
+import '../../../finance/presentation/controllers/finance_cubit.dart';
+import '../../../users/presentation/controllers/user_cubit.dart';
 
-class ManagerDashboardPage extends StatelessWidget {
+class ManagerDashboardPage extends StatefulWidget {
   const ManagerDashboardPage({super.key});
+
+  @override
+  State<ManagerDashboardPage> createState() => _ManagerDashboardPageState();
+}
+
+class _ManagerDashboardPageState extends State<ManagerDashboardPage> {
+  @override
+  void initState() {
+    super.initState();
+    // İlk sekme ziyaretlerindeki 1 saniyelik yükleme ekranlarını sıfırlamak için verileri arka planda önceden yükle.
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      sl<PropertiesCubit>().fetchAll();
+      sl<FinanceCubit>().fetchManagerFinance();
+      sl<UserCubit>().fetchUsers();
+    });
+  }
 
   @override
   Widget build(BuildContext context) {
