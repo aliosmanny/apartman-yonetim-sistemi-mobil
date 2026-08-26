@@ -1,4 +1,3 @@
-
 import '../../domain/models/models.dart';
 
 abstract class PropertiesState {}
@@ -14,6 +13,8 @@ class PropertiesLoaded extends PropertiesState {
   final List<AppOwner> owners;
   final List<AppTenant> tenants;
   final List<AppLeaseContract> contracts;
+  final bool isBlocksLoading;
+  final bool isUnitsLoading;
 
   PropertiesLoaded({
     this.apartments = const [],
@@ -22,6 +23,8 @@ class PropertiesLoaded extends PropertiesState {
     this.owners = const [],
     this.tenants = const [],
     this.contracts = const [],
+    this.isBlocksLoading = false,
+    this.isUnitsLoading = false,
   });
 
   PropertiesLoaded copyWith({
@@ -31,6 +34,8 @@ class PropertiesLoaded extends PropertiesState {
     List<AppOwner>? owners,
     List<AppTenant>? tenants,
     List<AppLeaseContract>? contracts,
+    bool? isBlocksLoading,
+    bool? isUnitsLoading,
   }) {
     return PropertiesLoaded(
       apartments: apartments ?? this.apartments,
@@ -39,6 +44,8 @@ class PropertiesLoaded extends PropertiesState {
       owners: owners ?? this.owners,
       tenants: tenants ?? this.tenants,
       contracts: contracts ?? this.contracts,
+      isBlocksLoading: isBlocksLoading ?? this.isBlocksLoading,
+      isUnitsLoading: isUnitsLoading ?? this.isUnitsLoading,
     );
   }
 }

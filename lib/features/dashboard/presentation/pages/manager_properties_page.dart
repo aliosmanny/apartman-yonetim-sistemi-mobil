@@ -490,8 +490,8 @@ class _ManagerPropertiesPageState extends State<ManagerPropertiesPage> {
                 return TabBarView(
                   children: [
                     _buildApartments(filteredApartments),
-                    _buildBlocks(filteredBlocks),
-                    _buildUnits(filteredUnits),
+                    _buildBlocks(filteredBlocks, isLoading: state.isBlocksLoading),
+                    _buildUnits(filteredUnits, isLoading: state.isUnitsLoading),
                     _buildOwners(filteredOwners),
                     _buildTenants(filteredTenants),
                     LeaseContractListPage(filteredContracts: filteredContracts),
@@ -606,7 +606,10 @@ class _ManagerPropertiesPageState extends State<ManagerPropertiesPage> {
     );
   }
 
-  Widget _buildBlocks(List<AppBlock> list) {
+  Widget _buildBlocks(List<AppBlock> list, {bool isLoading = false}) {
+    if (isLoading && list.isEmpty) {
+      return const Center(child: CircularProgressIndicator());
+    }
     return _buildList<AppBlock>(
       items: list,
       emptyMsg: 'Blok bulunamadı.',
@@ -631,7 +634,10 @@ class _ManagerPropertiesPageState extends State<ManagerPropertiesPage> {
     );
   }
 
-  Widget _buildUnits(List<AppUnit> list) {
+  Widget _buildUnits(List<AppUnit> list, {bool isLoading = false}) {
+    if (isLoading && list.isEmpty) {
+      return const Center(child: CircularProgressIndicator());
+    }
     return _buildList<AppUnit>(
       items: list,
       emptyMsg: 'Daire bulunamadı.',

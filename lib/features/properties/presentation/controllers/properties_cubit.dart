@@ -10,7 +10,7 @@ class PropertiesCubit extends Cubit<PropertiesState> {
   Future<void> fetchAll() async {
     emit(PropertiesLoading());
     try {
-      // 1. Fetch apartments, owners, tenants, and contracts in parallel
+      // 1. Fetch apartments, owners, tenants, and contracts in parallel (Fast path)
       final results = await Future.wait([
         _repo.getApartments().catchError((_) => <AppApartment>[]),
         _repo.getOwners().catchError((_) => <AppOwner>[]),
@@ -23,7 +23,19 @@ class PropertiesCubit extends Cubit<PropertiesState> {
       final tenants = results[2] as List<AppTenant>;
       final contracts = results[3] as List<AppLeaseContract>;
 
-      // 2. Fetch blocks for all apartments in parallel
+      // Emit first load state immediately (Apartments, Owners, Tenants, Contracts visible instantly!)
+      emit(PropertiesLoaded(
+        apartments: apartments,
+        blocks: const [],
+        units: const [],
+        owners: owners,
+        tenants: tenants,
+        contracts: contracts,
+        isBlocksLoading: true,
+        isUnitsLoading: true,
+      ));
+
+      // 2. Fetch blocks for all apartments in parallel in the background
       final blocks = <AppBlock>[];
       if (apartments.isNotEmpty) {
         final blocksResults = await Future.wait(
@@ -34,7 +46,19 @@ class PropertiesCubit extends Cubit<PropertiesState> {
         }
       }
 
-      // 3. Fetch units for all blocks in parallel
+      // Emit intermediate state with blocks loaded, units still loading in background
+      emit(PropertiesLoaded(
+        apartments: apartments,
+        blocks: blocks,
+        units: const [],
+        owners: owners,
+        tenants: tenants,
+        contracts: contracts,
+        isBlocksLoading: false,
+        isUnitsLoading: true,
+      ));
+
+      // 3. Fetch units for all blocks in parallel in the background
       final units = <AppUnit>[];
       if (blocks.isNotEmpty) {
         final unitsResults = await Future.wait(
@@ -45,6 +69,7 @@ class PropertiesCubit extends Cubit<PropertiesState> {
         }
       }
 
+      // Emit final loaded state with all data
       emit(PropertiesLoaded(
         apartments: apartments,
         blocks: blocks,
@@ -52,6 +77,8 @@ class PropertiesCubit extends Cubit<PropertiesState> {
         owners: owners,
         tenants: tenants,
         contracts: contracts,
+        isBlocksLoading: false,
+        isUnitsLoading: false,
       ));
     } catch (e) {
       emit(PropertiesError(e.toString()));
