@@ -141,7 +141,7 @@ class AppRouter {
               routes: [
                 GoRoute(
                   path: '/manager/users',
-                  name: RouteNames.managerUsers,
+                  name: 'managerUsers',
                   builder: (_, __) => const UserListPage(),
                   routes: [
                     GoRoute(
