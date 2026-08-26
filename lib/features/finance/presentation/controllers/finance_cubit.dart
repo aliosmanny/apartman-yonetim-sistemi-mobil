@@ -12,11 +12,18 @@ import 'finance_state.dart';
 
 class FinanceCubit extends Cubit<FinanceState> {
   final FinanceRepository _repository;
+  static FinanceLoaded? _cachedState;
 
-  FinanceCubit(this._repository) : super(FinanceInitial());
+  static void clearCache() {
+    _cachedState = null;
+  }
+
+  FinanceCubit(this._repository) : super(_cachedState ?? FinanceInitial());
 
   Future<void> fetchDebts() async {
-    emit(FinanceLoading());
+    if (state is! FinanceLoaded) {
+      emit(FinanceLoading());
+    }
     try {
       final results = await Future.wait([
         _repository.getDebts().catchError((_) => <Debt>[]),
@@ -24,14 +31,18 @@ class FinanceCubit extends Cubit<FinanceState> {
       ]);
       final debts = results[0] as List<Debt>;
       final payments = results[1] as List<Payment>;
-      emit(FinanceLoaded(debts: debts, payments: payments));
+      final loadedState = FinanceLoaded(debts: debts, payments: payments);
+      _cachedState = loadedState;
+      emit(loadedState);
     } catch (e) {
       emit(FinanceError(message: 'Borçlar yüklenirken bir hata oluştu: ${e.toString()}'));
     }
   }
 
   Future<void> fetchManagerFinance() async {
-    emit(FinanceLoading());
+    if (state is! FinanceLoaded) {
+      emit(FinanceLoading());
+    }
     try {
       final results = await Future.wait([
         _repository.getSummary().catchError((_) => null),
@@ -53,14 +64,16 @@ class FinanceCubit extends Cubit<FinanceState> {
         payments = debts.expand((d) => d.payments).toList();
       }
 
-      emit(FinanceLoaded(
+      final loadedState = FinanceLoaded(
         summary: summary,
         duePeriods: duePeriods,
         debts: debts,
         payments: payments,
         incomes: incomes,
         expenses: expenses,
-      ));
+      );
+      _cachedState = loadedState;
+      emit(loadedState);
     } catch (e) {
       emit(FinanceError(message: 'Finans verileri yüklenirken bir hata oluştu: ${e.toString()}'));
     }

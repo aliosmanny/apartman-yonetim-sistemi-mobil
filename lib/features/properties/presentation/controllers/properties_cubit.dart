@@ -5,10 +5,18 @@ import 'properties_state.dart';
 
 class PropertiesCubit extends Cubit<PropertiesState> {
   final PropertiesRepository _repo;
-  PropertiesCubit(this._repo) : super(PropertiesInitial());
+  static PropertiesLoaded? _cachedState;
+
+  static void clearCache() {
+    _cachedState = null;
+  }
+
+  PropertiesCubit(this._repo) : super(_cachedState ?? PropertiesInitial());
 
   Future<void> fetchAll() async {
-    emit(PropertiesLoading());
+    if (state is! PropertiesLoaded) {
+      emit(PropertiesLoading());
+    }
     try {
       // 1. Fetch apartments, owners, tenants, and contracts in parallel (Fast path)
       final results = await Future.wait([
@@ -70,7 +78,7 @@ class PropertiesCubit extends Cubit<PropertiesState> {
       }
 
       // Emit final loaded state with all data
-      emit(PropertiesLoaded(
+      final finalLoadedState = PropertiesLoaded(
         apartments: apartments,
         blocks: blocks,
         units: units,
@@ -79,7 +87,9 @@ class PropertiesCubit extends Cubit<PropertiesState> {
         contracts: contracts,
         isBlocksLoading: false,
         isUnitsLoading: false,
-      ));
+      );
+      _cachedState = finalLoadedState;
+      emit(finalLoadedState);
     } catch (e) {
       emit(PropertiesError(e.toString()));
     }

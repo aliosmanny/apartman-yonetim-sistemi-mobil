@@ -5,17 +5,26 @@ import '../../domain/models/user.dart';
 
 class UserCubit extends Cubit<UserState> {
   final UserRepository _repository;
+  static UserLoaded? _cachedState;
 
-  UserCubit(this._repository) : super(UserInitial());
+  static void clearCache() {
+    _cachedState = null;
+  }
+
+  UserCubit(this._repository) : super(_cachedState ?? UserInitial());
 
   Future<void> fetchUsers() async {
-    emit(UserLoading());
+    if (state is! UserLoaded) {
+      emit(UserLoading());
+    }
     try {
       List<AppUser> users = [];
       try {
         users = await _repository.getUsers();
       } catch (_) {}
-      emit(UserLoaded(users));
+      final loadedState = UserLoaded(users);
+      _cachedState = loadedState;
+      emit(loadedState);
     } catch (e) {
       emit(UserError(e.toString()));
     }

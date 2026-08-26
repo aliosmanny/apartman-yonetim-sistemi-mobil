@@ -2,6 +2,9 @@ import 'package:flutter_bloc/flutter_bloc.dart';
 import '../../domain/repositories/auth_repository.dart';
 import '../../../../core/errors/failures.dart';
 import 'auth_state.dart';
+import '../../../properties/presentation/controllers/properties_cubit.dart';
+import '../../../finance/presentation/controllers/finance_cubit.dart';
+import '../../../users/presentation/controllers/user_cubit.dart';
 
 class AuthCubit extends Cubit<AuthState> {
   final AuthRepository _repository;
@@ -47,6 +50,10 @@ class AuthCubit extends Cubit<AuthState> {
     emit(const AuthActionLoading());
     try {
       await _repository.logout();
+      // Oturum kapatıldığında statik önbellekleri temizle
+      PropertiesCubit.clearCache();
+      FinanceCubit.clearCache();
+      UserCubit.clearCache();
     } finally {
       emit(const AuthUnauthenticated());
     }
