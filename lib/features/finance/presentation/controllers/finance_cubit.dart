@@ -18,12 +18,12 @@ class FinanceCubit extends Cubit<FinanceState> {
   Future<void> fetchDebts() async {
     emit(FinanceLoading());
     try {
-      List<Debt> debts = [];
-      try { debts = await _repository.getDebts(); } catch (_) {}
-      
-      List<Payment> payments = [];
-      try { payments = await _repository.getPayments(); } catch (_) {}
-      
+      final results = await Future.wait([
+        _repository.getDebts().catchError((_) => <Debt>[]),
+        _repository.getPayments().catchError((_) => <Payment>[]),
+      ]);
+      final debts = results[0] as List<Debt>;
+      final payments = results[1] as List<Payment>;
       emit(FinanceLoaded(debts: debts, payments: payments));
     } catch (e) {
       emit(FinanceError(message: 'Borçlar yüklenirken bir hata oluştu: ${e.toString()}'));
@@ -33,25 +33,23 @@ class FinanceCubit extends Cubit<FinanceState> {
   Future<void> fetchManagerFinance() async {
     emit(FinanceLoading());
     try {
-      FinanceSummary? summary;
-      try { summary = await _repository.getSummary(); } catch (_) {}
-      
-      List<DuePeriod> duePeriods = [];
-      try { duePeriods = await _repository.getDuePeriods(); } catch (_) {}
-      
-      List<Debt> debts = [];
-      try { debts = await _repository.getDebts(); } catch (_) {}
-      
-      List<Income> incomes = [];
-      try { incomes = await _repository.getIncomes(); } catch (_) {}
-      
-      List<Expense> expenses = [];
-      try { expenses = await _repository.getExpenses(); } catch (_) {}
-      
-      List<Payment> payments = [];
-      try {
-        payments = await _repository.getPayments();
-      } catch (_) {
+      final results = await Future.wait([
+        _repository.getSummary().catchError((_) => null),
+        _repository.getDuePeriods().catchError((_) => <DuePeriod>[]),
+        _repository.getDebts().catchError((_) => <Debt>[]),
+        _repository.getIncomes().catchError((_) => <Income>[]),
+        _repository.getExpenses().catchError((_) => <Expense>[]),
+        _repository.getPayments().catchError((_) => <Payment>[]),
+      ]);
+
+      final summary = results[0] as FinanceSummary?;
+      final duePeriods = results[1] as List<DuePeriod>;
+      final debts = results[2] as List<Debt>;
+      final incomes = results[3] as List<Income>;
+      final expenses = results[4] as List<Expense>;
+      var payments = results[5] as List<Payment>;
+
+      if (payments.isEmpty && debts.isNotEmpty) {
         payments = debts.expand((d) => d.payments).toList();
       }
 

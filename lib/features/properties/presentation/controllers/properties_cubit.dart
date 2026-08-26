@@ -10,27 +10,41 @@ class PropertiesCubit extends Cubit<PropertiesState> {
   Future<void> fetchAll() async {
     emit(PropertiesLoading());
     try {
-      final apartments = await _repo.getApartments();
-      
+      // 1. Fetch apartments, owners, tenants, and contracts in parallel
+      final results = await Future.wait([
+        _repo.getApartments().catchError((_) => <AppApartment>[]),
+        _repo.getOwners().catchError((_) => <AppOwner>[]),
+        _repo.getTenants().catchError((_) => <AppTenant>[]),
+        _repo.getContracts().catchError((_) => <AppLeaseContract>[]),
+      ]);
+
+      final apartments = results[0] as List<AppApartment>;
+      final owners = results[1] as List<AppOwner>;
+      final tenants = results[2] as List<AppTenant>;
+      final contracts = results[3] as List<AppLeaseContract>;
+
+      // 2. Fetch blocks for all apartments in parallel
       final blocks = <AppBlock>[];
-      for (var apt in apartments) {
-        try { blocks.addAll(await _repo.getBlocksForApartment(apt.id)); } catch (_) {}
+      if (apartments.isNotEmpty) {
+        final blocksResults = await Future.wait(
+          apartments.map((apt) => _repo.getBlocksForApartment(apt.id).catchError((_) => <AppBlock>[]))
+        );
+        for (var bList in blocksResults) {
+          blocks.addAll(bList);
+        }
       }
-      
+
+      // 3. Fetch units for all blocks in parallel
       final units = <AppUnit>[];
-      for (var block in blocks) {
-        try { units.addAll(await _repo.getUnitsForBlock(block.id)); } catch (_) {}
+      if (blocks.isNotEmpty) {
+        final unitsResults = await Future.wait(
+          blocks.map((block) => _repo.getUnitsForBlock(block.id).catchError((_) => <AppUnit>[]))
+        );
+        for (var uList in unitsResults) {
+          units.addAll(uList);
+        }
       }
-      
-      List<AppOwner> owners = [];
-      try { owners = await _repo.getOwners(); } catch (_) {}
-      
-      List<AppTenant> tenants = [];
-      try { tenants = await _repo.getTenants(); } catch (_) {}
-      
-      List<AppLeaseContract> contracts = [];
-      try { contracts = await _repo.getContracts(); } catch (_) {}
-      
+
       emit(PropertiesLoaded(
         apartments: apartments,
         blocks: blocks,
