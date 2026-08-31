@@ -14,6 +14,8 @@ class AppUser {
   final DateTime updatedAt;
   final List<String> ownedUnits;
   final List<String> rentedUnits;
+  final int? managedApartmentId;
+  final String? managedApartmentName;
 
   const AppUser({
     required this.id,
@@ -31,6 +33,8 @@ class AppUser {
     required this.updatedAt,
     this.ownedUnits = const [],
     this.rentedUnits = const [],
+    this.managedApartmentId,
+    this.managedApartmentName,
   });
 
   String get fullName => '$firstName $lastName';

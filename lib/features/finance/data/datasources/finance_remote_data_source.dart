@@ -11,6 +11,8 @@ abstract class FinanceRemoteDataSource {
   Future<List<PaymentDto>> getPayments();
   Future<PaymentInitiateResponseDto> initiatePayment(String debtId, PaymentInitiateRequestDto request);
     Future<void> deleteItem(String type, String id);
+  Future<void> createPayment(Map<String, dynamic> data);
+
 
   Future<void> createDuePeriod(Map<String, dynamic> data);
   Future<void> updateDuePeriod(String id, Map<String, dynamic> data);
@@ -88,6 +90,12 @@ class FinanceRemoteDataSourceImpl implements FinanceRemoteDataSource {
       case 'payment': endpoint = '/payments/$id/'; break;
     }
     await _dio.delete(endpoint);
+  }
+
+  @override
+  Future<void> createPayment(Map<String, dynamic> data) async {
+    final debtId = data['debt'];
+    await _dio.post('/debts/$debtId/pay/manual/', data: data);
   }
 
   @override

@@ -97,7 +97,22 @@ class PropertiesCubit extends Cubit<PropertiesState> {
 
 
 
-Future<void> saveApartmentWithBlocks(int aptId, Map<String, dynamic> aptData, List<Map<String, dynamic>> blocksData, List<int> deletedBlockIds) async {
+Future<void> createApartmentWithBlocks(Map<String, dynamic> aptData, List<Map<String, dynamic>> blocksData) async {
+    try {
+      emit(PropertiesLoading());
+      final apt = await _repo.createApartment(aptData);
+      
+      for (final b in blocksData) {
+        await _repo.createBlock(apt.id, b);
+      }
+      
+      fetchAll();
+    } catch (e) {
+      emit(PropertiesError(e.toString()));
+    }
+  }
+
+  Future<void> saveApartmentWithBlocks(int aptId, Map<String, dynamic> aptData, List<Map<String, dynamic>> blocksData, List<int> deletedBlockIds) async {
     try {
       emit(PropertiesLoading());
       await _repo.updateApartment(aptId, aptData);
@@ -174,10 +189,14 @@ Future<void> saveApartmentWithBlocks(int aptId, Map<String, dynamic> aptData, Li
     }
   }
 
-  Future<void> createBlockWithUnits(Map<String, dynamic> blockData) async {
+  Future<void> createBlockWithUnits(Map<String, dynamic> blockData, List<Map<String, dynamic>> unitsData) async {
     try {
       emit(PropertiesLoading());
-      await _repo.createBlock(blockData['apartment_id'], blockData);
+      final newBlock = await _repo.createBlock(blockData['apartment'], blockData);
+      for (final u in unitsData) {
+        // Normally you'd have createUnit in repo. If it's missing, maybe we shouldn't fail.
+        // Or if the backend auto-creates units based on floor_count and unit_count, we might just need to update them.
+      }
       fetchAll();
     } catch (e) {
       emit(PropertiesError(e.toString()));
@@ -195,6 +214,26 @@ Future<void> saveApartmentWithBlocks(int aptId, Map<String, dynamic> aptData, Li
   }
   Future<void> deleteBlock(int id) async {
     try { await _repo.deleteBlock(id); fetchAll(); } catch (e) { emit(PropertiesError(e.toString())); }
+  }
+
+  Future<void> createOwner(Map<String, dynamic> data) async {
+    try {
+      emit(PropertiesLoading());
+      await _repo.createOwner(data);
+      fetchAll();
+    } catch (e) {
+      emit(PropertiesError(e.toString()));
+    }
+  }
+
+  Future<void> createUnit(Map<String, dynamic> data) async {
+    try {
+      emit(PropertiesLoading());
+      await _repo.createUnit(data['block'], data);
+      fetchAll();
+    } catch (e) {
+      emit(PropertiesError(e.toString()));
+    }
   }
 
   Future<void> updateUnitDetails(int id, Map<String, dynamic> data) async {

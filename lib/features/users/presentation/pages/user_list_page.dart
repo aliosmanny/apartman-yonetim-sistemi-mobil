@@ -236,7 +236,14 @@ class _UserListPageState extends State<UserListPage> {
       child: Scaffold(
         backgroundColor: AppColors.background,
         appBar: AppBar(
-          title: const Text('Kullanıcılar'),
+          title: BlocBuilder<UserCubit, UserState>(
+            builder: (context, state) {
+              if (state is UserLoaded) {
+                return Text('Kullanıcılar (${state.users.length})');
+              }
+              return const Text('Kullanıcılar');
+            },
+          ),
           centerTitle: true,
         ),
         body: Column(
@@ -292,9 +299,23 @@ class _UserListPageState extends State<UserListPage> {
                     return Center(child: Text('Hata: ${state.message}', style: const TextStyle(color: AppColors.error)));
                   } else if (state is UserLoaded) {
                     final users = state.users.where((u) {
-                      final matchesSearch = u.fullName.toLowerCase().contains(_searchQuery) ||
-                          u.phone.contains(_searchQuery) ||
-                          (u.email?.toLowerCase().contains(_searchQuery) ?? false);
+                      // Basic normalization for Turkish characters in search
+                      String normalize(String s) => s.toLowerCase()
+                          .replaceAll('i̇', 'i').replaceAll('ı', 'i')
+                          .replaceAll('ğ', 'g').replaceAll('ü', 'u')
+                          .replaceAll('ş', 's').replaceAll('ö', 'o').replaceAll('ç', 'c');
+                          
+                      final query = normalize(_searchQuery);
+                      final fullName = normalize(u.fullName);
+                      final email = normalize(u.email ?? '');
+                      final phone = u.phone;
+                      final role = normalize(u.roleDisplay ?? u.role);
+
+                      final matchesSearch = query.isEmpty ||
+                          fullName.contains(query) ||
+                          phone.contains(query) ||
+                          email.contains(query) ||
+                          role.contains(query);
                       
                       final matchesRole = _selectedRole == 'all' || u.role == _selectedRole;
                       
@@ -343,94 +364,70 @@ class _UserCard extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return Container(
-      decoration: BoxDecoration(
-        color: AppColors.cardBackground,
-        borderRadius: BorderRadius.circular(16),
-        border: Border.all(color: AppColors.border),
-        boxShadow: [
-          BoxShadow(
-            color: Colors.black.withOpacity(0.02),
-            blurRadius: 10,
-            offset: const Offset(0, 4),
-          ),
-        ],
-      ),
-      child: ListTile(
-        contentPadding: const EdgeInsets.all(16),
-        leading: CircleAvatar(
-          backgroundColor: AppColors.primary.withOpacity(0.1),
-          child: Text(
-            user.firstName.isNotEmpty ? user.firstName[0].toUpperCase() : '?',
-            style: const TextStyle(color: AppColors.primary, fontWeight: FontWeight.bold),
-          ),
-        ),
-        title: Text(
-          user.fullName,
-          style: AppTextStyles.titleMedium.copyWith(fontWeight: FontWeight.w600),
-        ),
-        subtitle: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            const SizedBox(height: 4),
-            Text(user.phone, style: AppTextStyles.labelSmall.copyWith(color: AppColors.textSecondary)),
-            if (user.email != null && user.email!.isNotEmpty) ...[
-              const SizedBox(height: 2),
-              Text(user.email!, style: AppTextStyles.labelSmall.copyWith(color: AppColors.textSecondary)),
-            ],
-            const SizedBox(height: 6),
-            Container(
-              padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 2),
-              decoration: BoxDecoration(
-                color: AppColors.primary.withOpacity(0.1),
-                borderRadius: BorderRadius.circular(6),
-              ),
+    return Card(
+      child: InkWell(
+        borderRadius: BorderRadius.circular(24),
+        onTap: () => context.push('/manager/users/edit', extra: {'user': user, 'cubit': context.read<UserCubit>()}),
+        child: Padding(
+          padding: const EdgeInsets.all(8.0),
+          child: ListTile(
+            contentPadding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+            leading: CircleAvatar(
+              radius: 24,
+              backgroundColor: AppColors.primary.withValues(alpha: 0.1),
               child: Text(
-                user.roleDisplay ?? user.role,
-                style: AppTextStyles.labelSmall.copyWith(color: AppColors.primary, fontSize: 10),
+                user.firstName.isNotEmpty ? user.firstName[0].toUpperCase() : '?',
+                style: const TextStyle(color: AppColors.primary, fontWeight: FontWeight.bold, fontSize: 18),
               ),
             ),
-            if (user.ownedUnits.isNotEmpty) ...[
-              const SizedBox(height: 4),
-              Text('Kat Maliki: ${user.ownedUnits.first}', style: AppTextStyles.labelSmall.copyWith(fontSize: 10, color: AppColors.success)),
-            ],
-            if (user.rentedUnits.isNotEmpty) ...[
-              const SizedBox(height: 4),
-              Text('Kiracı: ${user.rentedUnits.first}', style: AppTextStyles.labelSmall.copyWith(fontSize: 10, color: AppColors.warning)),
-            ]
-          ],
-        ),
-        trailing: PopupMenuButton<String>(
-          icon: const Icon(Icons.more_vert, color: AppColors.textSecondary),
-          onSelected: (val) {
-            if (val == 'edit') {
-              context.push('/manager/users/edit', extra: {'user': user, 'cubit': context.read<UserCubit>()});
-            } else if (val == 'delete') {
-              context.read<UserCubit>().deleteUser(user.id);
-            }
-          },
-          itemBuilder: (context) => [
-            const PopupMenuItem(
-              value: 'edit',
-              child: Row(
-                children: [
-                  Icon(Icons.edit_outlined, size: 20),
-                  SizedBox(width: 8),
-                  Text('Düzenle'),
-                ],
-              ),
+            title: Text(
+              user.fullName,
+              style: AppTextStyles.titleMedium.copyWith(fontWeight: FontWeight.bold),
             ),
-            const PopupMenuItem(
-              value: 'delete',
-              child: Row(
-                children: [
-                  Icon(Icons.delete_outline, size: 20, color: AppColors.error),
-                  SizedBox(width: 8),
-                  Text('Sil', style: TextStyle(color: AppColors.error)),
-                ],
-              ),
+            subtitle: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                const SizedBox(height: 4),
+                Text(user.phone, style: AppTextStyles.labelSmall.copyWith(color: AppColors.textSecondary)),
+                const SizedBox(height: 4),
+                Row(
+                  children: [
+                    Container(
+                      padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 2),
+                      decoration: BoxDecoration(
+                        color: AppColors.primary.withValues(alpha: 0.1),
+                        borderRadius: BorderRadius.circular(8),
+                      ),
+                      child: Text(user.roleDisplay ?? user.role, style: TextStyle(fontSize: 10, color: AppColors.primary, fontWeight: FontWeight.bold)),
+                    ),
+                    const SizedBox(width: 8),
+                    Container(
+                      padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 2),
+                      decoration: BoxDecoration(
+                        color: (user.isActive ? AppColors.success : AppColors.error).withValues(alpha: 0.1),
+                        borderRadius: BorderRadius.circular(8),
+                      ),
+                      child: Text(
+                        user.isActive ? 'Aktif' : 'Pasif',
+                        style: TextStyle(fontSize: 10, color: user.isActive ? AppColors.success : AppColors.error, fontWeight: FontWeight.bold),
+                      ),
+                    ),
+                  ],
+                ),
+              ],
             ),
-          ],
+            trailing: Row(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                IconButton(
+                  icon: const Icon(Icons.edit_outlined, color: AppColors.textSecondary, size: 20),
+                  onPressed: () {
+                    context.push('/manager/users/edit', extra: {'user': user, 'cubit': context.read<UserCubit>()});
+                  },
+                ),
+              ],
+            ),
+          ),
         ),
       ),
     );

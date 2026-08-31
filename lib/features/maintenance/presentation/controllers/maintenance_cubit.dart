@@ -25,6 +25,8 @@ class MaintenanceCubit extends Cubit<MaintenanceState> {
     String? priority,
     int? unitId,
     XFile? image,
+    String? status,
+    int? assignedToStaffId,
   }) async {
     try {
       await _repository.createRequest(
@@ -34,6 +36,8 @@ class MaintenanceCubit extends Cubit<MaintenanceState> {
         priority: priority,
         unitId: unitId,
         image: image,
+        status: status,
+        assignedToStaffId: assignedToStaffId,
       );
       await fetchRequests();
     } catch (e) {

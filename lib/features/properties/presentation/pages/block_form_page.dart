@@ -8,8 +8,9 @@ import '../controllers/properties_state.dart';
 class BlockFormPage extends StatefulWidget {
   final AppBlock? block;
   final PropertiesCubit cubit;
+  final bool isDuplicate;
 
-  const BlockFormPage({super.key, this.block, required this.cubit});
+  const BlockFormPage({super.key, this.block, required this.cubit, this.isDuplicate = false});
 
   @override
   State<BlockFormPage> createState() => _BlockFormPageState();
@@ -35,6 +36,9 @@ class _BlockFormPageState extends State<BlockFormPage> {
     super.initState();
     _selectedApartmentId = widget.block?.apartmentId;
     _name = widget.block?.name ?? '';
+    if (widget.isDuplicate) {
+      _name = '$_name (Kopya)';
+    }
     _floorCount = widget.block?.floorCount ?? 1;
     _unitCount = widget.block?.unitCount ?? 1;
 
@@ -66,11 +70,11 @@ class _BlockFormPageState extends State<BlockFormPage> {
 
     if (_selectedApartmentId == null) return;
 
-    if (widget.block != null) {
+    if (widget.block != null && !widget.isDuplicate) {
       widget.cubit.saveBlockWithUnits(
         widget.block!.id,
         {
-          'apartment_id': _selectedApartmentId,
+          'apartment': _selectedApartmentId,
           'name': _name,
           'floor_count': _floorCount,
           'unit_count': _unitCount,
@@ -79,12 +83,17 @@ class _BlockFormPageState extends State<BlockFormPage> {
         _deletedUnitIds,
       );
     } else {
+      final duplicateUnits = _units.map((u) => {
+        'number': u['number'],
+        'floor': u['floor'],
+        'usage_status': u['usage_status'],
+      }).toList();
       widget.cubit.createBlockWithUnits({
-          'apartment_id': _selectedApartmentId,
+          'apartment': _selectedApartmentId,
           'name': _name,
           'floor_count': _floorCount,
           'unit_count': _unitCount,
-      });
+      }, duplicateUnits);
     }
     Navigator.pop(context);
   }
@@ -96,7 +105,7 @@ class _BlockFormPageState extends State<BlockFormPage> {
       length: 2,
       child: Scaffold(
         appBar: AppBar(
-          title: Text(widget.block == null ? 'Yeni Blok' : 'Blok Düzenle'),
+          title: Text(widget.block == null ? 'Yeni Blok' : (widget.isDuplicate ? 'Yeni Blok (Çoğalt)' : 'Blok Düzenle')),
           bottom: const TabBar(
             tabs: [
               Tab(text: 'Genel'),
@@ -114,7 +123,7 @@ class _BlockFormPageState extends State<BlockFormPage> {
           padding: const EdgeInsets.all(16),
           child: Row(
             children: [
-              if (widget.block != null)
+              if (widget.block != null && !widget.isDuplicate)
                 Expanded(
                   child: ElevatedButton(
                     onPressed: () {
@@ -125,7 +134,7 @@ class _BlockFormPageState extends State<BlockFormPage> {
                     child: const Text('Sil Blok'),
                   ),
                 ),
-              if (widget.block != null) const SizedBox(width: 16),
+              if (widget.block != null && !widget.isDuplicate) const SizedBox(width: 16),
               Expanded(
                 child: ElevatedButton(
                   onPressed: _save,
@@ -145,47 +154,77 @@ class _BlockFormPageState extends State<BlockFormPage> {
       child: ListView(
         padding: const EdgeInsets.all(16),
         children: [
-          DropdownButtonFormField<int>(
-            value: _selectedApartmentId,
-            decoration: const InputDecoration(labelText: 'Apartman / Site *'),
-            items: _apartments.map((apt) {
-              return DropdownMenuItem<int>(
-                value: apt.id,
-                child: Text(apt.name),
-              );
-            }).toList(),
-            onChanged: (val) {
-              setState(() {
-                _selectedApartmentId = val;
-              });
-            },
-            validator: (v) => v == null ? 'Zorunlu alan' : null,
-          ),
+          const Text('Blok Tanımı', style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold)),
           const SizedBox(height: 16),
-          TextFormField(
-            initialValue: _name,
-            decoration: const InputDecoration(labelText: 'Blok Adı *'),
-            onChanged: (v) => _name = v,
-            onSaved: (v) => _name = v!,
-            validator: (v) => v!.isEmpty ? 'Zorunlu alan' : null,
+          Container(
+            padding: const EdgeInsets.all(16),
+            decoration: BoxDecoration(
+              color: Colors.white,
+              borderRadius: BorderRadius.circular(12),
+              border: Border.all(color: Colors.grey.shade300),
+            ),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                DropdownButtonFormField<int>(
+                  value: _selectedApartmentId,
+                  decoration: const InputDecoration(labelText: 'Apartman / Site *', border: OutlineInputBorder()),
+                  items: _apartments.map((apt) {
+                    return DropdownMenuItem<int>(
+                      value: apt.id,
+                      child: Text(apt.name),
+                    );
+                  }).toList(),
+                  onChanged: (val) {
+                    setState(() {
+                      _selectedApartmentId = val;
+                    });
+                  },
+                  validator: (v) => v == null ? 'Zorunlu alan' : null,
+                ),
+                const SizedBox(height: 16),
+                TextFormField(
+                  initialValue: _name,
+                  decoration: const InputDecoration(labelText: 'Blok Adı *', border: OutlineInputBorder()),
+                  onChanged: (v) => _name = v,
+                  onSaved: (v) => _name = v!,
+                  validator: (v) => v!.isEmpty ? 'Zorunlu alan' : null,
+                ),
+              ],
+            ),
           ),
+          const SizedBox(height: 32),
+          const Text('Kat ve Daire Sayıları', style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold)),
           const SizedBox(height: 16),
-          TextFormField(
-            initialValue: _floorCount.toString(),
-            decoration: const InputDecoration(labelText: 'Kat Sayısı *'),
-            keyboardType: TextInputType.number,
-            onChanged: (v) => _floorCount = int.tryParse(v) ?? 1,
-            onSaved: (v) => _floorCount = int.tryParse(v!) ?? 1,
-            validator: (v) => v!.isEmpty ? 'Zorunlu alan' : null,
-          ),
-          const SizedBox(height: 16),
-          TextFormField(
-            initialValue: _unitCount.toString(),
-            decoration: const InputDecoration(labelText: 'Daire Sayısı *'),
-            keyboardType: TextInputType.number,
-            onChanged: (v) => _unitCount = int.tryParse(v) ?? 1,
-            onSaved: (v) => _unitCount = int.tryParse(v!) ?? 1,
-            validator: (v) => v!.isEmpty ? 'Zorunlu alan' : null,
+          Container(
+            padding: const EdgeInsets.all(16),
+            decoration: BoxDecoration(
+              color: Colors.white,
+              borderRadius: BorderRadius.circular(12),
+              border: Border.all(color: Colors.grey.shade300),
+            ),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                TextFormField(
+                  initialValue: _floorCount.toString(),
+                  decoration: const InputDecoration(labelText: 'Kat Sayısı *', border: OutlineInputBorder()),
+                  keyboardType: TextInputType.number,
+                  onChanged: (v) => _floorCount = int.tryParse(v) ?? 1,
+                  onSaved: (v) => _floorCount = int.tryParse(v!) ?? 1,
+                  validator: (v) => v!.isEmpty ? 'Zorunlu alan' : null,
+                ),
+                const SizedBox(height: 16),
+                TextFormField(
+                  initialValue: _unitCount.toString(),
+                  decoration: const InputDecoration(labelText: 'Daire Sayısı *', border: OutlineInputBorder()),
+                  keyboardType: TextInputType.number,
+                  onChanged: (v) => _unitCount = int.tryParse(v) ?? 1,
+                  onSaved: (v) => _unitCount = int.tryParse(v!) ?? 1,
+                  validator: (v) => v!.isEmpty ? 'Zorunlu alan' : null,
+                ),
+              ],
+            ),
           ),
         ],
       ),

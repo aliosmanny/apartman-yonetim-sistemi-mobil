@@ -69,6 +69,7 @@ class _TenantFormPageState extends State<TenantFormPage> {
             const SizedBox(height: 16),
             DropdownButtonFormField<int>(
               value: _selectedUnitId,
+              isExpanded: true,
               decoration: const InputDecoration(labelText: 'Daire *'),
               items: _units.map((u) {
                 return DropdownMenuItem<int>(

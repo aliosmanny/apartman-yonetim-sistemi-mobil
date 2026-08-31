@@ -2,9 +2,9 @@ import 'package:flutter/material.dart';
 
 abstract class AppColors {
   // ── Primary ─────────────────────────────────────
-  static const Color primary = Color(0xFF1E40AF);
-  static const Color primaryLight = Color(0xFF3B82F6);
-  static const Color primaryDark = Color(0xFF1E3A8A);
+  static const Color primary = Color(0xFF4F46E5);
+  static const Color primaryLight = Color(0xFF818CF8);
+  static const Color primaryDark = Color(0xFF3730A3);
 
   // ── Secondary ────────────────────────────────────
   static const Color secondary = Color(0xFF0EA5E9);
@@ -21,7 +21,7 @@ abstract class AppColors {
   static const Color infoLight = Color(0xFFE0E7FF);
 
   // ── Backgrounds ──────────────────────────────────
-  static const Color background = Color(0xFFF8FAFC);
+  static const Color background = Color(0xFFF4F6F8);
   static const Color surface = Color(0xFFFFFFFF);
   static const Color surfaceVariant = Color(0xFFF1F5F9);
   static const Color cardBackground = Color(0xFFFFFFFF);
@@ -34,12 +34,12 @@ abstract class AppColors {
 
   // ── Border ───────────────────────────────────────
   static const Color border = Color(0xFFE2E8F0);
-  static const Color borderFocused = Color(0xFF3B82F6);
+  static const Color borderFocused = Color(0xFF818CF8);
   static const Color divider = Color(0xFFF1F5F9);
 
   // ── Rol renkleri ──────────────────────────────────
   static const Color roleSystemAdmin = Color(0xFF7C3AED);
-  static const Color roleManager = Color(0xFF1E40AF);
+  static const Color roleManager = Color(0xFF4F46E5);
   static const Color roleOwner = Color(0xFF0D9488);
   static const Color roleTenant = Color(0xFF059669);
   static const Color roleStaff = Color(0xFFD97706);
@@ -52,20 +52,20 @@ abstract class AppColors {
 
   // ── Bakım talep durumları ─────────────────────────
   static const Color maintenancePending = Color(0xFFF59E0B);
-  static const Color maintenanceAssigned = Color(0xFF3B82F6);
+  static const Color maintenanceAssigned = Color(0xFF818CF8);
   static const Color maintenanceInProgress = Color(0xFF8B5CF6);
   static const Color maintenanceCompleted = Color(0xFF10B981);
   static const Color maintenanceCancelled = Color(0xFF6B7280);
 
   // ── Gradient ─────────────────────────────────────
   static const LinearGradient primaryGradient = LinearGradient(
-    colors: [Color(0xFF1E40AF), Color(0xFF3B82F6)],
+    colors: [Color(0xFF4F46E5), Color(0xFF818CF8)],
     begin: Alignment.topLeft,
     end: Alignment.bottomRight,
   );
 
   static const LinearGradient cardGradient = LinearGradient(
-    colors: [Color(0xFF1E3A8A), Color(0xFF1D4ED8)],
+    colors: [Color(0xFF3730A3), Color(0xFF3730A3)],
     begin: Alignment.topLeft,
     end: Alignment.bottomRight,
   );

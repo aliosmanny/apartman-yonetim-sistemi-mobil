@@ -36,6 +36,7 @@ class StaffCubit extends Cubit<StaffState> {
     } catch (e) {
       emit(StaffError(e.toString()));
       fetchStaff(); // Fallback to loaded state
+      rethrow;
     }
   }
 
@@ -46,6 +47,7 @@ class StaffCubit extends Cubit<StaffState> {
     } catch (e) {
       emit(StaffError(e.toString()));
       fetchStaff();
+      rethrow;
     }
   }
 
@@ -56,6 +58,7 @@ class StaffCubit extends Cubit<StaffState> {
     } catch (e) {
       emit(StaffError(e.toString()));
       fetchStaff();
+      rethrow;
     }
   }
 }

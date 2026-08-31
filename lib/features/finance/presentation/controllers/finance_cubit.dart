@@ -61,7 +61,16 @@ class FinanceCubit extends Cubit<FinanceState> {
       var payments = results[5] as List<Payment>;
 
       if (payments.isEmpty && debts.isNotEmpty) {
-        payments = debts.expand((d) => d.payments).toList();
+        payments = debts.expand((d) => d.payments.map((p) => Payment(
+          id: p.id,
+          debtId: p.debtId,
+          debtDescription: p.debtDescription?.isNotEmpty == true ? p.debtDescription : d.description,
+          unitDisplay: p.unitDisplay?.isNotEmpty == true ? p.unitDisplay : d.unitDisplay,
+          amount: p.amount,
+          paymentDate: p.paymentDate,
+          status: p.status,
+          statusDisplay: p.statusDisplay,
+        ))).toList();
       }
 
       final loadedState = FinanceLoaded(
@@ -99,6 +108,11 @@ class FinanceCubit extends Cubit<FinanceState> {
     } catch (e) {
       throw Exception('Silme işlemi başarısız: ${e.toString()}');
     }
+  }
+
+  Future<void> createPayment(Map<String, dynamic> data) async { 
+    await _repository.createPayment(data); 
+    await fetchManagerFinance(); 
   }
 
   Future<void> createDuePeriod(Map<String, dynamic> data) async {

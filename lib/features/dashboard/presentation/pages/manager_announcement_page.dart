@@ -381,13 +381,12 @@ class _ManagerAnnouncementPageState extends State<ManagerAnnouncementPage> {
         ),
         floatingActionButton: Builder(
           builder: (context) {
-            return FloatingActionButton.extended(
+            return FloatingActionButton(
               onPressed: () {
                 context.push('/manager/announcements/create', extra: context.read<AnnouncementCubit>());
               },
               backgroundColor: AppColors.primary,
-              icon: const Icon(Icons.add, color: Colors.white),
-              label: const Text('Duyuru Ekle', style: TextStyle(color: Colors.white)),
+              child: const Icon(Icons.add, color: Colors.white),
             );
           }
         ),

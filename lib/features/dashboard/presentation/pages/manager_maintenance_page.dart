@@ -72,13 +72,25 @@ class _ManagerMaintenancePageState extends State<ManagerMaintenancePage> {
   }
 
   List<MaintenanceRequest> _getFilteredRequests(List<MaintenanceRequest> requests) {
-    if (_currentIndex == 0) {
-      return requests.where((r) => r.status == 'pending' || r.status == 'Beklemede' || r.status == 'p').toList();
-    }
     if (_currentIndex == 1) {
-      return requests.where((r) => r.status == 'in_progress' || r.status == 'assigned' || r.status == 'i' || r.status == 'a' || r.status == 'Devam Ediyor').toList();
+      return requests.where((r) {
+        final s = r.status.toLowerCase();
+        return s == 'in_progress' || s == 'assigned' || s == 'i' || s == 'a' || s == 'devam ediyor' || s == 'işlemde';
+      }).toList();
     }
-    return requests.where((r) => r.status == 'completed' || r.status == 'cancelled' || r.status == 'resolved' || r.status == 'rejected' || r.status == 'Tamamlandı' || r.status == 'İptal Edildi' || r.status == 'c').toList();
+    if (_currentIndex == 2) {
+      return requests.where((r) {
+        final s = r.status.toLowerCase();
+        return s == 'completed' || s == 'cancelled' || s == 'resolved' || s == 'rejected' || s == 'tamamlandı' || s == 'i̇ptal edildi' || s == 'c' || s == 'çözüldü';
+      }).toList();
+    }
+    // _currentIndex == 0 (Açık). Any request that is not in progress or resolved is considered Open/Pending.
+    return requests.where((r) {
+      final s = r.status.toLowerCase();
+      final isInProgress = s == 'in_progress' || s == 'assigned' || s == 'i' || s == 'a' || s == 'devam ediyor' || s == 'işlemde';
+      final isResolved = s == 'completed' || s == 'cancelled' || s == 'resolved' || s == 'rejected' || s == 'tamamlandı' || s == 'i̇ptal edildi' || s == 'c' || s == 'çözüldü';
+      return !isInProgress && !isResolved;
+    }).toList();
   }
 
   List<Map<String, String>> _toOptions(Iterable<String> list) {
@@ -272,6 +284,13 @@ class _ManagerMaintenancePageState extends State<ManagerMaintenancePage> {
             ),
           ],
         ),
+        floatingActionButton: FloatingActionButton(
+          onPressed: () {
+            context.push('/manager/maintenance/create');
+          },
+          backgroundColor: const Color(0xFF1B1B2F),
+          child: const Icon(Icons.add, color: Colors.white),
+        ),
         body: Column(
           children: [
             Container(
@@ -402,9 +421,15 @@ class _ManagerMaintenanceCard extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     Color statusColor = AppColors.primary;
-    if (request.status == 'in_progress' || request.status == 'assigned' || request.status == 'i' || request.status == 'a') statusColor = const Color(0xFFD97706);
-    if (request.status == 'resolved' || request.status == 'completed' || request.status == 'c') statusColor = AppColors.success;
-    if (request.status == 'rejected' || request.status == 'cancelled' || request.status == 'x') statusColor = AppColors.error;
+    final s = request.status.toLowerCase();
+    final isInProgress = s == 'in_progress' || s == 'assigned' || s == 'i' || s == 'a' || s == 'devam ediyor' || s == 'işlemde';
+    final isResolved = s == 'completed' || s == 'cancelled' || s == 'resolved' || s == 'rejected' || s == 'tamamlandı' || s == 'i̇ptal edildi' || s == 'c' || s == 'çözüldü';
+    final isCancelled = s == 'cancelled' || s == 'rejected' || s == 'x' || s == 'iptal edildi' || s == 'i̇ptal edildi';
+
+    if (isInProgress) statusColor = const Color(0xFFD97706);
+    if (isResolved) {
+      statusColor = isCancelled ? AppColors.error : AppColors.success;
+    }
 
     return GestureDetector(
       onTap: () {
@@ -544,7 +569,7 @@ class _ManagerMaintenanceCard extends StatelessWidget {
                 ),
               ),
             ],
-            if (request.status == 'pending' || request.status == 'Beklemede' || request.status == 'p') ...[
+            if (!isInProgress && !isResolved) ...[
               const Divider(height: 1),
               Padding(
                 padding: const EdgeInsets.all(12),

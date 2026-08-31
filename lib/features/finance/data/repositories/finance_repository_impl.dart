@@ -67,6 +67,11 @@ class FinanceRepositoryImpl implements FinanceRepository {
   }
 
   @override
+  @override 
+  Future<void> createPayment(Map<String, dynamic> data) async { 
+    await _remoteDataSource.createPayment(data); 
+  }
+
   Future<void> createDuePeriod(Map<String, dynamic> data) async {
     await _remoteDataSource.createDuePeriod(data);
   }

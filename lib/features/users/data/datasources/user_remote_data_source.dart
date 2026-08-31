@@ -15,7 +15,7 @@ class UserRemoteDataSourceImpl implements UserRemoteDataSource {
 
   @override
   Future<List<UserDto>> getUsers() async {
-    final response = await _dio.get('/users/');
+    final response = await _dio.get('/users/', queryParameters: {'page_size': 1000, 'limit': 1000});
     
     List<dynamic> data;
     if (response.data is Map && response.data['results'] != null) {
@@ -31,8 +31,21 @@ class UserRemoteDataSourceImpl implements UserRemoteDataSource {
 
   @override
   Future<UserDto> createUser(Map<String, dynamic> data) async {
-    final response = await _dio.post('/users/', data: data);
-    return UserDto.fromJson(response.data);
+    try {
+      final role = data['role'];
+      if (role == 'owner') {
+        await _dio.post('/owners/', data: data);
+        return UserDto(id: 0, phone: '', firstName: '', lastName: '', role: '', isActive: true, isStaff: false, isSuperuser: false, createdAt: DateTime.now().toIso8601String(), updatedAt: DateTime.now().toIso8601String());
+      } else if (role == 'tenant') {
+        await _dio.post('/tenants/', data: data);
+        return UserDto(id: 0, phone: '', firstName: '', lastName: '', role: '', isActive: true, isStaff: false, isSuperuser: false, createdAt: DateTime.now().toIso8601String(), updatedAt: DateTime.now().toIso8601String());
+      } else {
+        final response = await _dio.post('/users/', data: data);
+        return UserDto.fromJson(response.data);
+      }
+    } on DioException catch (e) {
+      throw Exception('API Hatası: ${e.response?.data}');
+    }
   }
 
   @override

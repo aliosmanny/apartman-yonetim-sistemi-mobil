@@ -6,9 +6,12 @@ abstract class PropertiesRemoteDataSource {
   Future<List<LeaseContractDto>> getContracts();
   Future<LeaseContractDto> createContract(Map<String, dynamic> data, {String? filePath});
   Future<List<ApartmentDto>> getApartments();
+  Future<ApartmentDto> createApartment(Map<String, dynamic> data);
   Future<List<BlockDto>> getBlocksForApartment(int aptId);
   Future<List<UnitDto>> getUnitsForBlock(int blockId);
+  Future<UnitDto> createUnit(int blockId, Map<String, dynamic> data);
   Future<List<OwnerDto>> getOwners();
+  Future<OwnerDto> createOwner(Map<String, dynamic> data);
   Future<List<TenantDto>> getTenants();
   Future<void> deleteApartment(int id);
   Future<ApartmentDto> updateApartment(int id, Map<String, dynamic> data);
@@ -64,6 +67,12 @@ class PropertiesRemoteDataSourceImpl implements PropertiesRemoteDataSource {
   }
 
   @override
+  Future<ApartmentDto> createApartment(Map<String, dynamic> data) async {
+    final res = await _dio.post('/apartments/', data: data);
+    return ApartmentDto.fromJson(res.data);
+  }
+
+  @override
   Future<List<BlockDto>> getBlocksForApartment(int aptId) async {
     final res = await _dio.get('/apartments/$aptId/blocks/');
     return _extractResults(res.data).map((e) => BlockDto.fromJson(e)).toList();
@@ -73,6 +82,18 @@ class PropertiesRemoteDataSourceImpl implements PropertiesRemoteDataSource {
   Future<List<UnitDto>> getUnitsForBlock(int blockId) async {
     final res = await _dio.get('/blocks/$blockId/units/');
     return _extractResults(res.data).map((e) => UnitDto.fromJson(e)).toList();
+  }
+
+  @override
+  Future<UnitDto> createUnit(int blockId, Map<String, dynamic> data) async {
+    final res = await _dio.post('/units/', data: data);
+    return UnitDto.fromJson(res.data);
+  }
+
+  @override
+  Future<OwnerDto> createOwner(Map<String, dynamic> data) async {
+    final res = await _dio.post('/owners/', data: data);
+    return OwnerDto.fromJson(res.data);
   }
 
   @override

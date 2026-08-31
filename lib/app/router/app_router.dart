@@ -48,6 +48,7 @@ import '../../features/finance/presentation/pages/debt_list_page.dart';
 import '../../features/finance/domain/models/debt.dart';
 import '../../features/maintenance/presentation/pages/maintenance_list_page.dart';
 import '../../features/maintenance/presentation/pages/create_maintenance_page.dart';
+import '../../features/maintenance/presentation/pages/manager_create_maintenance_page.dart';
 import '../../features/profile/presentation/pages/profile_page.dart';
 import '../../features/profile/presentation/pages/change_password_page.dart';
 import '../../features/announcements/presentation/pages/announcement_list_page.dart';
@@ -176,6 +177,17 @@ class AppRouter {
                   builder: (_, __) => const ManagerPropertiesPage(),
                   routes: [
                     GoRoute(
+                      path: 'apartment/add',
+                      builder: (context, state) {
+                        final extra = state.extra as Map<String, dynamic>;
+                        return ApartmentFormPage(
+                          cubit: extra['cubit'],
+                          apartment: extra['apartment'],
+                          isDuplicate: extra['isDuplicate'] ?? false,
+                        );
+                      },
+                    ),
+                    GoRoute(
                       path: 'apartment/edit',
                       name: 'managerEditApartment',
                       builder: (context, state) {
@@ -183,6 +195,17 @@ class AppRouter {
                         return ApartmentFormPage(
                           apartment: extra['apartment'],
                           cubit: extra['cubit'],
+                        );
+                      },
+                    ),
+                    GoRoute(
+                      path: 'block/add',
+                      builder: (context, state) {
+                        final extra = state.extra as Map<String, dynamic>;
+                        return BlockFormPage(
+                          cubit: extra['cubit'],
+                          block: extra['block'],
+                          isDuplicate: extra['isDuplicate'] ?? false,
                         );
                       },
                     ),
@@ -198,6 +221,17 @@ class AppRouter {
                       },
                     ),
                     GoRoute(
+                      path: 'unit/add',
+                      builder: (context, state) {
+                        final extra = state.extra as Map<String, dynamic>;
+                        return UnitFormPage(
+                          cubit: extra['cubit'],
+                          unit: extra['unit'],
+                          isDuplicate: extra['isDuplicate'] ?? false,
+                        );
+                      },
+                    ),
+                    GoRoute(
                       path: 'unit/edit',
                       name: 'managerEditUnit',
                       builder: (context, state) {
@@ -205,6 +239,18 @@ class AppRouter {
                         return UnitFormPage(
                           unit: extra['unit'],
                           cubit: extra['cubit'],
+                        );
+                      },
+                    ),
+
+                    GoRoute(
+                      path: 'owner/add',
+                      name: 'managerAddOwner',
+                      builder: (context, state) {
+                        final extra = state.extra as Map<String, dynamic>;
+                        return OwnerFormPage(
+                          cubit: extra['cubit'],
+                          userCubit: extra['userCubit'],
                         );
                       },
                     ),
@@ -216,9 +262,11 @@ class AppRouter {
                         return OwnerFormPage(
                           owner: extra['owner'],
                           cubit: extra['cubit'],
+                          userCubit: extra['userCubit'],
                         );
                       },
                     ),
+
                     GoRoute(
                       path: 'tenant/edit',
                       name: 'managerEditTenant',
@@ -261,7 +309,16 @@ class AppRouter {
                     GoRoute(
                       path: 'add',
                       name: 'managerFinanceAdd',
-                      builder: (_, __) => const ManagerAddExpensePage(),
+                      builder: (_, state) {
+                        final cubit = state.extra as FinanceCubit?;
+                        if (cubit != null) {
+                          return BlocProvider.value(
+                            value: cubit,
+                            child: const ManagerAddExpensePage(),
+                          );
+                        }
+                        return const ManagerAddExpensePage();
+                      },
                     ),
                     GoRoute(
                       path: 'edit_due_period',
@@ -346,6 +403,11 @@ class AppRouter {
                   path: '/manager/maintenance',
                   name: RouteNames.managerMaintenance,
                   builder: (_, __) => const ManagerMaintenancePage(),
+                ),
+                GoRoute(
+                  path: '/manager/maintenance/create',
+                  name: 'managerMaintenanceCreate',
+                  builder: (_, __) => const ManagerCreateMaintenancePage(),
                 ),
                 GoRoute(
                   path: '/manager/maintenance/:id',

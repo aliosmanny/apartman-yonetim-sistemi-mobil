@@ -51,6 +51,21 @@ class ApiException implements Exception {
         final errors = data['non_field_errors'];
         if (errors is List && errors.isNotEmpty) return errors.first.toString();
       }
+      
+      // For DRF: collect all string list values from the map if they look like errors
+      final errorFields = <String>[];
+      data.forEach((key, value) {
+        if (key != 'message' && key != 'detail' && key != 'non_field_errors') {
+          if (value is List && value.isNotEmpty) {
+            errorFields.add('$key: ${value.join(", ")}');
+          } else if (value is String) {
+            errorFields.add('$key: $value');
+          }
+        }
+      });
+      if (errorFields.isNotEmpty) {
+        return errorFields.join('\n');
+      }
     }
     switch (statusCode) {
       case 400:

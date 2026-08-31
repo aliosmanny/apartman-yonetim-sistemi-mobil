@@ -16,6 +16,8 @@ class UserDto {
   final String updatedAt;
   final List<String> ownedUnits;
   final List<String> rentedUnits;
+  final int? managedApartmentId;
+  final String? managedApartmentName;
 
   UserDto({
     required this.id,
@@ -33,6 +35,8 @@ class UserDto {
     required this.updatedAt,
     this.ownedUnits = const [],
     this.rentedUnits = const [],
+    this.managedApartmentId,
+    this.managedApartmentName,
   });
 
   factory UserDto.fromJson(Map<String, dynamic> json) {
@@ -52,6 +56,8 @@ class UserDto {
       updatedAt: json['updated_at'] ?? DateTime.now().toIso8601String(),
       ownedUnits: (json['owned_units'] as List?)?.map((e) => e.toString()).toList() ?? [],
       rentedUnits: (json['rented_units'] as List?)?.map((e) => e.toString()).toList() ?? [],
+      managedApartmentId: json['managed_apartment_id'] as int?,
+      managedApartmentName: json['managed_apartment_name'] as String?,
     );
   }
 
@@ -72,6 +78,8 @@ class UserDto {
       updatedAt: DateTime.parse(updatedAt),
       ownedUnits: ownedUnits,
       rentedUnits: rentedUnits,
+      managedApartmentId: managedApartmentId,
+      managedApartmentName: managedApartmentName,
     );
   }
 }

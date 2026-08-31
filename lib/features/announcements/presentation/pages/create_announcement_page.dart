@@ -1,8 +1,15 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_bloc/flutter_bloc.dart';
 import '../../../../app/theme/app_colors.dart';
 import '../../../../app/theme/app_text_styles.dart';
 import '../controllers/announcement_cubit.dart';
 import '../../domain/models/announcement.dart';
+import '../../../../core/di/injection.dart';
+import '../../../auth/presentation/controllers/auth_cubit.dart';
+import '../../../auth/presentation/controllers/auth_state.dart';
+import '../../../auth/domain/models/auth_user.dart';
+import '../../../properties/presentation/controllers/properties_cubit.dart';
+import '../../../properties/presentation/controllers/properties_state.dart';
 
 class CreateAnnouncementPage extends StatefulWidget {
   final AnnouncementCubit cubit;
@@ -44,6 +51,48 @@ class _CreateAnnouncementPageState extends State<CreateAnnouncementPage> {
     }
   }
 
+  bool _isManager = false;
+  int? _selectedApartmentId;
+  late List<DropdownMenuItem<int>> _apartmentItems = [];
+
+  @override
+  void didChangeDependencies() {
+    super.didChangeDependencies();
+    
+    final authState = context.read<AuthCubit>().state;
+    if (authState is AuthAuthenticated) {
+      _isManager = authState.user.role == UserRole.apartmentManager;
+    }
+
+    final propState = sl<PropertiesCubit>().state;
+    final apts = <int, String>{};
+    
+    if (propState is PropertiesLoaded) {
+      for (var a in propState.apartments) {
+        apts[a.id] = a.name;
+      }
+    }
+
+    // Add existing apartment if editing
+    if (widget.announcementToEdit != null && widget.announcementToEdit!.apartmentId != null && !apts.containsKey(widget.announcementToEdit!.apartmentId)) {
+      apts[widget.announcementToEdit!.apartmentId!] = widget.announcementToEdit!.apartmentName ?? 'Apartman ${widget.announcementToEdit!.apartmentId}';
+    }
+    
+    _apartmentItems = apts.entries.map((e) => DropdownMenuItem<int>(value: e.key, child: Text(e.value))).toList();
+    
+    if (widget.announcementToEdit != null) {
+      _selectedApartmentId = widget.announcementToEdit!.apartmentId;
+    } else {
+      if (_isManager || apts.length == 1) {
+        if (apts.isNotEmpty && _selectedApartmentId == null) {
+          _selectedApartmentId = apts.keys.first;
+        }
+      } else if (_selectedApartmentId == null && apts.isNotEmpty) {
+        _selectedApartmentId = apts.keys.first;
+      }
+    }
+  }
+
   @override
   void dispose() {
     _titleController.dispose();
@@ -62,12 +111,14 @@ class _CreateAnnouncementPageState extends State<CreateAnnouncementPage> {
           title: _titleController.text.trim(),
           content: _contentController.text.trim(),
           status: _selectedStatus,
+          apartmentId: _selectedApartmentId,
         );
       } else {
         await widget.cubit.createAnnouncement(
           title: _titleController.text.trim(),
           content: _contentController.text.trim(),
           status: _selectedStatus,
+          apartmentId: _selectedApartmentId,
         );
       }
 
@@ -82,9 +133,13 @@ class _CreateAnnouncementPageState extends State<CreateAnnouncementPage> {
       }
     } catch (e) {
       if (mounted) {
+        String msg = e.toString();
+        if (msg.startsWith('Exception: ApiException(status:')) {
+          msg = msg.split('message:').last.replaceAll(')', '').trim();
+        }
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
-            content: Text('Hata: $e'),
+            content: Text('Hata: $msg'),
             backgroundColor: AppColors.error,
           ),
         );
@@ -99,7 +154,6 @@ class _CreateAnnouncementPageState extends State<CreateAnnouncementPage> {
   @override
   Widget build(BuildContext context) {
     final isEditing = widget.announcementToEdit != null;
-    final aptName = widget.announcementToEdit?.apartmentName ?? 'Gülbahçe Evleri';
 
     return Scaffold(
       backgroundColor: AppColors.background,
@@ -116,18 +170,17 @@ class _CreateAnnouncementPageState extends State<CreateAnnouncementPage> {
             children: [
               Text('Apartman / Site', style: AppTextStyles.labelSmall.copyWith(color: AppColors.textSecondary)),
               const SizedBox(height: 8),
-              DropdownButtonFormField<String>(
-                value: 'default',
+              DropdownButtonFormField<int>(
+                value: _apartmentItems.any((e) => e.value == _selectedApartmentId) ? _selectedApartmentId : null,
                 decoration: const InputDecoration(
+                  hintText: '--- Apartman Seçiniz ---',
                   filled: true,
                   fillColor: AppColors.surface,
                   border: OutlineInputBorder(borderRadius: BorderRadius.all(Radius.circular(12)), borderSide: BorderSide(color: AppColors.border)),
                   enabledBorder: OutlineInputBorder(borderRadius: BorderRadius.all(Radius.circular(12)), borderSide: BorderSide(color: AppColors.border)),
                 ),
-                items: [
-                  DropdownMenuItem(value: 'default', child: Text(aptName)),
-                ],
-                onChanged: null, // Disabled for now, as user said they will fetch from DB later
+                items: _apartmentItems,
+                onChanged: (_isManager || _apartmentItems.length <= 1) ? null : (val) => setState(() => _selectedApartmentId = val),
               ),
               const SizedBox(height: 20),
 

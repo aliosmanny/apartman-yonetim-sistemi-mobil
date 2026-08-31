@@ -28,6 +28,8 @@ class MaintenanceRepositoryImpl implements MaintenanceRepository {
     String? priority,
     int? unitId,
     XFile? image,
+    String? status,
+    int? assignedToStaffId,
   }) async {
     final data = <String, dynamic>{
       'title': title,
@@ -36,6 +38,12 @@ class MaintenanceRepositoryImpl implements MaintenanceRepository {
     };
     if (unitId != null) {
       data['unit'] = unitId;
+    }
+    if (status != null) {
+      data['status'] = status;
+    }
+    if (assignedToStaffId != null) {
+      data['assigned_to'] = assignedToStaffId;
     }
     
     final dto = await _remoteDataSource.createMaintenanceRequest(data, image: image);

@@ -1,5 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
+import '../../../../core/constants/turkey_cities.dart';
+
 import '../../../../app/theme/app_colors.dart';
 import '../../../../app/theme/app_text_styles.dart';
 import '../../domain/models/models.dart';
@@ -9,8 +11,9 @@ import '../controllers/properties_state.dart';
 class ApartmentFormPage extends StatefulWidget {
   final AppApartment? apartment;
   final PropertiesCubit cubit;
+  final bool isDuplicate;
 
-  const ApartmentFormPage({super.key, this.apartment, required this.cubit});
+  const ApartmentFormPage({super.key, this.apartment, required this.cubit, this.isDuplicate = false});
 
   @override
   State<ApartmentFormPage> createState() => _ApartmentFormPageState();
@@ -20,8 +23,8 @@ class _ApartmentFormPageState extends State<ApartmentFormPage> {
   final _formKey = GlobalKey<FormState>();
   
   late String _name;
-  late String _city;
-  late String _district;
+  String? _city;
+  String? _district;
   late String _address;
   late double _lateFee;
   
@@ -32,8 +35,13 @@ class _ApartmentFormPageState extends State<ApartmentFormPage> {
   void initState() {
     super.initState();
     _name = widget.apartment?.name ?? '';
-    _city = widget.apartment?.province ?? '';
-    _district = widget.apartment?.district ?? '';
+    if (widget.isDuplicate) {
+      _name = '$_name (Kopya)';
+    }
+    _city = widget.apartment?.province;
+    if (_city != null && _city!.isEmpty) _city = null;
+    _district = widget.apartment?.district;
+    if (_district != null && _district!.isEmpty) _district = null;
     _address = widget.apartment?.address ?? '';
     _lateFee = widget.apartment?.monthlyLateFeeRate ?? 0.0;
     
@@ -59,19 +67,28 @@ class _ApartmentFormPageState extends State<ApartmentFormPage> {
       _formKey.currentState!.save();
     }
     
-    if (widget.apartment != null) {
+    final data = {
+      'name': _name,
+      'city': _city ?? '',
+      'district': _district ?? '',
+      'address': _address,
+      'monthly_late_fee_rate': _lateFee,
+    };
+    
+    if (widget.apartment != null && !widget.isDuplicate) {
       widget.cubit.saveApartmentWithBlocks(
         widget.apartment!.id,
-        {
-          'name': _name,
-          'city': _city,
-          'district': _district,
-          'address': _address,
-          'monthly_late_fee_rate': _lateFee,
-        },
+        data,
         _blocks,
         _deletedBlockIds,
       );
+    } else {
+      final duplicateBlocks = _blocks.map((b) => {
+        'name': b['name'],
+        'floor_count': b['floor_count'],
+        'unit_count': b['unit_count'],
+      }).toList();
+      widget.cubit.createApartmentWithBlocks(data, duplicateBlocks);
     }
     Navigator.pop(context);
   }
@@ -82,7 +99,7 @@ class _ApartmentFormPageState extends State<ApartmentFormPage> {
       length: 2,
       child: Scaffold(
         appBar: AppBar(
-          title: Text(widget.apartment == null ? 'Yeni Apartman' : 'Apartman Düzenle'),
+          title: Text(widget.apartment == null ? 'Yeni Apartman' : (widget.isDuplicate ? 'Yeni Apartman (Çoğalt)' : 'Apartman Düzenle')),
           bottom: const TabBar(
             tabs: [
               Tab(text: 'Genel'),
@@ -100,7 +117,7 @@ class _ApartmentFormPageState extends State<ApartmentFormPage> {
           padding: const EdgeInsets.all(16),
           child: Row(
             children: [
-              if (widget.apartment != null)
+              if (widget.apartment != null && !widget.isDuplicate)
                 Expanded(
                   child: ElevatedButton(
                     onPressed: () {
@@ -111,7 +128,7 @@ class _ApartmentFormPageState extends State<ApartmentFormPage> {
                     child: const Text('Sil Apartman / Site'),
                   ),
                 ),
-              if (widget.apartment != null) const SizedBox(width: 16),
+              if (widget.apartment != null && !widget.isDuplicate) const SizedBox(width: 16),
               Expanded(
                 child: ElevatedButton(
                   onPressed: _save,
@@ -139,20 +156,39 @@ class _ApartmentFormPageState extends State<ApartmentFormPage> {
             onSaved: (v) => _name = v!,
           ),
           const SizedBox(height: 16),
-          TextFormField(
-            initialValue: _city,
-            decoration: const InputDecoration(labelText: 'İl *'),
-            validator: (v) => v!.isEmpty ? 'Zorunlu alan' : null,
-            onChanged: (v) => _city = v,
-            onSaved: (v) => _city = v!,
+          DropdownButtonFormField<String>(
+            value: (_city != null && TurkeyCities.citiesAndDistricts.keys.contains(_city)) ? _city : null,
+            decoration: const InputDecoration(
+              labelText: 'İl *',
+              hintText: '--- İl Seçiniz ---',
+            ),
+            items: TurkeyCities.citiesAndDistricts.keys.map((c) => DropdownMenuItem(value: c, child: Text(c))).toList(),
+            validator: (v) => v == null ? 'Zorunlu alan' : null,
+            onChanged: (v) {
+              setState(() {
+                _city = v;
+                _district = null; // Reset district when city changes
+              });
+            },
+            onSaved: (v) => _city = v,
           ),
           const SizedBox(height: 16),
-          TextFormField(
-            initialValue: _district,
-            decoration: const InputDecoration(labelText: 'İlçe *'),
-            validator: (v) => v!.isEmpty ? 'Zorunlu alan' : null,
-            onChanged: (v) => _district = v,
-            onSaved: (v) => _district = v!,
+          DropdownButtonFormField<String>(
+            value: (_city != null && _district != null && TurkeyCities.citiesAndDistricts[_city]!.contains(_district)) ? _district : null,
+            decoration: const InputDecoration(
+              labelText: 'İlçe *',
+              hintText: '--- Önce İl Seçiniz ---',
+            ),
+            items: _city == null 
+                ? [] 
+                : TurkeyCities.citiesAndDistricts[_city]!.map((d) => DropdownMenuItem(value: d, child: Text(d))).toList(),
+            validator: (v) => v == null ? 'Zorunlu alan' : null,
+            onChanged: (v) {
+              setState(() {
+                _district = v;
+              });
+            },
+            onSaved: (v) => _district = v,
           ),
           const SizedBox(height: 16),
           TextFormField(

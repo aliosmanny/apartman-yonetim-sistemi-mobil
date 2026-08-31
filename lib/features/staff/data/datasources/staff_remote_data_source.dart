@@ -21,7 +21,9 @@ class StaffRemoteDataSourceImpl implements StaffRemoteDataSource {
       final response = await _apiClient.dio.post('/staff/', data: data);
       return StaffDto.fromJson(response.data as Map<String, dynamic>);
     } catch (e) {
-      if (e is DioException) throw ApiException.fromDioException(e);
+      if (e is DioException) {
+        throw ApiException(message: 'Hata detayı: ${e.response?.data}');
+      }
       throw ApiException(message: 'Veri eklenirken hata: $e');
     }
   }

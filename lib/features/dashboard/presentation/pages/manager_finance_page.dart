@@ -557,29 +557,53 @@ class _ManagerFinanceViewState extends State<_ManagerFinanceView> {
     }
     return RefreshIndicator(
       onRefresh: () => context.read<FinanceCubit>().fetchManagerFinance(),
-      child: ListView.builder(
+      child: ListView.separated(
         padding: const EdgeInsets.all(16),
         itemCount: periods.length,
+        separatorBuilder: (_, __) => const SizedBox(height: 12),
         itemBuilder: (context, index) {
           final p = periods[index];
           return Card(
-            margin: const EdgeInsets.only(bottom: 12),
-            child: ListTile(
-              title: Text(p.periodDisplay, style: AppTextStyles.titleMedium),
-              subtitle: Text(p.apartmentName, style: AppTextStyles.bodySmall),
-              trailing: Row(
-                mainAxisSize: MainAxisSize.min,
-                children: [
-                  Text('₺${p.amount.toStringAsFixed(2)}', style: AppTextStyles.titleMedium),
-                  IconButton(
-                    icon: const Icon(Icons.delete_outline, color: AppColors.error),
-                    onPressed: () => _showDeleteDialog(context, 'due_period', p.id, p.periodDisplay),
-                  ),
-                  IconButton(
-                    icon: const Icon(Icons.edit_outlined, color: AppColors.primary),
-                    onPressed: () => context.pushNamed('managerEditDuePeriod', extra: {'period': p, 'cubit': context.read<FinanceCubit>()}),
-                  ),
-                ],
+            child: InkWell(
+              borderRadius: BorderRadius.circular(24),
+              onTap: () => context.pushNamed('managerEditDuePeriod', extra: {'period': p, 'cubit': context.read<FinanceCubit>()}),
+              child: Padding(
+                padding: const EdgeInsets.all(16),
+                child: Row(
+                  children: [
+                    Container(
+                      padding: const EdgeInsets.all(12),
+                      decoration: BoxDecoration(color: AppColors.primary.withValues(alpha: 0.1), borderRadius: BorderRadius.circular(16)),
+                      child: const Icon(Icons.calendar_month_rounded, color: AppColors.primary),
+                    ),
+                    const SizedBox(width: 16),
+                    Expanded(
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          Text(p.periodDisplay, style: AppTextStyles.titleMedium.copyWith(fontWeight: FontWeight.bold)),
+                          const SizedBox(height: 4),
+                          Text(p.apartmentName, style: AppTextStyles.bodySmall.copyWith(color: AppColors.textSecondary)),
+                        ],
+                      ),
+                    ),
+                    Column(
+                      crossAxisAlignment: CrossAxisAlignment.end,
+                      children: [
+                        Text('₺${p.amount.toStringAsFixed(2)}', style: AppTextStyles.titleLarge.copyWith(fontWeight: FontWeight.w800)),
+                        const SizedBox(height: 4),
+                        Row(
+                          children: [
+                            GestureDetector(
+                              onTap: () => _showDeleteDialog(context, 'due_period', p.id, p.periodDisplay),
+                              child: const Icon(Icons.delete_outline, color: AppColors.error, size: 20),
+                            ),
+                          ],
+                        )
+                      ],
+                    ),
+                  ],
+                ),
               ),
             ),
           );
@@ -594,101 +618,91 @@ class _ManagerFinanceViewState extends State<_ManagerFinanceView> {
     }
     return RefreshIndicator(
       onRefresh: () => context.read<FinanceCubit>().fetchManagerFinance(),
-      child: ListView.builder(
+      child: ListView.separated(
         padding: const EdgeInsets.all(16),
         itemCount: debts.length,
+        separatorBuilder: (_, __) => const SizedBox(height: 12),
         itemBuilder: (context, index) {
           final debt = debts[index];
           final isOverdue = debt.isOverdue;
           return Card(
-            margin: const EdgeInsets.only(bottom: 12),
-            shape: RoundedRectangleBorder(
-              borderRadius: BorderRadius.circular(12),
-              side: BorderSide(color: isOverdue ? AppColors.error.withValues(alpha: 0.5) : Colors.transparent),
-            ),
-            child: Padding(
-              padding: const EdgeInsets.all(16),
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Row(
-                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      Expanded(
-                        child: Column(
-                          crossAxisAlignment: CrossAxisAlignment.start,
-                          children: [
-                            Text(debt.description, style: AppTextStyles.titleMedium),
-                            const SizedBox(height: 4),
-                            Text(debt.unitDisplay ?? 'Ortak Alan', style: AppTextStyles.bodySmall),
-                          ],
-                        ),
-                      ),
-                      const SizedBox(width: 16),
-                      Column(
-                        crossAxisAlignment: CrossAxisAlignment.end,
+            shape: isOverdue ? RoundedRectangleBorder(borderRadius: BorderRadius.circular(24), side: BorderSide(color: AppColors.error.withValues(alpha: 0.5), width: 1.5)) : null,
+            child: InkWell(
+              borderRadius: BorderRadius.circular(24),
+              onTap: () => context.pushNamed('managerEditDebt', extra: {'debt': debt, 'cubit': context.read<FinanceCubit>()}),
+              child: Padding(
+                padding: const EdgeInsets.all(16),
+                child: Row(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Container(
+                      padding: const EdgeInsets.all(12),
+                      decoration: BoxDecoration(color: (isOverdue ? AppColors.error : AppColors.warning).withValues(alpha: 0.1), borderRadius: BorderRadius.circular(16)),
+                      child: Icon(Icons.account_balance_wallet_rounded, color: isOverdue ? AppColors.error : AppColors.warning),
+                    ),
+                    const SizedBox(width: 16),
+                    Expanded(
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
                         children: [
-                          Text('₺${debt.totalAmount.toStringAsFixed(2)}', style: AppTextStyles.titleMedium.copyWith(color: AppColors.primary, fontWeight: FontWeight.bold)),
-                          if (debt.isPaid)
-                            Text(
-                              '✓ Ödendi',
-                              style: AppTextStyles.labelSmall.copyWith(color: AppColors.success, fontWeight: FontWeight.bold),
-                            )
-                          else if (isOverdue)
-                            Text(
-                              'Gecikmiş',
-                              style: AppTextStyles.labelSmall.copyWith(color: AppColors.error, fontWeight: FontWeight.bold),
-                            ),
+                          Text(debt.description, style: AppTextStyles.titleMedium.copyWith(fontWeight: FontWeight.bold)),
+                          const SizedBox(height: 4),
+                          Text(debt.unitDisplay ?? 'Ortak Alan', style: AppTextStyles.bodySmall.copyWith(color: AppColors.textSecondary)),
+                          const SizedBox(height: 8),
+                          Row(
+                            children: [
+                              Container(
+                                padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+                                decoration: BoxDecoration(color: (isOverdue ? AppColors.error : AppColors.success).withValues(alpha: 0.1), borderRadius: BorderRadius.circular(8)),
+                                child: Text(debt.statusDisplay, style: TextStyle(fontSize: 10, fontWeight: FontWeight.bold, color: isOverdue ? AppColors.error : AppColors.success)),
+                              ),
+                              const SizedBox(width: 8),
+                              if (isOverdue)
+                                Container(
+                                  padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+                                  decoration: BoxDecoration(color: AppColors.error.withValues(alpha: 0.1), borderRadius: BorderRadius.circular(8)),
+                                  child: Text('Gecikme: ₺${debt.lateFeeAmount.toStringAsFixed(2)}', style: TextStyle(fontSize: 10, fontWeight: FontWeight.bold, color: AppColors.error)),
+                                ),
+                            ],
+                          )
                         ],
                       ),
-                    ],
-                  ),
-                  const SizedBox(height: 12),
-                  const Divider(height: 1),
-                  const SizedBox(height: 8),
-                  Row(
-                    mainAxisAlignment: MainAxisAlignment.end,
-                    children: [
-                      if (!debt.isPaid) ...[
-                        ElevatedButton.icon(
-                          style: ElevatedButton.styleFrom(
-                            backgroundColor: Colors.deepPurple,
-                            foregroundColor: Colors.white,
-                            padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 0),
-                            minimumSize: const Size(0, 32),
-                            shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
-                          ),
-                          icon: const Icon(Icons.payment, size: 14),
-                          label: const Text('Ödeme Yap', style: TextStyle(fontSize: 12, fontWeight: FontWeight.bold)),
-                          onPressed: () {
-                            showDialog(
-                              context: context,
-                              builder: (ctx) => BlocProvider.value(
-                                value: context.read<FinanceCubit>(),
-                                child: PaymentDialog(debt: debt),
+                    ),
+                    Column(
+                      crossAxisAlignment: CrossAxisAlignment.end,
+                      children: [
+                        Text('₺${debt.totalAmount.toStringAsFixed(2)}', style: AppTextStyles.titleLarge.copyWith(fontWeight: FontWeight.w800, color: isOverdue ? AppColors.error : AppColors.textPrimary)),
+                        const SizedBox(height: 12),
+                        Row(
+                          children: [
+                            if (debt.status != 'paid')
+                              GestureDetector(
+                                onTap: () {
+                                  showDialog(
+                                    context: context,
+                                    builder: (ctx) => BlocProvider.value(
+                                      value: context.read<FinanceCubit>(),
+                                      child: PaymentDialog(debt: debt),
+                                    ),
+                                  );
+                                },
+                                child: Container(
+                                  padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
+                                  decoration: BoxDecoration(color: AppColors.primary, borderRadius: BorderRadius.circular(10)),
+                                  child: const Text('Öde', style: TextStyle(color: Colors.white, fontSize: 12, fontWeight: FontWeight.bold)),
+                                ),
                               ),
-                            );
-                          },
-                        ),
-                        const SizedBox(width: 8),
+                            const SizedBox(width: 12),
+                            GestureDetector(
+                              onTap: () => _showDeleteDialog(context, 'debt', debt.id, debt.description),
+                              child: const Icon(Icons.delete_outline, color: AppColors.error, size: 20),
+                            ),
+                          ],
+                        )
                       ],
-                      IconButton(
-                        icon: const Icon(Icons.edit_outlined, color: AppColors.primary, size: 20),
-                        padding: const EdgeInsets.all(8),
-                        constraints: const BoxConstraints(),
-                        onPressed: () => context.pushNamed('managerEditDebt', extra: {'debt': debt, 'cubit': context.read<FinanceCubit>()}),
-                      ),
-                      const SizedBox(width: 8),
-                      IconButton(
-                        icon: const Icon(Icons.delete_outline, color: AppColors.error, size: 20),
-                        padding: const EdgeInsets.all(8),
-                        constraints: const BoxConstraints(),
-                        onPressed: () => _showDeleteDialog(context, 'debt', debt.id, debt.description),
-                      ),
-                    ],
-                  ),
-                ],
+                    ),
+                  ],
+                ),
               ),
             ),
           );
@@ -699,36 +713,55 @@ class _ManagerFinanceViewState extends State<_ManagerFinanceView> {
 
   Widget _buildPaymentsTab(BuildContext context, List<Payment> payments) {
     if (payments.isEmpty) {
-      return Center(child: Text('Ödeme kaydı bulunmuyor.', style: AppTextStyles.bodyMedium));
+      return Center(child: Text('Ödeme bulunmuyor.', style: AppTextStyles.bodyMedium));
     }
     return RefreshIndicator(
       onRefresh: () => context.read<FinanceCubit>().fetchManagerFinance(),
-      child: ListView.builder(
+      child: ListView.separated(
         padding: const EdgeInsets.all(16),
         itemCount: payments.length,
+        separatorBuilder: (_, __) => const SizedBox(height: 12),
         itemBuilder: (context, index) {
           final p = payments[index];
-          final dateStr = DateFormat('dd MMM yyyy HH:mm').format(p.paymentDate);
+          final dateStr = DateFormat('dd MMM HH:mm').format(p.paymentDate);
           return Card(
-            margin: const EdgeInsets.only(bottom: 12),
-            child: ListTile(
-              title: Text(p.debtDescription ?? 'Ödeme', style: AppTextStyles.titleMedium),
-              subtitle: Text('${p.unitDisplay ?? ''}\n$dateStr', style: AppTextStyles.bodySmall),
-              trailing: Row(
-                mainAxisSize: MainAxisSize.min,
-                children: [
-                  Text('₺${p.amount.toStringAsFixed(2)}', style: AppTextStyles.titleMedium.copyWith(color: AppColors.success)),
-                  IconButton(
-                    icon: const Icon(Icons.delete_outline, color: AppColors.error),
-                    onPressed: () => _showDeleteDialog(context, 'payment', p.id, 'Ödeme ${p.id}'),
-                  ),
-                  IconButton(
-                    icon: const Icon(Icons.edit_outlined, color: AppColors.primary),
-                    onPressed: () => ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('Düzenleme özelliği yakında eklenecek'))),
-                  ),
-                ],
+            child: InkWell(
+              borderRadius: BorderRadius.circular(24),
+              onTap: () => ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('Düzenleme özelliği yakında eklenecek'))),
+              child: Padding(
+                padding: const EdgeInsets.all(16),
+                child: Row(
+                  children: [
+                    Container(
+                      padding: const EdgeInsets.all(12),
+                      decoration: BoxDecoration(color: AppColors.success.withValues(alpha: 0.1), borderRadius: BorderRadius.circular(16)),
+                      child: const Icon(Icons.arrow_downward_rounded, color: AppColors.success),
+                    ),
+                    const SizedBox(width: 16),
+                    Expanded(
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          Text(p.debtDescription ?? 'Ödeme', style: AppTextStyles.titleMedium.copyWith(fontWeight: FontWeight.bold)),
+                          const SizedBox(height: 4),
+                          Text('${p.unitDisplay ?? 'Bilinmiyor'} • $dateStr', style: AppTextStyles.bodySmall.copyWith(color: AppColors.textSecondary)),
+                        ],
+                      ),
+                    ),
+                    Column(
+                      crossAxisAlignment: CrossAxisAlignment.end,
+                      children: [
+                        Text('+ ₺${p.amount.toStringAsFixed(2)}', style: AppTextStyles.titleLarge.copyWith(fontWeight: FontWeight.w800, color: AppColors.success)),
+                        const SizedBox(height: 8),
+                        GestureDetector(
+                          onTap: () => _showDeleteDialog(context, 'payment', p.id, 'Ödeme ${p.id}'),
+                          child: const Icon(Icons.delete_outline, color: AppColors.error, size: 20),
+                        ),
+                      ],
+                    ),
+                  ],
+                ),
               ),
-              isThreeLine: true,
             ),
           );
         },
@@ -737,34 +770,56 @@ class _ManagerFinanceViewState extends State<_ManagerFinanceView> {
   }
 
   Widget _buildIncomesTab(BuildContext context, List<Income> incomes) {
-    if (incomes.isEmpty) {
-      return Center(child: Text('Gelir kaydı bulunmuyor.', style: AppTextStyles.bodyMedium));
-    }
+    if (incomes.isEmpty) return Center(child: Text('Gelir kaydı bulunmuyor.', style: AppTextStyles.bodyMedium));
     return RefreshIndicator(
       onRefresh: () => context.read<FinanceCubit>().fetchManagerFinance(),
-      child: ListView.builder(
+      child: ListView.separated(
         padding: const EdgeInsets.all(16),
         itemCount: incomes.length,
+        separatorBuilder: (_, __) => const SizedBox(height: 12),
         itemBuilder: (context, index) {
           final inc = incomes[index];
           return Card(
-            margin: const EdgeInsets.only(bottom: 12),
-            child: ListTile(
-              title: Text(inc.title, style: AppTextStyles.titleMedium),
-              subtitle: Text(inc.categoryDisplay, style: AppTextStyles.bodySmall),
-              trailing: Row(
-                mainAxisSize: MainAxisSize.min,
-                children: [
-                  Text('+₺${inc.amount.toStringAsFixed(2)}', style: AppTextStyles.titleMedium.copyWith(color: AppColors.success)),
-                  IconButton(
-                    icon: const Icon(Icons.delete_outline, color: AppColors.error),
-                    onPressed: () => _showDeleteDialog(context, 'income', inc.id, inc.title),
-                  ),
-                  IconButton(
-                    icon: const Icon(Icons.edit_outlined, color: AppColors.primary),
-                    onPressed: () => context.pushNamed('managerEditTransaction', extra: {'income': inc, 'cubit': context.read<FinanceCubit>()}),
-                  ),
-                ],
+            child: InkWell(
+              borderRadius: BorderRadius.circular(24),
+              onTap: () => context.pushNamed('managerEditTransaction', extra: {'income': inc, 'cubit': context.read<FinanceCubit>()}),
+              child: Padding(
+                padding: const EdgeInsets.all(16),
+                child: Row(
+                  children: [
+                    Container(
+                      padding: const EdgeInsets.all(12),
+                      decoration: BoxDecoration(color: AppColors.success.withValues(alpha: 0.1), borderRadius: BorderRadius.circular(16)),
+                      child: const Icon(Icons.trending_up_rounded, color: AppColors.success),
+                    ),
+                    const SizedBox(width: 16),
+                    Expanded(
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          Text(inc.title, style: AppTextStyles.titleMedium.copyWith(fontWeight: FontWeight.bold)),
+                          const SizedBox(height: 4),
+                          Container(
+                            padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 2),
+                            decoration: BoxDecoration(color: AppColors.surfaceVariant, borderRadius: BorderRadius.circular(6)),
+                            child: Text(inc.categoryDisplay, style: TextStyle(fontSize: 10, color: AppColors.textSecondary, fontWeight: FontWeight.bold)),
+                          ),
+                        ],
+                      ),
+                    ),
+                    Column(
+                      crossAxisAlignment: CrossAxisAlignment.end,
+                      children: [
+                        Text('+ ₺${inc.amount.toStringAsFixed(2)}', style: AppTextStyles.titleLarge.copyWith(fontWeight: FontWeight.w800, color: AppColors.success)),
+                        const SizedBox(height: 8),
+                        GestureDetector(
+                          onTap: () => _showDeleteDialog(context, 'income', inc.id, inc.title),
+                          child: const Icon(Icons.delete_outline, color: AppColors.error, size: 20),
+                        ),
+                      ],
+                    ),
+                  ],
+                ),
               ),
             ),
           );
@@ -774,34 +829,56 @@ class _ManagerFinanceViewState extends State<_ManagerFinanceView> {
   }
 
   Widget _buildExpensesTab(BuildContext context, List<Expense> expenses) {
-    if (expenses.isEmpty) {
-      return Center(child: Text('Gider kaydı bulunmuyor.', style: AppTextStyles.bodyMedium));
-    }
+    if (expenses.isEmpty) return Center(child: Text('Gider kaydı bulunmuyor.', style: AppTextStyles.bodyMedium));
     return RefreshIndicator(
       onRefresh: () => context.read<FinanceCubit>().fetchManagerFinance(),
-      child: ListView.builder(
+      child: ListView.separated(
         padding: const EdgeInsets.all(16),
         itemCount: expenses.length,
+        separatorBuilder: (_, __) => const SizedBox(height: 12),
         itemBuilder: (context, index) {
           final exp = expenses[index];
           return Card(
-            margin: const EdgeInsets.only(bottom: 12),
-            child: ListTile(
-              title: Text(exp.title, style: AppTextStyles.titleMedium),
-              subtitle: Text(exp.categoryDisplay, style: AppTextStyles.bodySmall),
-              trailing: Row(
-                mainAxisSize: MainAxisSize.min,
-                children: [
-                  Text('-₺${exp.amount.toStringAsFixed(2)}', style: AppTextStyles.titleMedium.copyWith(color: AppColors.error)),
-                  IconButton(
-                    icon: const Icon(Icons.delete_outline, color: AppColors.error),
-                    onPressed: () => _showDeleteDialog(context, 'expense', exp.id, exp.title),
-                  ),
-                  IconButton(
-                    icon: const Icon(Icons.edit_outlined, color: AppColors.primary),
-                    onPressed: () => context.pushNamed('managerEditTransaction', extra: {'expense': exp, 'cubit': context.read<FinanceCubit>()}),
-                  ),
-                ],
+            child: InkWell(
+              borderRadius: BorderRadius.circular(24),
+              onTap: () => context.pushNamed('managerEditTransaction', extra: {'expense': exp, 'cubit': context.read<FinanceCubit>()}),
+              child: Padding(
+                padding: const EdgeInsets.all(16),
+                child: Row(
+                  children: [
+                    Container(
+                      padding: const EdgeInsets.all(12),
+                      decoration: BoxDecoration(color: AppColors.error.withValues(alpha: 0.1), borderRadius: BorderRadius.circular(16)),
+                      child: const Icon(Icons.trending_down_rounded, color: AppColors.error),
+                    ),
+                    const SizedBox(width: 16),
+                    Expanded(
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          Text(exp.title, style: AppTextStyles.titleMedium.copyWith(fontWeight: FontWeight.bold)),
+                          const SizedBox(height: 4),
+                          Container(
+                            padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 2),
+                            decoration: BoxDecoration(color: AppColors.surfaceVariant, borderRadius: BorderRadius.circular(6)),
+                            child: Text(exp.categoryDisplay, style: TextStyle(fontSize: 10, color: AppColors.textSecondary, fontWeight: FontWeight.bold)),
+                          ),
+                        ],
+                      ),
+                    ),
+                    Column(
+                      crossAxisAlignment: CrossAxisAlignment.end,
+                      children: [
+                        Text('- ₺${exp.amount.toStringAsFixed(2)}', style: AppTextStyles.titleLarge.copyWith(fontWeight: FontWeight.w800, color: AppColors.textPrimary)),
+                        const SizedBox(height: 8),
+                        GestureDetector(
+                          onTap: () => _showDeleteDialog(context, 'expense', exp.id, exp.title),
+                          child: const Icon(Icons.delete_outline, color: AppColors.error, size: 20),
+                        ),
+                      ],
+                    ),
+                  ],
+                ),
               ),
             ),
           );
@@ -809,6 +886,7 @@ class _ManagerFinanceViewState extends State<_ManagerFinanceView> {
       ),
     );
   }
+
 }
 
 class _SliverAppBarDelegate extends SliverPersistentHeaderDelegate {

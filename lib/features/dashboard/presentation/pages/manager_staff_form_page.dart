@@ -5,6 +5,12 @@ import '../../../../app/theme/app_colors.dart';
 import '../../../../app/theme/app_text_styles.dart';
 import '../../../staff/domain/models/staff_member.dart';
 import '../../../staff/presentation/controllers/staff_cubit.dart';
+import '../../../../core/di/injection.dart';
+import '../../../auth/presentation/controllers/auth_cubit.dart';
+import '../../../auth/presentation/controllers/auth_state.dart';
+import '../../../auth/domain/models/auth_user.dart';
+import '../../../properties/presentation/controllers/properties_cubit.dart';
+import '../../../properties/presentation/controllers/properties_state.dart';
 
 class ManagerStaffFormPage extends StatefulWidget {
   final StaffMember? staff; // null ise Ekle, değilse Düzenle
@@ -31,12 +37,13 @@ class _ManagerStaffFormPageState extends State<ManagerStaffFormPage> {
   late List<DropdownMenuItem<int>> _apartmentItems;
   late List<DropdownMenuItem<String>> _roleItems;
 
+  bool _isManager = false;
+
   @override
   void initState() {
     super.initState();
     final staff = widget.staff;
     
-    // Split user_name loosely
     String fName = '';
     String lName = '';
     if (staff != null && staff.userName.isNotEmpty) {
@@ -53,27 +60,15 @@ class _ManagerStaffFormPageState extends State<ManagerStaffFormPage> {
     _lastNameController = TextEditingController(text: lName);
     _phoneController = TextEditingController(text: staff?.userPhone ?? '');
     _emailController = TextEditingController(text: staff?.userEmail ?? '');
-    _passwordController = TextEditingController(); // her zaman bos
+    _passwordController = TextEditingController();
     
     if (staff != null) {
       _selectedApartmentId = staff.apartmentId;
       _selectedRole = staff.role;
       _isActive = staff.isActive;
     } else {
-      _selectedApartmentId = 1;
       _selectedRole = 'teknik'; 
     }
-
-    // Güvenli Dropdown Listeleri (Mevcut değer listede yoksa dinamik olarak ekle ki çökmesin)
-    final apts = {
-      1: 'Elit Yaşam Sitesi',
-      2: 'Gülbahçe Evleri',
-      3: 'Yıldız Apartmanı',
-    };
-    if (staff != null && staff.apartmentId != 0 && !apts.containsKey(staff.apartmentId)) {
-      apts[staff.apartmentId] = staff.apartmentName.isNotEmpty ? staff.apartmentName : 'Apartman ${staff.apartmentId}';
-    }
-    _apartmentItems = apts.entries.map((e) => DropdownMenuItem<int>(value: e.key, child: Text(e.value))).toList();
 
     final roles = {
       'teknik': 'Teknik Servis',
@@ -89,6 +84,39 @@ class _ManagerStaffFormPageState extends State<ManagerStaffFormPage> {
   }
 
   @override
+  void didChangeDependencies() {
+    super.didChangeDependencies();
+    
+    final authState = context.read<AuthCubit>().state;
+    if (authState is AuthAuthenticated) {
+      _isManager = authState.user.role == UserRole.apartmentManager;
+    }
+
+    final propState = sl<PropertiesCubit>().state;
+    final apts = <int, String>{};
+    
+    if (propState is PropertiesLoaded) {
+      for (var a in propState.apartments) {
+        apts[a.id] = a.name;
+      }
+    }
+
+    if (widget.staff != null && widget.staff!.apartmentId != 0 && !apts.containsKey(widget.staff!.apartmentId)) {
+      apts[widget.staff!.apartmentId] = widget.staff!.apartmentName.isNotEmpty ? widget.staff!.apartmentName : 'Apartman ${widget.staff!.apartmentId}';
+    }
+    
+    _apartmentItems = apts.entries.map((e) => DropdownMenuItem<int>(value: e.key, child: Text(e.value))).toList();
+    
+    if (_isManager || apts.length == 1) {
+      if (apts.isNotEmpty && _selectedApartmentId == null) {
+        _selectedApartmentId = apts.keys.first;
+      }
+    } else if (_selectedApartmentId == null && apts.isNotEmpty) {
+      _selectedApartmentId = apts.keys.first;
+    }
+  }
+
+  @override
   void dispose() {
     _firstNameController.dispose();
     _lastNameController.dispose();
@@ -98,7 +126,9 @@ class _ManagerStaffFormPageState extends State<ManagerStaffFormPage> {
     super.dispose();
   }
 
-  void _save() {
+  bool _isSaving = false;
+
+  void _save() async {
     if (_formKey.currentState!.validate()) {
       if (_selectedApartmentId == null || _selectedRole == null) {
         ScaffoldMessenger.of(context).showSnackBar(
@@ -107,38 +137,61 @@ class _ManagerStaffFormPageState extends State<ManagerStaffFormPage> {
         return;
       }
 
+      setState(() => _isSaving = true);
+
       final data = <String, dynamic>{
         'apartment_id': _selectedApartmentId,
         'role': _selectedRole,
         'is_active': _isActive,
       };
 
-      if (widget.staff == null) {
-        // Create Mode
-        data['first_name'] = _firstNameController.text.trim();
-        data['last_name'] = _lastNameController.text.trim();
-        data['phone'] = _phoneController.text.trim();
-        if (_emailController.text.trim().isNotEmpty) {
-          data['email'] = _emailController.text.trim();
-        }
-        if (_passwordController.text.trim().isNotEmpty) {
-          data['password'] = _passwordController.text.trim();
+      try {
+        if (widget.staff == null) {
+          // Create Mode
+          data['first_name'] = _firstNameController.text.trim();
+          data['last_name'] = _lastNameController.text.trim();
+          data['phone'] = _phoneController.text.trim();
+          if (_emailController.text.trim().isNotEmpty) {
+            data['email'] = _emailController.text.trim();
+          }
+          if (_passwordController.text.trim().isNotEmpty) {
+            data['password'] = _passwordController.text.trim();
+          }
+          
+          await context.read<StaffCubit>().createStaff(data);
+        } else {
+          await context.read<StaffCubit>().updateStaff(widget.staff!.id, data);
         }
         
-        context.read<StaffCubit>().createStaff(data);
-      } else {
-        // Edit Mode (Only apartment, role, and is_active can be updated for existing staff via this endpoint for now)
-        context.read<StaffCubit>().updateStaff(widget.staff!.id, data);
+        if (mounted) context.pop();
+      } catch (e) {
+        if (mounted) {
+          String msg = e.toString();
+          if (msg.startsWith('ApiException(status:')) {
+            // Very quick hack to display just the message part
+            msg = msg.split('message:').last.replaceAll(')', '').trim();
+          }
+          ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text('Hata: $msg'), backgroundColor: AppColors.error, duration: const Duration(seconds: 5)));
+        }
+      } finally {
+        if (mounted) setState(() => _isSaving = false);
       }
-      
-      context.pop();
     }
   }
 
-  void _delete() {
+  void _delete() async {
     if (widget.staff != null) {
-      context.read<StaffCubit>().deleteStaff(widget.staff!.id);
-      context.pop();
+      setState(() => _isSaving = true);
+      try {
+        await context.read<StaffCubit>().deleteStaff(widget.staff!.id);
+        if (mounted) context.pop();
+      } catch (e) {
+        if (mounted) {
+          ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text('Hata: $e'), backgroundColor: AppColors.error));
+        }
+      } finally {
+        if (mounted) setState(() => _isSaving = false);
+      }
     }
   }
 
@@ -203,7 +256,7 @@ class _ManagerStaffFormPageState extends State<ManagerStaffFormPage> {
                       'Apartman / Site*',
                       value: _selectedApartmentId,
                       items: _apartmentItems,
-                      onChanged: (val) => setState(() => _selectedApartmentId = val as int?),
+                      onChanged: (_isManager || _apartmentItems.length <= 1) ? null : (val) => setState(() => _selectedApartmentId = val as int?),
                     ),
                     const SizedBox(height: 16),
                     _buildDropdown(
@@ -239,13 +292,13 @@ class _ManagerStaffFormPageState extends State<ManagerStaffFormPage> {
               if (isEdit) ...[
                 Expanded(
                   child: ElevatedButton(
-                    onPressed: _delete,
+                    onPressed: _isSaving ? null : _delete,
                     style: ElevatedButton.styleFrom(
                       backgroundColor: AppColors.error,
                       foregroundColor: Colors.white,
                       padding: const EdgeInsets.symmetric(vertical: 16),
                     ),
-                    child: const Text('Sil Personel'),
+                    child: const Text('Sil'),
                   ),
                 ),
                 const SizedBox(width: 16),
@@ -253,12 +306,14 @@ class _ManagerStaffFormPageState extends State<ManagerStaffFormPage> {
               Expanded(
                 flex: 2,
                 child: ElevatedButton(
-                  onPressed: _save,
+                  onPressed: _isSaving ? null : _save,
                   style: ElevatedButton.styleFrom(
                     backgroundColor: AppColors.primary,
                     padding: const EdgeInsets.symmetric(vertical: 16),
                   ),
-                  child: const Text('Kaydet'),
+                  child: _isSaving 
+                      ? const SizedBox(height: 20, width: 20, child: CircularProgressIndicator(strokeWidth: 2, color: Colors.white))
+                      : const Text('Kaydet'),
                 ),
               ),
             ],
@@ -296,7 +351,7 @@ class _ManagerStaffFormPageState extends State<ManagerStaffFormPage> {
     );
   }
 
-  Widget _buildDropdown(String label, {required dynamic value, required List<DropdownMenuItem<dynamic>> items, required ValueChanged<dynamic> onChanged}) {
+  Widget _buildDropdown(String label, {required dynamic value, required List<DropdownMenuItem<dynamic>> items, required ValueChanged<dynamic>? onChanged}) {
     return Row(
       crossAxisAlignment: CrossAxisAlignment.center,
       children: [

@@ -8,9 +8,11 @@ abstract class MaintenanceRepository {
     required String title,
     required String description,
     required String category,
-    String? priority, // Backend desteklemese bile formda olabilir, şimdilik data'ya ekleyelim.
-    int? unitId, // Sakinler için gerekli
+    String? priority,
+    int? unitId,
     XFile? image,
+    String? status,
+    int? assignedToStaffId,
   });
   Future<MaintenanceRequest> updateRequestStatus(String id, String status, {String? note, int? assignedStaffId});
   Future<MaintenanceRequest> updateAssignedStaff(String id, int staffId);

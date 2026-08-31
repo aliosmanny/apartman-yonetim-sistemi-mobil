@@ -18,6 +18,7 @@ abstract class FinanceRepository {
   Future<List<Payment>> getPayments();
   Future<PaymentInitiateResponseDto> initiatePayment(String debtId, PaymentInitiateRequestDto request);
     Future<void> deleteItem(String type, String id);
+  Future<void> createPayment(Map<String, dynamic> data);
 
   Future<void> createDuePeriod(Map<String, dynamic> data);
   Future<void> updateDuePeriod(String id, Map<String, dynamic> data);

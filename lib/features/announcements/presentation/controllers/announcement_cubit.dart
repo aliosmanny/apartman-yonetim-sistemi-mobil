@@ -20,12 +20,14 @@ class AnnouncementCubit extends Cubit<AnnouncementState> {
   Future<void> createAnnouncement({
     required String title,
     required String content,
+    int? apartmentId,
     String? status,
   }) async {
     try {
       await _repository.createAnnouncement(
         title: title,
         content: content,
+        apartmentId: apartmentId,
         status: status,
       );
       await fetchAnnouncements();
@@ -37,6 +39,7 @@ class AnnouncementCubit extends Cubit<AnnouncementState> {
   Future<void> updateAnnouncement(int id, {
     String? title,
     String? content,
+    int? apartmentId,
     String? status,
   }) async {
     try {
@@ -44,6 +47,7 @@ class AnnouncementCubit extends Cubit<AnnouncementState> {
         id,
         title: title,
         content: content,
+        apartmentId: apartmentId,
         status: status,
       );
       await fetchAnnouncements();

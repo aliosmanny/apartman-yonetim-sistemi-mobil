@@ -23,6 +23,7 @@ class AnnouncementRepositoryImpl implements AnnouncementRepository {
   Future<Announcement> createAnnouncement({
     required String title,
     required String content,
+    int? apartmentId,
     String? status,
   }) async {
     final data = <String, dynamic>{
@@ -30,6 +31,7 @@ class AnnouncementRepositoryImpl implements AnnouncementRepository {
       'content': content,
     };
     if (status != null) data['status'] = status;
+    if (apartmentId != null) data['apartment_id'] = apartmentId;
     
     final dto = await _remoteDataSource.createAnnouncement(data);
     return dto.toModel();
@@ -39,12 +41,14 @@ class AnnouncementRepositoryImpl implements AnnouncementRepository {
   Future<Announcement> updateAnnouncement(int id, {
     String? title,
     String? content,
+    int? apartmentId,
     String? status,
   }) async {
     final data = <String, dynamic>{};
     if (title != null) data['title'] = title;
     if (content != null) data['content'] = content;
     if (status != null) data['status'] = status;
+    if (apartmentId != null) data['apartment_id'] = apartmentId;
 
     final dto = await _remoteDataSource.updateAnnouncement(id, data);
     return dto.toModel();

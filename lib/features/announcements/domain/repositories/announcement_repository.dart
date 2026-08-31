@@ -6,11 +6,13 @@ abstract class AnnouncementRepository {
   Future<Announcement> createAnnouncement({
     required String title,
     required String content,
+    int? apartmentId,
     String? status,
   });
   Future<Announcement> updateAnnouncement(int id, {
     String? title,
     String? content,
+    int? apartmentId,
     String? status,
   });
   Future<void> deleteAnnouncement(int id);

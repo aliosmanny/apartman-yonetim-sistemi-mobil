@@ -8,6 +8,7 @@ import '../../../properties/domain/models/models.dart';
 import '../../../properties/presentation/controllers/properties_cubit.dart';
 import '../../../properties/presentation/controllers/properties_state.dart';
 import '../../../properties/presentation/pages/lease_contract_list_page.dart';
+import '../../../users/presentation/controllers/user_cubit.dart';
 
 class ManagerPropertiesPage extends StatefulWidget {
   const ManagerPropertiesPage({super.key});
@@ -18,6 +19,7 @@ class ManagerPropertiesPage extends StatefulWidget {
 
 class _ManagerPropertiesPageState extends State<ManagerPropertiesPage> {
   late final PropertiesCubit _cubit;
+  late final UserCubit _userCubit;
 
   // Apartman Filtreleri (Tab 0)
   String _selectedApartmentCity = 'all';
@@ -44,6 +46,7 @@ class _ManagerPropertiesPageState extends State<ManagerPropertiesPage> {
   void initState() {
     super.initState();
     _cubit = sl<PropertiesCubit>()..fetchAll();
+    _userCubit = sl<UserCubit>()..fetchUsers();
   }
 
   @override
@@ -451,6 +454,48 @@ class _ManagerPropertiesPageState extends State<ManagerPropertiesPage> {
               ],
             ),
           ),
+          floatingActionButton: Builder(
+            builder: (context) {
+              final tabController = DefaultTabController.of(context);
+              return AnimatedBuilder(
+                animation: tabController,
+                builder: (context, _) {
+                  final index = tabController.index;
+                  String tooltip = '';
+                  VoidCallback? onPressed;
+                  
+                  if (index == 0) {
+                    tooltip = 'Yeni Apartman Ekle';
+                    onPressed = () => context.push('/manager/properties/apartment/add', extra: {'cubit': _cubit});
+                  } else if (index == 1) {
+                    tooltip = 'Yeni Blok Ekle';
+                    onPressed = () => context.push('/manager/properties/block/add', extra: {'cubit': _cubit});
+                  } else if (index == 2) {
+                    // tooltip = 'Yeni Daire Ekle';
+                    onPressed = null;
+                  } else if (index == 3) {
+                    tooltip = 'Yeni Kat Maliki Ekle';
+                    onPressed = () => context.push('/manager/properties/owner/add', extra: {'cubit': _cubit, 'userCubit': _userCubit});
+                  } else if (index == 4) {
+                    tooltip = 'Yeni Kiracı Ekle';
+                    onPressed = () => context.push('/manager/properties/owner/add', extra: {'cubit': _cubit, 'userCubit': _userCubit});
+                  } else if (index == 5) {
+                    tooltip = 'Yeni Sözleşme Ekle';
+                    onPressed = () => context.push('/manager/properties/contracts/create', extra: {'cubit': _cubit});
+                  }
+
+                  if (onPressed == null) return const SizedBox();
+
+                  return FloatingActionButton(
+                    onPressed: onPressed,
+                    tooltip: tooltip,
+                    backgroundColor: AppColors.primary,
+                    child: const Icon(Icons.add, color: Colors.white),
+                  );
+                },
+              );
+            },
+          ),
           body: BlocBuilder<PropertiesCubit, PropertiesState>(
             builder: (context, state) {
               if (state is PropertiesLoading) {
@@ -520,15 +565,16 @@ class _ManagerPropertiesPageState extends State<ManagerPropertiesPage> {
     );
   }
 
-  Widget _buildCard({required Widget child}) {
-    return Container(
-      decoration: BoxDecoration(
-        color: AppColors.cardBackground,
-        borderRadius: BorderRadius.circular(12),
-        border: Border.all(color: AppColors.border),
+  Widget _buildCard({required Widget child, VoidCallback? onTap}) {
+    return Card(
+      child: InkWell(
+        borderRadius: BorderRadius.circular(24),
+        onTap: onTap,
+        child: Padding(
+          padding: const EdgeInsets.all(16),
+          child: child,
+        ),
       ),
-      padding: const EdgeInsets.all(16),
-      child: child,
     );
   }
 
@@ -536,12 +582,22 @@ class _ManagerPropertiesPageState extends State<ManagerPropertiesPage> {
     return Row(
       mainAxisAlignment: MainAxisAlignment.end,
       children: [
+        if (type == 'apartment' || type == 'block' || type == 'unit')
+          TextButton.icon(
+            onPressed: () {
+              if (type == 'apartment') context.push('/manager/properties/apartment/add', extra: {'apartment': item, 'cubit': _cubit, 'isDuplicate': true});
+              if (type == 'block') context.push('/manager/properties/block/add', extra: {'block': item, 'cubit': _cubit, 'isDuplicate': true});
+              if (type == 'unit') context.push('/manager/properties/unit/add', extra: {'unit': item, 'cubit': _cubit, 'isDuplicate': true});
+            },
+            icon: const Icon(Icons.copy, size: 16),
+            label: const Text('Çoğalt'),
+          ),
         TextButton.icon(
           onPressed: () {
             if (type == 'apartment') context.push('/manager/properties/apartment/edit', extra: {'apartment': item, 'cubit': _cubit});
             if (type == 'block') context.push('/manager/properties/block/edit', extra: {'block': item, 'cubit': _cubit});
             if (type == 'unit') context.push('/manager/properties/unit/edit', extra: {'unit': item, 'cubit': _cubit});
-            if (type == 'owner') context.push('/manager/properties/owner/edit', extra: {'owner': item, 'cubit': _cubit});
+            if (type == 'owner') context.push('/manager/properties/owner/edit', extra: {'owner': item, 'cubit': _cubit, 'userCubit': _userCubit});
             if (type == 'tenant') context.push('/manager/properties/tenant/edit', extra: {'tenant': item, 'cubit': _cubit});
           },
           icon: const Icon(Icons.edit, size: 16),
@@ -583,6 +639,7 @@ class _ManagerPropertiesPageState extends State<ManagerPropertiesPage> {
       items: list,
       emptyMsg: 'Apartman bulunamadı.',
       builder: (item) => _buildCard(
+        onTap: () => context.push('/manager/properties/apartment/edit', extra: {'apartment': item, 'cubit': _cubit}),
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
@@ -614,6 +671,7 @@ class _ManagerPropertiesPageState extends State<ManagerPropertiesPage> {
       items: list,
       emptyMsg: 'Blok bulunamadı.',
       builder: (item) => _buildCard(
+        onTap: () => context.push('/manager/properties/block/edit', extra: {'block': item, 'cubit': _cubit}),
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
@@ -642,6 +700,7 @@ class _ManagerPropertiesPageState extends State<ManagerPropertiesPage> {
       items: list,
       emptyMsg: 'Daire bulunamadı.',
       builder: (item) => _buildCard(
+        onTap: () => context.push('/manager/properties/unit/edit', extra: {'unit': item, 'cubit': _cubit}),
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
@@ -681,6 +740,7 @@ class _ManagerPropertiesPageState extends State<ManagerPropertiesPage> {
       items: list,
       emptyMsg: 'Kat maliki bulunamadı.',
       builder: (item) => _buildCard(
+        onTap: () => context.push('/manager/properties/owner/edit', extra: {'owner': item, 'cubit': _cubit, 'userCubit': _userCubit}),
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
@@ -702,6 +762,7 @@ class _ManagerPropertiesPageState extends State<ManagerPropertiesPage> {
       items: list,
       emptyMsg: 'Kiracı bulunamadı.',
       builder: (item) => _buildCard(
+        onTap: () => context.push('/manager/properties/tenant/edit', extra: {'tenant': item, 'cubit': _cubit}),
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
