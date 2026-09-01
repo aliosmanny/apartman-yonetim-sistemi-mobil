@@ -474,7 +474,18 @@ class AppRouter {
                         ),
                       ],
                     ),
-                    GoRoute(path: 'profile', name: 'managerProfile', builder: (_, __) => const ManagerProfilePage()),
+                    GoRoute(
+                      path: 'profile',
+                      name: 'managerProfile',
+                      builder: (_, __) => const ManagerProfilePage(),
+                      routes: [
+                        GoRoute(
+                          path: 'change-password',
+                          name: 'managerChangePassword',
+                          builder: (_, __) => const ChangePasswordPage(),
+                        ),
+                      ],
+                    ),
                     GoRoute(path: 'settings', name: 'managerSettings', builder: (_, __) => const ManagerSettingsPage()),
                   ],
                 ),
@@ -618,6 +629,11 @@ class AppRouter {
                   name: RouteNames.staffProfile,
                   builder: (_, __) => const StaffProfilePage(),
                   routes: [
+                    GoRoute(
+                      path: 'change-password',
+                      name: 'staffChangePassword',
+                      builder: (_, __) => const ChangePasswordPage(),
+                    ),
                     GoRoute(
                       path: 'edit',
                       name: 'staffEditProfile',

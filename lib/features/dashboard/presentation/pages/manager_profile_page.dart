@@ -192,9 +192,7 @@ class _ManagerProfilePageState extends State<ManagerProfilePage> {
                   title: Text('Şifre Değiştir', style: AppTextStyles.titleMedium),
                   trailing: const Icon(Icons.chevron_right_rounded, color: AppColors.textTertiary),
                   onTap: () {
-                    ScaffoldMessenger.of(context).showSnackBar(
-                      const SnackBar(content: Text('Şifre değiştirme sayfası açılacak.')),
-                    );
+                    context.pushNamed('managerChangePassword');
                   },
                 ),
               ),

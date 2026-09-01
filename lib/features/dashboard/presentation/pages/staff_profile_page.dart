@@ -110,6 +110,12 @@ class StaffProfilePage extends StatelessWidget {
                   onTap: () => context.pushNamed('staffSettings'),
                 ),
                 _ProfileMenuItem(
+                  icon: Icons.lock_outline_rounded,
+                  iconColor: AppColors.textPrimary,
+                  title: 'Şifre Değiştir',
+                  onTap: () => context.pushNamed('staffChangePassword'),
+                ),
+                _ProfileMenuItem(
                   icon: Icons.logout_rounded,
                   iconColor: AppColors.error,
                   title: 'Çıkış Yap',
