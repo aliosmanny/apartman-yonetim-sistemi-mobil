@@ -112,16 +112,7 @@ class ProfilePage extends StatelessWidget {
                           title: 'Bildirim Tercihleri',
                           onTap: () => context.push('/resident/profile/notifications'),
                         ),
-                        _buildActionTile(
-                          context,
-                          icon: Icons.help_rounded,
-                          title: 'Yardım ve Destek',
-                          onTap: () {
-                            ScaffoldMessenger.of(context).showSnackBar(
-                              const SnackBar(content: Text('Destek sayfası yapım aşamasında.')),
-                            );
-                          },
-                        ),
+
 
                         const SizedBox(height: 40),
 

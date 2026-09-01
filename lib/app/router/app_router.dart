@@ -51,6 +51,7 @@ import '../../features/maintenance/presentation/pages/create_maintenance_page.da
 import '../../features/maintenance/presentation/pages/manager_create_maintenance_page.dart';
 import '../../features/profile/presentation/pages/profile_page.dart';
 import '../../features/profile/presentation/pages/change_password_page.dart';
+import '../../features/profile/presentation/pages/notification_settings_page.dart';
 import '../../features/announcements/presentation/pages/announcement_list_page.dart';
 import '../../features/dashboard/presentation/pages/manager_announcement_page.dart';
 import '../../features/announcements/presentation/controllers/announcement_cubit.dart';
@@ -550,6 +551,11 @@ class AppRouter {
                       path: 'change-password',
                       name: 'residentChangePassword',
                       builder: (_, __) => const ChangePasswordPage(),
+                    ),
+                    GoRoute(
+                      path: 'notifications',
+                      name: 'residentNotifications',
+                      builder: (_, __) => const NotificationSettingsPage(),
                     ),
                   ],
                 ),
