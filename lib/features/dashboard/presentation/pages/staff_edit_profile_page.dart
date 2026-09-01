@@ -1,5 +1,8 @@
 import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
+import 'package:flutter_bloc/flutter_bloc.dart';
+import '../../../auth/presentation/controllers/auth_cubit.dart';
+import '../../../auth/presentation/controllers/auth_state.dart';
 import '../../../../app/theme/app_colors.dart';
 import '../../../../app/theme/app_text_styles.dart';
 
@@ -20,9 +23,20 @@ class _StaffEditProfilePageState extends State<StaffEditProfilePage> {
   @override
   void initState() {
     super.initState();
-    _nameController = TextEditingController(text: 'Personel');
-    _emailController = TextEditingController(text: 'personel@apartman.com');
-    _phoneController = TextEditingController(text: '0555 123 45 67');
+    final state = context.read<AuthCubit>().state;
+    String name = 'Personel';
+    String email = 'personel@apartman.com';
+    String phone = '0555 123 45 67';
+    
+    if (state is AuthAuthenticated) {
+      name = state.user.fullName;
+      email = state.user.email ?? '';
+      phone = state.user.phone;
+    }
+    
+    _nameController = TextEditingController(text: name);
+    _emailController = TextEditingController(text: email);
+    _phoneController = TextEditingController(text: phone);
   }
 
   @override
