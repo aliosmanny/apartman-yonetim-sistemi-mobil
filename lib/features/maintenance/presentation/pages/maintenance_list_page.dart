@@ -11,16 +11,19 @@ import '../controllers/maintenance_state.dart';
 class MaintenanceListPage extends StatelessWidget {
   final bool showAppBar;
   final List<MaintenanceRequest>? filteredRequests;
-  const MaintenanceListPage({super.key, this.showAppBar = true, this.filteredRequests});
+  const MaintenanceListPage(
+      {super.key, this.showAppBar = true, this.filteredRequests});
 
   @override
   Widget build(BuildContext context) {
     final scaffold = Scaffold(
       backgroundColor: AppColors.background,
-      appBar: showAppBar ? AppBar(
-        title: const Text('Talepler ve Arızalar'),
-        centerTitle: false,
-      ) : null,
+      appBar: showAppBar
+          ? AppBar(
+              title: const Text('Talepler ve Arızalar'),
+              centerTitle: false,
+            )
+          : null,
       body: BlocBuilder<MaintenanceCubit, MaintenanceState>(
         builder: (context, state) {
           if (state is MaintenanceLoading || state is MaintenanceInitial) {
@@ -32,12 +35,14 @@ class MaintenanceListPage extends StatelessWidget {
               child: Column(
                 mainAxisAlignment: MainAxisAlignment.center,
                 children: [
-                  const Icon(Icons.error_outline_rounded, size: 48, color: AppColors.error),
+                  const Icon(Icons.error_outline_rounded,
+                      size: 48, color: AppColors.error),
                   const SizedBox(height: 16),
                   Text(state.message, style: AppTextStyles.bodyMedium),
                   const SizedBox(height: 16),
                   ElevatedButton(
-                    onPressed: () => context.read<MaintenanceCubit>().fetchRequests(),
+                    onPressed: () =>
+                        context.read<MaintenanceCubit>().fetchRequests(),
                     child: const Text('Tekrar Dene'),
                   )
                 ],
@@ -52,10 +57,12 @@ class MaintenanceListPage extends StatelessWidget {
                 child: Column(
                   mainAxisAlignment: MainAxisAlignment.center,
                   children: [
-                    const Icon(Icons.sentiment_satisfied_alt_rounded, size: 64, color: AppColors.textTertiary),
+                    const Icon(Icons.sentiment_satisfied_alt_rounded,
+                        size: 64, color: AppColors.textTertiary),
                     const SizedBox(height: 16),
                     Text('Hiç talebiniz bulunmuyor.',
-                        style: AppTextStyles.headlineMedium.copyWith(color: AppColors.textSecondary)),
+                        style: AppTextStyles.headlineMedium
+                            .copyWith(color: AppColors.textSecondary)),
                   ],
                 ),
               );
@@ -83,7 +90,8 @@ class MaintenanceListPage extends StatelessWidget {
           return FloatingActionButton(
             onPressed: () async {
               // Güvenli context kullanımı ve sayfa yönlendirmesi
-              await GoRouter.of(fabContext).push('/resident/maintenance/create');
+              await GoRouter.of(fabContext)
+                  .push('/resident/maintenance/create');
               if (fabContext.mounted) {
                 fabContext.read<MaintenanceCubit>().fetchRequests();
               }
@@ -163,13 +171,15 @@ class _RequestCard extends StatelessWidget {
                       const SizedBox(height: 4),
                       Text(
                         'Kategori: ${request.safeCategoryDisplay}',
-                        style: AppTextStyles.bodySmall.copyWith(color: AppColors.textSecondary),
+                        style: AppTextStyles.bodySmall
+                            .copyWith(color: AppColors.textSecondary),
                       ),
                     ],
                   ),
                 ),
                 Container(
-                  padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
+                  padding:
+                      const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
                   decoration: BoxDecoration(
                     color: statusColor.withOpacity(0.1),
                     borderRadius: BorderRadius.circular(20),
@@ -181,7 +191,8 @@ class _RequestCard extends StatelessWidget {
                       const SizedBox(width: 6),
                       Text(
                         request.safeStatusDisplay,
-                        style: AppTextStyles.labelSmall.copyWith(color: statusColor, fontWeight: FontWeight.w700),
+                        style: AppTextStyles.labelSmall.copyWith(
+                            color: statusColor, fontWeight: FontWeight.w700),
                       ),
                     ],
                   ),
@@ -208,15 +219,19 @@ class _RequestCard extends StatelessWidget {
                   children: [
                     Row(
                       children: [
-                        const Icon(Icons.admin_panel_settings_rounded, size: 14, color: AppColors.warning),
+                        const Icon(Icons.admin_panel_settings_rounded,
+                            size: 14, color: AppColors.warning),
                         const SizedBox(width: 4),
-                        Text('Yönetici Notu:', style: AppTextStyles.labelSmall.copyWith(color: AppColors.warning)),
+                        Text('Yönetici Notu:',
+                            style: AppTextStyles.labelSmall
+                                .copyWith(color: AppColors.warning)),
                       ],
                     ),
                     const SizedBox(height: 4),
                     Text(
                       request.adminNotes!,
-                      style: AppTextStyles.bodySmall.copyWith(color: AppColors.textPrimary),
+                      style: AppTextStyles.bodySmall
+                          .copyWith(color: AppColors.textPrimary),
                     ),
                   ],
                 ),
@@ -225,7 +240,8 @@ class _RequestCard extends StatelessWidget {
             const SizedBox(height: 12),
             Text(
               'Oluşturulma: ${_formatDate(request.createdAt)}',
-              style: AppTextStyles.labelSmall.copyWith(color: AppColors.textTertiary),
+              style: AppTextStyles.labelSmall
+                  .copyWith(color: AppColors.textTertiary),
             ),
           ],
         ),

@@ -18,10 +18,12 @@ class ManagerCreateMaintenancePage extends StatefulWidget {
   const ManagerCreateMaintenancePage({super.key});
 
   @override
-  State<ManagerCreateMaintenancePage> createState() => _ManagerCreateMaintenancePageState();
+  State<ManagerCreateMaintenancePage> createState() =>
+      _ManagerCreateMaintenancePageState();
 }
 
-class _ManagerCreateMaintenancePageState extends State<ManagerCreateMaintenancePage> {
+class _ManagerCreateMaintenancePageState
+    extends State<ManagerCreateMaintenancePage> {
   final _formKey = GlobalKey<FormState>();
   String _title = '';
   String _description = '';
@@ -108,7 +110,11 @@ class _ManagerCreateMaintenancePageState extends State<ManagerCreateMaintenanceP
   Future<void> _pickImage() async {
     try {
       final picker = ImagePicker();
-      final pickedFile = await picker.pickImage(source: ImageSource.gallery);
+      final pickedFile = await picker.pickImage(
+        source: ImageSource.gallery,
+        imageQuality: 50,
+        maxWidth: 1024,
+      );
       if (pickedFile != null) {
         setState(() {
           _selectedImage = pickedFile;
@@ -150,14 +156,18 @@ class _ManagerCreateMaintenancePageState extends State<ManagerCreateMaintenanceP
                     child: Column(
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
-                        const Text('Talep Bilgileri', style: TextStyle(fontWeight: FontWeight.bold, fontSize: 16)),
+                        const Text('Talep Bilgileri',
+                            style: TextStyle(
+                                fontWeight: FontWeight.bold, fontSize: 16)),
                         const SizedBox(height: 16),
                         TextFormField(
                           decoration: const InputDecoration(
                             labelText: 'Talep Başlığı *',
                             border: OutlineInputBorder(),
                           ),
-                          validator: (val) => val == null || val.isEmpty ? 'Zorunlu alan' : null,
+                          validator: (val) => val == null || val.isEmpty
+                              ? 'Zorunlu alan'
+                              : null,
                           onSaved: (val) => _title = val ?? '',
                         ),
                         const SizedBox(height: 16),
@@ -168,7 +178,9 @@ class _ManagerCreateMaintenancePageState extends State<ManagerCreateMaintenanceP
                             alignLabelWithHint: true,
                             border: OutlineInputBorder(),
                           ),
-                          validator: (val) => val == null || val.isEmpty ? 'Zorunlu alan' : null,
+                          validator: (val) => val == null || val.isEmpty
+                              ? 'Zorunlu alan'
+                              : null,
                           onSaved: (val) => _description = val ?? '',
                         ),
                         const SizedBox(height: 16),
@@ -201,7 +213,9 @@ class _ManagerCreateMaintenancePageState extends State<ManagerCreateMaintenanceP
                     child: Column(
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
-                        const Text('Durum ve Atama', style: TextStyle(fontWeight: FontWeight.bold, fontSize: 16)),
+                        const Text('Durum ve Atama',
+                            style: TextStyle(
+                                fontWeight: FontWeight.bold, fontSize: 16)),
                         const SizedBox(height: 16),
                         DropdownButtonFormField<String>(
                           value: _status,
@@ -224,7 +238,9 @@ class _ManagerCreateMaintenancePageState extends State<ManagerCreateMaintenanceP
                           builder: (context, state) {
                             List<StaffMember> staffList = [];
                             if (state is StaffLoaded) {
-                              staffList = state.staffList.where((s) => s.isActive).toList();
+                              staffList = state.staffList
+                                  .where((s) => s.isActive)
+                                  .toList();
                             }
                             return DropdownButtonFormField<int>(
                               value: _assignedStaffId,
@@ -232,11 +248,14 @@ class _ManagerCreateMaintenancePageState extends State<ManagerCreateMaintenanceP
                                 labelText: 'Atanan Personel',
                                 border: OutlineInputBorder(),
                               ),
-                              hint: Text(state is StaffLoading ? 'Yükleniyor...' : 'Seçim yapınız'),
+                              hint: Text(state is StaffLoading
+                                  ? 'Yükleniyor...'
+                                  : 'Seçim yapınız'),
                               items: staffList.map((s) {
                                 return DropdownMenuItem(
                                   value: s.id,
-                                  child: Text('${s.userName} (${s.roleDisplay})'),
+                                  child:
+                                      Text('${s.userName} (${s.roleDisplay})'),
                                 );
                               }).toList(),
                               onChanged: (val) {
@@ -258,7 +277,9 @@ class _ManagerCreateMaintenancePageState extends State<ManagerCreateMaintenanceP
                     child: Column(
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
-                        const Text('Daire Seçimi', style: TextStyle(fontWeight: FontWeight.bold, fontSize: 16)),
+                        const Text('Daire Seçimi',
+                            style: TextStyle(
+                                fontWeight: FontWeight.bold, fontSize: 16)),
                         const SizedBox(height: 16),
                         BlocBuilder<PropertiesCubit, PropertiesState>(
                           builder: (context, state) {
@@ -273,17 +294,23 @@ class _ManagerCreateMaintenancePageState extends State<ManagerCreateMaintenanceP
                                 labelText: 'Daire *',
                                 border: OutlineInputBorder(),
                               ),
-                              hint: Text(state is PropertiesLoading ? 'Yükleniyor...' : 'Seçim yapınız'),
+                              hint: Text(state is PropertiesLoading
+                                  ? 'Yükleniyor...'
+                                  : 'Seçim yapınız'),
                               items: units.map((u) {
                                 return DropdownMenuItem(
                                   value: u.id,
-                                  child: Text('${u.apartmentName} - ${u.blockName} - Daire ${u.number}', overflow: TextOverflow.ellipsis),
+                                  child: Text(
+                                      '${u.apartmentName} - ${u.blockName} - Daire ${u.number}',
+                                      overflow: TextOverflow.ellipsis),
                                 );
                               }).toList(),
                               onChanged: (val) {
-                                if (val != null) setState(() => _selectedUnitId = val);
+                                if (val != null)
+                                  setState(() => _selectedUnitId = val);
                               },
-                              validator: (v) => v == null ? 'Zorunlu alan' : null,
+                              validator: (v) =>
+                                  v == null ? 'Zorunlu alan' : null,
                             );
                           },
                         ),
@@ -300,7 +327,9 @@ class _ManagerCreateMaintenancePageState extends State<ManagerCreateMaintenanceP
                     child: Column(
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
-                        const Text('Fotoğraf Ekle', style: TextStyle(fontWeight: FontWeight.bold, fontSize: 16)),
+                        const Text('Fotoğraf Ekle',
+                            style: TextStyle(
+                                fontWeight: FontWeight.bold, fontSize: 16)),
                         const SizedBox(height: 16),
                         InkWell(
                           onTap: _pickImage,
@@ -311,7 +340,8 @@ class _ManagerCreateMaintenancePageState extends State<ManagerCreateMaintenanceP
                             decoration: BoxDecoration(
                               color: AppColors.primary.withOpacity(0.04),
                               borderRadius: BorderRadius.circular(14),
-                              border: Border.all(color: AppColors.primary.withOpacity(0.25)),
+                              border: Border.all(
+                                  color: AppColors.primary.withOpacity(0.25)),
                             ),
                             child: _selectedImage == null
                                 ? Column(
@@ -320,13 +350,20 @@ class _ManagerCreateMaintenancePageState extends State<ManagerCreateMaintenanceP
                                       Container(
                                         padding: const EdgeInsets.all(8),
                                         decoration: BoxDecoration(
-                                          color: AppColors.primary.withOpacity(0.1),
+                                          color: AppColors.primary
+                                              .withOpacity(0.1),
                                           shape: BoxShape.circle,
                                         ),
-                                        child: const Icon(Icons.add_a_photo_rounded, color: AppColors.primary, size: 24),
+                                        child: const Icon(
+                                            Icons.add_a_photo_rounded,
+                                            color: AppColors.primary,
+                                            size: 24),
                                       ),
                                       const SizedBox(height: 8),
-                                      Text('Galeriden Seç', style: AppTextStyles.labelMedium.copyWith(color: AppColors.primary)),
+                                      Text('Galeriden Seç',
+                                          style: AppTextStyles.labelMedium
+                                              .copyWith(
+                                                  color: AppColors.primary)),
                                     ],
                                   )
                                 : ClipRRect(
@@ -345,8 +382,10 @@ class _ManagerCreateMaintenancePageState extends State<ManagerCreateMaintenanceP
                           Align(
                             alignment: Alignment.centerRight,
                             child: TextButton(
-                              onPressed: () => setState(() => _selectedImage = null),
-                              child: const Text('Fotoğrafı Kaldır', style: TextStyle(color: AppColors.error)),
+                              onPressed: () =>
+                                  setState(() => _selectedImage = null),
+                              child: const Text('Fotoğrafı Kaldır',
+                                  style: TextStyle(color: AppColors.error)),
                             ),
                           ),
                         ],
@@ -362,15 +401,19 @@ class _ManagerCreateMaintenancePageState extends State<ManagerCreateMaintenanceP
                     backgroundColor: const Color(0xFF1B1B2F),
                     foregroundColor: Colors.white,
                     minimumSize: const Size(double.infinity, 50),
-                    shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+                    shape: RoundedRectangleBorder(
+                        borderRadius: BorderRadius.circular(12)),
                   ),
                   child: _isLoading
                       ? const SizedBox(
                           width: 22,
                           height: 22,
-                          child: CircularProgressIndicator(color: Colors.white, strokeWidth: 2),
+                          child: CircularProgressIndicator(
+                              color: Colors.white, strokeWidth: 2),
                         )
-                      : const Text('Kaydet', style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold)),
+                      : const Text('Kaydet',
+                          style: TextStyle(
+                              fontSize: 16, fontWeight: FontWeight.bold)),
                 ),
                 const SizedBox(height: 24),
               ],

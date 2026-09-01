@@ -86,7 +86,11 @@ class _CreateMaintenancePageState extends State<CreateMaintenancePage> {
   Future<void> _pickImage() async {
     try {
       final picker = ImagePicker();
-      final pickedFile = await picker.pickImage(source: ImageSource.gallery);
+      final pickedFile = await picker.pickImage(
+        source: ImageSource.gallery,
+        imageQuality: 50,
+        maxWidth: 1024,
+      );
       if (pickedFile != null) {
         setState(() {
           _selectedImage = pickedFile;
@@ -118,8 +122,10 @@ class _CreateMaintenancePageState extends State<CreateMaintenancePage> {
               const SizedBox(height: 8),
               DropdownButtonFormField<String>(
                 value: _category,
+                isExpanded: true,
                 decoration: const InputDecoration(
-                  prefixIcon: Icon(Icons.category_rounded, size: 20, color: AppColors.textTertiary),
+                  prefixIcon: Icon(Icons.category_rounded,
+                      size: 20, color: AppColors.textTertiary),
                 ),
                 items: _categories.map((cat) {
                   return DropdownMenuItem(
@@ -132,7 +138,6 @@ class _CreateMaintenancePageState extends State<CreateMaintenancePage> {
                 },
               ),
               const SizedBox(height: 20),
-
               Text('Daire Seçin', style: AppTextStyles.inputLabel),
               const SizedBox(height: 8),
               BlocBuilder<DashboardCubit, DashboardState>(
@@ -147,14 +152,17 @@ class _CreateMaintenancePageState extends State<CreateMaintenancePage> {
                     }
                     return DropdownButtonFormField<int>(
                       value: _selectedUnitId,
+                      isExpanded: true,
                       hint: const Text('Seçim yapınız'),
                       decoration: const InputDecoration(
-                        prefixIcon: Icon(Icons.home_work_rounded, size: 20, color: AppColors.textTertiary),
+                        prefixIcon: Icon(Icons.home_work_rounded,
+                            size: 20, color: AppColors.textTertiary),
                       ),
                       items: units.map((u) {
                         return DropdownMenuItem(
                           value: u.id,
-                          child: Text(u.display),
+                          child:
+                              Text(u.display, overflow: TextOverflow.ellipsis),
                         );
                       }).toList(),
                       onChanged: (val) {
@@ -166,19 +174,19 @@ class _CreateMaintenancePageState extends State<CreateMaintenancePage> {
                 },
               ),
               const SizedBox(height: 20),
-
               Text('Konu / Başlık', style: AppTextStyles.inputLabel),
               const SizedBox(height: 8),
               TextFormField(
                 decoration: const InputDecoration(
                   hintText: 'Örn: Asansör Çalışmıyor',
-                  prefixIcon: Icon(Icons.title_rounded, size: 20, color: AppColors.textTertiary),
+                  prefixIcon: Icon(Icons.title_rounded,
+                      size: 20, color: AppColors.textTertiary),
                 ),
-                validator: (val) => val == null || val.isEmpty ? 'Zorunlu alan' : null,
+                validator: (val) =>
+                    val == null || val.isEmpty ? 'Zorunlu alan' : null,
                 onSaved: (val) => _title = val ?? '',
               ),
               const SizedBox(height: 20),
-
               Text('Detaylı Açıklama', style: AppTextStyles.inputLabel),
               const SizedBox(height: 8),
               TextFormField(
@@ -187,12 +195,13 @@ class _CreateMaintenancePageState extends State<CreateMaintenancePage> {
                   hintText: 'Sorunu veya talebinizi detaylıca açıklayın...',
                   alignLabelWithHint: true,
                 ),
-                validator: (val) => val == null || val.isEmpty ? 'Zorunlu alan' : null,
+                validator: (val) =>
+                    val == null || val.isEmpty ? 'Zorunlu alan' : null,
                 onSaved: (val) => _description = val ?? '',
               ),
               const SizedBox(height: 20),
-
-              Text('Fotoğraf Ekle (İsteğe Bağlı)', style: AppTextStyles.inputLabel),
+              Text('Fotoğraf Ekle (İsteğe Bağlı)',
+                  style: AppTextStyles.inputLabel),
               const SizedBox(height: 8),
               InkWell(
                 onTap: _pickImage,
@@ -203,7 +212,8 @@ class _CreateMaintenancePageState extends State<CreateMaintenancePage> {
                   decoration: BoxDecoration(
                     color: AppColors.primary.withOpacity(0.04),
                     borderRadius: BorderRadius.circular(14),
-                    border: Border.all(color: AppColors.primary.withOpacity(0.25)),
+                    border:
+                        Border.all(color: AppColors.primary.withOpacity(0.25)),
                   ),
                   child: _selectedImage == null
                       ? Column(
@@ -215,10 +225,13 @@ class _CreateMaintenancePageState extends State<CreateMaintenancePage> {
                                 color: AppColors.primary.withOpacity(0.1),
                                 shape: BoxShape.circle,
                               ),
-                              child: const Icon(Icons.add_a_photo_rounded, color: AppColors.primary, size: 20),
+                              child: const Icon(Icons.add_a_photo_rounded,
+                                  color: AppColors.primary, size: 20),
                             ),
                             const SizedBox(height: 8),
-                            Text('Galeriden Seç', style: AppTextStyles.labelMedium.copyWith(color: AppColors.primary)),
+                            Text('Galeriden Seç',
+                                style: AppTextStyles.labelMedium
+                                    .copyWith(color: AppColors.primary)),
                           ],
                         )
                       : ClipRRect(
@@ -238,19 +251,20 @@ class _CreateMaintenancePageState extends State<CreateMaintenancePage> {
                   alignment: Alignment.centerRight,
                   child: TextButton(
                     onPressed: () => setState(() => _selectedImage = null),
-                    child: const Text('Fotoğrafı Kaldır', style: TextStyle(color: AppColors.error)),
+                    child: const Text('Fotoğrafı Kaldır',
+                        style: TextStyle(color: AppColors.error)),
                   ),
                 ),
               ],
               const SizedBox(height: 32),
-
               ElevatedButton(
                 onPressed: _isLoading ? null : _submit,
                 child: _isLoading
                     ? const SizedBox(
                         width: 22,
                         height: 22,
-                        child: CircularProgressIndicator(color: Colors.white, strokeWidth: 2),
+                        child: CircularProgressIndicator(
+                            color: Colors.white, strokeWidth: 2),
                       )
                     : const Text('Talebi Gönder'),
               ),
