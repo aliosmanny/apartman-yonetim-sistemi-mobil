@@ -592,6 +592,23 @@ class _ManagerPropertiesPageState extends State<ManagerPropertiesPage> {
             icon: const Icon(Icons.copy, size: 16),
             label: const Text('Çoğalt'),
           ),
+        if (type == 'owner' || type == 'tenant')
+          TextButton.icon(
+            onPressed: () {
+              int? ownerId = type == 'owner' ? item.userId : null;
+              int? tenantId = type == 'tenant' ? item.userId : null;
+              int? unitId = item.unitId;
+              
+              context.push('/manager/properties/contracts/create', extra: {
+                'cubit': _cubit,
+                'unitId': unitId,
+                'ownerId': ownerId,
+                'tenantId': tenantId,
+              });
+            },
+            icon: const Icon(Icons.description, size: 16),
+            label: const Text('Sözleşme'),
+          ),
         TextButton.icon(
           onPressed: () {
             if (type == 'apartment') context.push('/manager/properties/apartment/edit', extra: {'apartment': item, 'cubit': _cubit});

@@ -284,9 +284,19 @@ class AppRouter {
                       builder: (_, state) {
                         final map = state.extra as Map<String, dynamic>?;
                         final cubit = map?['cubit'] as PropertiesCubit?;
+                        final unitId = map?['unitId'] as int?;
+                        final ownerId = map?['ownerId'] as int?;
+                        final tenantId = map?['tenantId'] as int?;
+                        
+                        final page = CreateLeaseContractPage(
+                          preSelectedUnitId: unitId,
+                          preSelectedOwnerId: ownerId,
+                          preSelectedTenantId: tenantId,
+                        );
+                        
                         return cubit != null
-                            ? BlocProvider.value(value: cubit, child: const CreateLeaseContractPage())
-                            : const CreateLeaseContractPage();
+                            ? BlocProvider.value(value: cubit, child: page)
+                            : page;
                       },
                     ),
                     GoRoute(

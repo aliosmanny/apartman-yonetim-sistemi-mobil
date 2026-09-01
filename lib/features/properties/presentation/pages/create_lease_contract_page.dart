@@ -8,7 +8,11 @@ import '../controllers/properties_cubit.dart';
 import '../controllers/properties_state.dart';
 
 class CreateLeaseContractPage extends StatefulWidget {
-  const CreateLeaseContractPage({super.key});
+  final int? preSelectedUnitId;
+  final int? preSelectedOwnerId;
+  final int? preSelectedTenantId;
+
+  const CreateLeaseContractPage({super.key, this.preSelectedUnitId, this.preSelectedOwnerId, this.preSelectedTenantId});
 
   @override
   State<CreateLeaseContractPage> createState() => _CreateLeaseContractPageState();
