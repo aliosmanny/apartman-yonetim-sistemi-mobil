@@ -214,9 +214,9 @@ class _ManagerDashboardPageState extends State<ManagerDashboardPage> {
                         shrinkWrap: true,
                         physics: const NeverScrollableScrollPhysics(),
                         children: [
-                          _buildActionBtn(context, Icons.campaign_rounded, 'Duyuru\nYayınla', AppColors.primary, '/manager/more'),
+                          _buildActionBtn(context, Icons.campaign_rounded, 'Duyuru\nYayınla', AppColors.primary, '/manager/announcements'),
                           _buildActionBtn(context, Icons.receipt_long_rounded, 'Gider\nEkle', AppColors.warning, '/manager/finance'),
-                          _buildActionBtn(context, Icons.person_add_rounded, 'Sakin\nEkle', AppColors.secondary, '/manager/properties'),
+                          _buildActionBtn(context, Icons.person_add_rounded, 'Sakin\nEkle', AppColors.secondary, '/manager/users'),
                           _buildActionBtn(context, Icons.engineering_rounded, 'İş\nAta', AppColors.success, '/manager/maintenance'),
                         ],
                       ),
