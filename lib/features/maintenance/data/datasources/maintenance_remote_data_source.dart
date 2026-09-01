@@ -18,7 +18,7 @@ class MaintenanceRemoteDataSourceImpl implements MaintenanceRemoteDataSource {
 
   @override
   Future<List<MaintenanceDto>> getMaintenanceRequests({String? status, String? category}) async {
-    final queryParameters = <String, dynamic>{};
+    final queryParameters = <String, dynamic>{'page_size': 1000, 'limit': 1000};
     if (status != null && status.isNotEmpty) queryParameters['status'] = status;
     if (category != null && category.isNotEmpty) queryParameters['category'] = category;
 

@@ -52,7 +52,7 @@ class StaffRemoteDataSourceImpl implements StaffRemoteDataSource {
   @override
   Future<List<StaffDto>> getStaffList() async {
     try {
-      final response = await _apiClient.dio.get('/staff/');
+      final response = await _apiClient.dio.get('/staff/', queryParameters: {'page_size': 1000, 'limit': 1000});
       
       final data = response.data;
       List<dynamic> listData = [];

@@ -16,7 +16,7 @@ class AnnouncementRemoteDataSourceImpl implements AnnouncementRemoteDataSource {
 
   @override
   Future<List<AnnouncementDto>> getAnnouncements({String? status}) async {
-    final Map<String, dynamic> queryParams = {};
+    final Map<String, dynamic> queryParams = {'page_size': 1000, 'limit': 1000};
     if (status != null && status.isNotEmpty) {
       queryParams['status'] = status;
     }

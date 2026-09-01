@@ -46,7 +46,7 @@ class PropertiesRemoteDataSourceImpl implements PropertiesRemoteDataSource {
 
   @override
   Future<List<LeaseContractDto>> getContracts() async {
-    final response = await _dio.get('/contracts/');
+    final response = await _dio.get('/contracts/', queryParameters: {'page_size': 1000, 'limit': 1000});
     final List<dynamic> data = response.data is List ? response.data : response.data['results'] ?? [];
     return data.map((json) => LeaseContractDto.fromJson(json)).toList();
   }
@@ -62,7 +62,7 @@ class PropertiesRemoteDataSourceImpl implements PropertiesRemoteDataSource {
 
   @override
   Future<List<ApartmentDto>> getApartments() async {
-    final res = await _dio.get('/apartments/');
+    final res = await _dio.get('/apartments/', queryParameters: {'page_size': 1000, 'limit': 1000});
     return _extractResults(res.data).map((e) => ApartmentDto.fromJson(e)).toList();
   }
 
@@ -74,13 +74,13 @@ class PropertiesRemoteDataSourceImpl implements PropertiesRemoteDataSource {
 
   @override
   Future<List<BlockDto>> getBlocksForApartment(int aptId) async {
-    final res = await _dio.get('/apartments/$aptId/blocks/');
+    final res = await _dio.get('/apartments/$aptId/blocks/', queryParameters: {'page_size': 1000, 'limit': 1000});
     return _extractResults(res.data).map((e) => BlockDto.fromJson(e)).toList();
   }
 
   @override
   Future<List<UnitDto>> getUnitsForBlock(int blockId) async {
-    final res = await _dio.get('/blocks/$blockId/units/');
+    final res = await _dio.get('/blocks/$blockId/units/', queryParameters: {'page_size': 1000, 'limit': 1000});
     return _extractResults(res.data).map((e) => UnitDto.fromJson(e)).toList();
   }
 
@@ -98,13 +98,13 @@ class PropertiesRemoteDataSourceImpl implements PropertiesRemoteDataSource {
 
   @override
   Future<List<OwnerDto>> getOwners() async {
-    final res = await _dio.get('/owners/');
+    final res = await _dio.get('/owners/', queryParameters: {'page_size': 1000, 'limit': 1000});
     return _extractResults(res.data).map((e) => OwnerDto.fromJson(e)).toList();
   }
 
   @override
   Future<List<TenantDto>> getTenants() async {
-    final res = await _dio.get('/tenants/');
+    final res = await _dio.get('/tenants/', queryParameters: {'page_size': 1000, 'limit': 1000});
     return _extractResults(res.data).map((e) => TenantDto.fromJson(e)).toList();
   }
 

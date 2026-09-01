@@ -33,7 +33,7 @@ class FinanceRemoteDataSourceImpl implements FinanceRemoteDataSource {
   FinanceRemoteDataSourceImpl(this._dio);
 
   Future<List<T>> _fetchList<T>(String path, T Function(Map<String, dynamic>) fromJson) async {
-    final response = await _dio.get(path);
+    final response = await _dio.get(path, queryParameters: {'page_size': 1000, 'limit': 1000});
     final data = response.data;
     List<dynamic> listData = [];
     if (data is Map<String, dynamic> && data.containsKey('results')) {
