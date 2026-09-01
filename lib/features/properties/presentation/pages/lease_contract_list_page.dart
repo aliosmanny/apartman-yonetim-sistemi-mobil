@@ -11,7 +11,8 @@ import 'package:go_router/go_router.dart';
 
 class LeaseContractListPage extends StatelessWidget {
   final List<AppLeaseContract>? filteredContracts;
-  const LeaseContractListPage({super.key, this.filteredContracts});
+  final bool isManager;
+  const LeaseContractListPage({super.key, this.filteredContracts, this.isManager = true});
 
   @override
   Widget build(BuildContext context) {
@@ -53,18 +54,19 @@ class LeaseContractListPage extends StatelessWidget {
                   style: AppTextStyles.bodyMedium.copyWith(color: AppColors.textSecondary),
                 ),
                 const SizedBox(height: 24),
-                ElevatedButton.icon(
-                  onPressed: () {
-                    context.push('/manager/properties/contracts/create', extra: {'cubit': context.read<PropertiesCubit>()});
-                  },
-                  icon: const Icon(Icons.add),
-                  label: const Text('Yeni Kira Sözleşmesi Ekle'),
-                  style: ElevatedButton.styleFrom(
-                    backgroundColor: AppColors.primary,
-                    foregroundColor: Colors.white,
-                    padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 12),
+                if (isManager)
+                  ElevatedButton.icon(
+                    onPressed: () {
+                      context.push('/manager/properties/contracts/create', extra: {'cubit': context.read<PropertiesCubit>()});
+                    },
+                    icon: const Icon(Icons.add),
+                    label: const Text('Yeni Kira Sözleşmesi Ekle'),
+                    style: ElevatedButton.styleFrom(
+                      backgroundColor: AppColors.primary,
+                      foregroundColor: Colors.white,
+                      padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 12),
+                    ),
                   ),
-                ),
               ],
             ),
           );
@@ -133,17 +135,18 @@ class LeaseContractListPage extends StatelessWidget {
                 );
               },
             ),
-            Positioned(
-              bottom: 16,
-              right: 16,
-              child: FloatingActionButton(
-                onPressed: () {
-                  context.push('/manager/properties/contracts/create', extra: {'cubit': context.read<PropertiesCubit>()});
-                },
-                backgroundColor: AppColors.primary,
-                child: const Icon(Icons.add, color: Colors.white),
+            if (isManager)
+              Positioned(
+                bottom: 16,
+                right: 16,
+                child: FloatingActionButton(
+                  onPressed: () {
+                    context.push('/manager/properties/contracts/create', extra: {'cubit': context.read<PropertiesCubit>()});
+                  },
+                  backgroundColor: AppColors.primary,
+                  child: const Icon(Icons.add, color: Colors.white),
+                ),
               ),
-            ),
           ],
         );
       },

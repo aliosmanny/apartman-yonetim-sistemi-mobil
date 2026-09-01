@@ -212,7 +212,7 @@ class _ResidentPropertiesPageState extends State<ResidentPropertiesPage> {
   
                 return TabBarView(
                   children: [
-                    LeaseContractListPage(filteredContracts: filteredContracts),
+                    LeaseContractListPage(filteredContracts: filteredContracts, isManager: false),
                   ],
                 );
               }
