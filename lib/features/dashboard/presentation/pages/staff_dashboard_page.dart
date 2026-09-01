@@ -31,37 +31,45 @@ class StaffDashboardPage extends StatelessWidget {
                   floating: false,
                   pinned: true,
                   elevation: 0,
-                  backgroundColor: const Color(0xFFD97706),
+                  backgroundColor: const Color(0xFFB45309),
                   flexibleSpace: FlexibleSpaceBar(
                     background: ClipRRect(
                       borderRadius: const BorderRadius.only(
-                        bottomLeft: Radius.circular(28),
-                        bottomRight: Radius.circular(28),
+                        bottomLeft: Radius.circular(32),
+                        bottomRight: Radius.circular(32),
                       ),
                       child: Container(
                         decoration: const BoxDecoration(
-                          gradient: LinearGradient(
-                            colors: [Color(0xFFD97706), Color(0xFFF59E0B)],
-                            begin: Alignment.topLeft,
-                            end: Alignment.bottomRight,
-                          ),
+                          gradient: AppColors.staffGradient,
                         ),
                         child: Stack(
                           children: [
                             Positioned(
-                              top: -30,
-                              right: -30,
+                              top: -40,
+                              right: -40,
                               child: Container(
-                                width: 140,
-                                height: 140,
+                                width: 160,
+                                height: 160,
                                 decoration: BoxDecoration(
                                   shape: BoxShape.circle,
-                                  color: Colors.white.withOpacity(0.05),
+                                  color: Colors.white.withAlpha(13),
+                                ),
+                              ),
+                            ),
+                            Positioned(
+                              bottom: -20,
+                              left: -20,
+                              child: Container(
+                                width: 90,
+                                height: 90,
+                                decoration: BoxDecoration(
+                                  shape: BoxShape.circle,
+                                  color: Colors.white.withAlpha(10),
                                 ),
                               ),
                             ),
                             Padding(
-                              padding: const EdgeInsets.fromLTRB(20, 60, 20, 20),
+                              padding: const EdgeInsets.fromLTRB(20, 60, 20, 24),
                               child: Column(
                                 crossAxisAlignment: CrossAxisAlignment.start,
                                 mainAxisAlignment: MainAxisAlignment.end,
@@ -70,43 +78,53 @@ class StaffDashboardPage extends StatelessWidget {
                                     crossAxisAlignment: CrossAxisAlignment.center,
                                     children: [
                                       Container(
-                                        width: 50,
-                                        height: 50,
+                                        width: 48,
+                                        height: 48,
                                         decoration: BoxDecoration(
-                                          color: Colors.white,
+                                          color: Colors.white.withAlpha(46),
                                           shape: BoxShape.circle,
-                                          boxShadow: [
-                                            BoxShadow(
-                                              color: Colors.black.withOpacity(0.1),
-                                              blurRadius: 8,
-                                              offset: const Offset(0, 4),
-                                            ),
-                                          ],
+                                          border: Border.all(
+                                            color: Colors.white.withAlpha(89),
+                                            width: 1.5,
+                                          ),
                                         ),
-                                        child: const Center(
-                                          child: Icon(Icons.engineering_rounded, color: Color(0xFFD97706), size: 26),
+                                        child: Center(
+                                          child: Text(
+                                            (user?.firstName != null && user!.firstName.isNotEmpty)
+                                                ? user.firstName.substring(0, 1).toUpperCase()
+                                                : 'P',
+                                            style: AppTextStyles.headlineSmall.copyWith(
+                                              color: Colors.white,
+                                              fontWeight: FontWeight.w700,
+                                            ),
+                                          ),
                                         ),
                                       ),
-                                      const SizedBox(width: 16),
+                                      const SizedBox(width: 14),
                                       Expanded(
                                         child: Column(
                                           crossAxisAlignment: CrossAxisAlignment.start,
                                           children: [
                                             Text(
                                               'Merhaba, ${user?.firstName ?? 'Personel'}!',
-                                              style: AppTextStyles.headlineMedium.copyWith(color: Colors.white),
+                                              style: AppTextStyles.headlineMedium.copyWith(
+                                                color: Colors.white,
+                                                fontWeight: FontWeight.w700,
+                                              ),
                                             ),
                                             const SizedBox(height: 2),
                                             Text(
                                               'İş Takip Ekranı',
-                                              style: AppTextStyles.bodyMedium.copyWith(color: Colors.white.withOpacity(0.8)),
+                                              style: AppTextStyles.bodyMedium.copyWith(
+                                                color: Colors.white.withAlpha(204),
+                                              ),
                                             ),
                                           ],
                                         ),
                                       ),
                                       Container(
                                         decoration: BoxDecoration(
-                                          color: Colors.white.withOpacity(0.15),
+                                          color: Colors.white.withAlpha(38),
                                           borderRadius: BorderRadius.circular(12),
                                         ),
                                         child: IconButton(
@@ -242,34 +260,44 @@ class _StatCard extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Container(
-      padding: const EdgeInsets.all(14),
       decoration: BoxDecoration(
         color: AppColors.cardBackground,
         borderRadius: BorderRadius.circular(16),
         border: Border.all(color: AppColors.border),
-        boxShadow: [
-          BoxShadow(
-            color: color.withOpacity(0.06),
-            blurRadius: 12,
-            offset: const Offset(0, 5),
-          ),
-        ],
       ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           Container(
-            padding: const EdgeInsets.all(6),
+            height: 3,
             decoration: BoxDecoration(
-              color: color.withOpacity(0.1),
-              borderRadius: BorderRadius.circular(8),
+              color: color,
+              borderRadius: const BorderRadius.only(
+                topLeft: Radius.circular(16),
+                topRight: Radius.circular(16),
+              ),
             ),
-            child: Icon(icon, color: color, size: 18),
           ),
-          const SizedBox(height: 10),
-          Text(value, style: AppTextStyles.headlineMedium.copyWith(color: color)),
-          const SizedBox(height: 2),
-          Text(label, style: AppTextStyles.bodySmall),
+          Padding(
+            padding: const EdgeInsets.all(14),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Container(
+                  padding: const EdgeInsets.all(6),
+                  decoration: BoxDecoration(
+                    color: color.withAlpha(26),
+                    borderRadius: BorderRadius.circular(8),
+                  ),
+                  child: Icon(icon, color: color, size: 18),
+                ),
+                const SizedBox(height: 10),
+                Text(value, style: AppTextStyles.headlineMedium.copyWith(color: color)),
+                const SizedBox(height: 2),
+                Text(label, style: AppTextStyles.bodySmall),
+              ],
+            ),
+          ),
         ],
       ),
     );

@@ -33,45 +33,73 @@ class ProfilePage extends StatelessWidget {
                   decoration: const BoxDecoration(
                     gradient: AppColors.primaryGradient,
                   ),
-                  padding: const EdgeInsets.only(bottom: 40, top: 20),
-                  child: Column(
+                  padding: const EdgeInsets.only(bottom: 48, top: 24),
+                  child: Stack(
+                    alignment: Alignment.center,
                     children: [
-                      Container(
-                        width: 90,
-                        height: 90,
-                        decoration: BoxDecoration(
-                          color: Colors.white,
-                          shape: BoxShape.circle,
-                          boxShadow: [
-                            BoxShadow(
-                              color: Colors.black.withOpacity(0.1),
-                              blurRadius: 10,
-                              offset: const Offset(0, 5),
-                            ),
-                          ],
-                        ),
-                        child: Center(
-                          child: Text(
-                            (user?.firstName != null && user!.firstName.isNotEmpty)
-                                ? user.firstName.substring(0, 1).toUpperCase()
-                                : 'U',
-                            style: const TextStyle(
-                              fontSize: 36,
-                              fontWeight: FontWeight.w700,
-                              color: AppColors.primary,
-                            ),
+                      // Dekoratif daire
+                      Positioned(
+                        top: -30,
+                        right: -30,
+                        child: Container(
+                          width: 140,
+                          height: 140,
+                          decoration: BoxDecoration(
+                            shape: BoxShape.circle,
+                            color: Colors.white.withAlpha(13),
                           ),
                         ),
                       ),
-                      const SizedBox(height: 16),
-                      Text(
-                        user?.fullName ?? 'Bilinmeyen Kullanıcı',
-                        style: AppTextStyles.headlineMedium.copyWith(color: Colors.white),
-                      ),
-                      const SizedBox(height: 4),
-                      Text(
-                        user?.role.displayName ?? 'Sakin',
-                        style: AppTextStyles.bodyMedium.copyWith(color: Colors.white.withOpacity(0.8)),
+                      Column(
+                        children: [
+                          // Avatar with ring
+                          Container(
+                            width: 104,
+                            height: 104,
+                            decoration: BoxDecoration(
+                              shape: BoxShape.circle,
+                              border: Border.all(color: Colors.white.withAlpha(128), width: 3),
+                            ),
+                            child: Container(
+                              decoration: const BoxDecoration(
+                                color: Colors.white,
+                                shape: BoxShape.circle,
+                              ),
+                              child: Center(
+                                child: Text(
+                                  (user?.firstName != null && user!.firstName.isNotEmpty)
+                                      ? user.firstName.substring(0, 1).toUpperCase()
+                                      : 'U',
+                                  style: TextStyle(
+                                    fontSize: 40,
+                                    fontWeight: FontWeight.w700,
+                                    color: AppColors.primary,
+                                  ),
+                                ),
+                              ),
+                            ),
+                          ),
+                          const SizedBox(height: 16),
+                          Text(
+                            user?.fullName ?? 'Bilinmeyen Kullanıcı',
+                            style: AppTextStyles.headlineMedium.copyWith(
+                              color: Colors.white,
+                              fontWeight: FontWeight.w700,
+                            ),
+                          ),
+                          const SizedBox(height: 4),
+                          Container(
+                            padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 4),
+                            decoration: BoxDecoration(
+                              color: Colors.white.withAlpha(38),
+                              borderRadius: BorderRadius.circular(20),
+                            ),
+                            child: Text(
+                              user?.role.displayName ?? 'Sakin',
+                              style: AppTextStyles.labelMedium.copyWith(color: Colors.white),
+                            ),
+                          ),
+                        ],
                       ),
                     ],
                   ),
@@ -79,11 +107,11 @@ class ProfilePage extends StatelessWidget {
 
                 // ── Bilgiler ve Ayarlar ─────────────────────
                 Transform.translate(
-                  offset: const Offset(0, -20),
+                  offset: const Offset(0, -24),
                   child: Container(
                     decoration: const BoxDecoration(
                       color: AppColors.background,
-                      borderRadius: BorderRadius.vertical(top: Radius.circular(24)),
+                      borderRadius: BorderRadius.vertical(top: Radius.circular(28)),
                     ),
                     padding: const EdgeInsets.all(20),
                     child: Column(
@@ -103,12 +131,14 @@ class ProfilePage extends StatelessWidget {
                         _buildActionTile(
                           context,
                           icon: Icons.lock_rounded,
+                          color: AppColors.primary,
                           title: 'Şifre Değiştir',
                           onTap: () => context.push('/resident/profile/change-password'),
                         ),
                         _buildActionTile(
                           context,
                           icon: Icons.notifications_rounded,
+                          color: AppColors.warning,
                           title: 'Bildirim Tercihleri',
                           onTap: () => context.push('/resident/profile/notifications'),
                         ),
@@ -150,24 +180,24 @@ class ProfilePage extends StatelessWidget {
 
   Widget _buildInfoTile(IconData icon, String title, String subtitle) {
     return Container(
-      margin: const EdgeInsets.only(bottom: 12),
-      padding: const EdgeInsets.all(16),
+      margin: const EdgeInsets.only(bottom: 10),
+      padding: const EdgeInsets.all(14),
       decoration: BoxDecoration(
         color: AppColors.cardBackground,
         borderRadius: BorderRadius.circular(16),
         border: Border.all(color: AppColors.border),
-        boxShadow: [
-          BoxShadow(
-            color: Colors.black.withOpacity(0.02),
-            blurRadius: 10,
-            offset: const Offset(0, 4),
-          ),
-        ],
       ),
       child: Row(
         children: [
-          Icon(icon, color: AppColors.textSecondary, size: 22),
-          const SizedBox(width: 16),
+          Container(
+            padding: const EdgeInsets.all(9),
+            decoration: BoxDecoration(
+              color: AppColors.primary.withAlpha(20),
+              borderRadius: BorderRadius.circular(10),
+            ),
+            child: Icon(icon, color: AppColors.primary, size: 20),
+          ),
+          const SizedBox(width: 14),
           Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
@@ -181,33 +211,27 @@ class ProfilePage extends StatelessWidget {
     );
   }
 
-  Widget _buildActionTile(BuildContext context, {required IconData icon, required String title, required VoidCallback onTap}) {
+  Widget _buildActionTile(BuildContext context, {required IconData icon, required String title, required VoidCallback onTap, Color color = AppColors.primary}) {
     return Container(
       margin: const EdgeInsets.only(bottom: 12),
       decoration: BoxDecoration(
         color: AppColors.cardBackground,
         borderRadius: BorderRadius.circular(16),
         border: Border.all(color: AppColors.border),
-        boxShadow: [
-          BoxShadow(
-            color: Colors.black.withOpacity(0.02),
-            blurRadius: 10,
-            offset: const Offset(0, 4),
-          ),
-        ],
       ),
       child: ListTile(
         onTap: onTap,
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
         leading: Container(
           padding: const EdgeInsets.all(8),
           decoration: BoxDecoration(
-            color: AppColors.primary.withOpacity(0.1),
-            borderRadius: BorderRadius.circular(8),
+            color: color.withAlpha(26),
+            borderRadius: BorderRadius.circular(10),
           ),
-          child: Icon(icon, color: AppColors.primary, size: 20),
+          child: Icon(icon, color: color, size: 20),
         ),
         title: Text(title, style: AppTextStyles.bodyMedium.copyWith(fontWeight: FontWeight.w600)),
-        trailing: const Icon(Icons.arrow_forward_ios_rounded, size: 16, color: AppColors.textTertiary),
+        trailing: const Icon(Icons.arrow_forward_ios_rounded, size: 14, color: AppColors.textTertiary),
       ),
     );
   }

@@ -58,7 +58,7 @@ class StaffAssignedPage extends StatelessWidget {
                   child: Column(
                     mainAxisAlignment: MainAxisAlignment.center,
                     children: [
-                      Icon(Icons.assignment_turned_in_rounded, size: 64, color: AppColors.textTertiary.withOpacity(0.5)),
+                      Icon(Icons.assignment_turned_in_rounded, size: 64, color: AppColors.textTertiary.withAlpha(128)),
                       const SizedBox(height: 16),
                       Text(
                         'Şu an bekleyen işiniz yok',
@@ -102,159 +102,170 @@ class _StaffAssignedCard extends StatelessWidget {
   Widget build(BuildContext context) {
     final bool inProgress = task.status == 'in_progress' || task.status == 'i' || task.status == 'assigned' || task.status == 'a';
     final Color statusColor = inProgress ? AppColors.maintenanceInProgress : AppColors.maintenancePending;
-
     final dateStr = DateFormat('dd MMM yyyy HH:mm').format(task.createdAt);
 
     return Container(
       decoration: BoxDecoration(
         color: AppColors.cardBackground,
         borderRadius: BorderRadius.circular(18),
-        border: Border.all(color: AppColors.border),
-        boxShadow: [
-          BoxShadow(
-            color: Colors.black.withOpacity(0.03),
-            blurRadius: 14,
-            offset: const Offset(0, 6),
-          ),
-        ],
+        border: Border.all(color: statusColor.withAlpha(77)),
       ),
-      child: InkWell(
-        onTap: () {
-          // GoRouter parametresi
-          context.pushNamed('staffTaskDetail', extra: task);
-        },
-        borderRadius: BorderRadius.circular(18),
-        child: Padding(
-          padding: const EdgeInsets.all(16),
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              Row(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Container(
-                    padding: const EdgeInsets.all(10),
-                    decoration: BoxDecoration(
-                      color: AppColors.primary.withOpacity(0.1),
-                      borderRadius: BorderRadius.circular(12),
-                    ),
-                    child: const Icon(Icons.build_circle_rounded, color: AppColors.primary),
-                  ),
-                  const SizedBox(width: 12),
-                  Expanded(
-                    child: Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: [
-                        Row(
-                          mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                          children: [
-                            Expanded(
-                              child: Text(
-                                task.title,
-                                style: AppTextStyles.titleMedium,
-                                maxLines: 1,
-                                overflow: TextOverflow.ellipsis,
-                              ),
-                            ),
-                            const SizedBox(width: 8),
-                            Container(
-                              padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
-                              decoration: BoxDecoration(
-                                color: statusColor.withOpacity(0.1),
-                                borderRadius: BorderRadius.circular(8),
-                              ),
-                              child: Row(
-                                mainAxisSize: MainAxisSize.min,
-                                children: [
-                                  Container(
-                                    width: 6,
-                                    height: 6,
-                                    decoration: BoxDecoration(color: statusColor, shape: BoxShape.circle),
-                                  ),
-                                  const SizedBox(width: 5),
-                                  Text(
-                                    inProgress ? 'Devam Ediyor' : 'Yeni İş',
-                                    style: AppTextStyles.labelSmall.copyWith(color: statusColor, fontWeight: FontWeight.w700),
-                                  ),
-                                ],
-                              ),
-                            ),
-                          ],
-                        ),
-                        const SizedBox(height: 4),
-                        Text(
-                          task.description,
-                          style: AppTextStyles.bodyMedium.copyWith(color: AppColors.textSecondary),
-                          maxLines: 2,
-                          overflow: TextOverflow.ellipsis,
-                        ),
-                      ],
-                    ),
-                  ),
-                ],
+      child: IntrinsicHeight(
+        child: Row(
+          children: [
+            // Sol renkli accent çizgisi
+            Container(
+              width: 5,
+              decoration: BoxDecoration(
+                color: statusColor,
+                borderRadius: const BorderRadius.only(
+                  topLeft: Radius.circular(18),
+                  bottomLeft: Radius.circular(18),
+                ),
               ),
-              const SizedBox(height: 12),
-              const Divider(height: 1),
-              const SizedBox(height: 12),
-              Row(
-                mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                children: [
-                  Expanded(
-                    child: Row(
-                      children: [
-                        const Icon(Icons.apartment_rounded, size: 16, color: AppColors.textTertiary),
-                        const SizedBox(width: 4),
-                        Expanded(
-                          child: Text(
-                            task.unitDisplay ?? task.apartmentName ?? 'Genel Ortak Alan',
-                            style: AppTextStyles.labelSmall.copyWith(color: AppColors.textSecondary),
-                            maxLines: 1,
-                            overflow: TextOverflow.ellipsis,
+            ),
+            Expanded(
+              child: InkWell(
+                onTap: () => context.pushNamed('staffTaskDetail', extra: task),
+                borderRadius: const BorderRadius.only(
+                  topRight: Radius.circular(18),
+                  bottomRight: Radius.circular(18),
+                ),
+                child: Padding(
+                  padding: const EdgeInsets.all(16),
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Row(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          Container(
+                            padding: const EdgeInsets.all(10),
+                            decoration: BoxDecoration(
+                              color: statusColor.withAlpha(26),
+                              borderRadius: BorderRadius.circular(12),
+                            ),
+                            child: Icon(Icons.build_circle_rounded, color: statusColor),
+                          ),
+                          const SizedBox(width: 12),
+                          Expanded(
+                            child: Column(
+                              crossAxisAlignment: CrossAxisAlignment.start,
+                              children: [
+                                Row(
+                                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                                  children: [
+                                    Expanded(
+                                      child: Text(
+                                        task.title,
+                                        style: AppTextStyles.titleMedium,
+                                        maxLines: 1,
+                                        overflow: TextOverflow.ellipsis,
+                                      ),
+                                    ),
+                                    const SizedBox(width: 8),
+                                    Container(
+                                      padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+                                      decoration: BoxDecoration(
+                                        color: statusColor.withAlpha(26),
+                                        borderRadius: BorderRadius.circular(8),
+                                      ),
+                                      child: Row(
+                                        mainAxisSize: MainAxisSize.min,
+                                        children: [
+                                          Container(
+                                            width: 6,
+                                            height: 6,
+                                            decoration: BoxDecoration(color: statusColor, shape: BoxShape.circle),
+                                          ),
+                                          const SizedBox(width: 5),
+                                          Text(
+                                            inProgress ? 'Devam Ediyor' : 'Yeni İş',
+                                            style: AppTextStyles.labelSmall.copyWith(color: statusColor, fontWeight: FontWeight.w700),
+                                          ),
+                                        ],
+                                      ),
+                                    ),
+                                  ],
+                                ),
+                                const SizedBox(height: 4),
+                                Text(
+                                  task.description,
+                                  style: AppTextStyles.bodyMedium.copyWith(color: AppColors.textSecondary),
+                                  maxLines: 2,
+                                  overflow: TextOverflow.ellipsis,
+                                ),
+                              ],
+                            ),
+                          ),
+                        ],
+                      ),
+                      const SizedBox(height: 12),
+                      const Divider(height: 1),
+                      const SizedBox(height: 12),
+                      Row(
+                        mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                        children: [
+                          Expanded(
+                            child: Row(
+                              children: [
+                                const Icon(Icons.apartment_rounded, size: 16, color: AppColors.textTertiary),
+                                const SizedBox(width: 4),
+                                Expanded(
+                                  child: Text(
+                                    task.unitDisplay ?? task.apartmentName ?? 'Genel Ortak Alan',
+                                    style: AppTextStyles.labelSmall.copyWith(color: AppColors.textSecondary),
+                                    maxLines: 1,
+                                    overflow: TextOverflow.ellipsis,
+                                  ),
+                                ),
+                              ],
+                            ),
+                          ),
+                          const SizedBox(width: 8),
+                          Row(
+                            children: [
+                              const Icon(Icons.access_time_rounded, size: 16, color: AppColors.textTertiary),
+                              const SizedBox(width: 4),
+                              Text(
+                                dateStr,
+                                style: AppTextStyles.labelSmall.copyWith(color: AppColors.textTertiary),
+                              ),
+                            ],
+                          ),
+                        ],
+                      ),
+                      if (task.adminNotes != null && task.adminNotes!.isNotEmpty) ...[
+                        const SizedBox(height: 12),
+                        Container(
+                          width: double.infinity,
+                          padding: const EdgeInsets.all(10),
+                          decoration: BoxDecoration(
+                            color: AppColors.warning.withAlpha(15),
+                            borderRadius: BorderRadius.circular(10),
+                            border: Border.all(color: AppColors.warning.withAlpha(51)),
+                          ),
+                          child: Row(
+                            crossAxisAlignment: CrossAxisAlignment.start,
+                            children: [
+                              Icon(Icons.info_rounded, size: 16, color: AppColors.warning),
+                              const SizedBox(width: 8),
+                              Expanded(
+                                child: Text(
+                                  'Yönetici Notu: ${task.adminNotes}',
+                                  style: AppTextStyles.labelSmall.copyWith(color: AppColors.textSecondary),
+                                ),
+                              ),
+                            ],
                           ),
                         ),
                       ],
-                    ),
-                  ),
-                  const SizedBox(width: 8),
-                  Row(
-                    children: [
-                      const Icon(Icons.access_time_rounded, size: 16, color: AppColors.textTertiary),
-                      const SizedBox(width: 4),
-                      Text(
-                        dateStr,
-                        style: AppTextStyles.labelSmall.copyWith(color: AppColors.textTertiary),
-                      ),
-                    ],
-                  ),
-                ],
-              ),
-              if (task.adminNotes != null && task.adminNotes!.isNotEmpty) ...[
-                const SizedBox(height: 12),
-                Container(
-                  width: double.infinity,
-                  padding: const EdgeInsets.all(10),
-                  decoration: BoxDecoration(
-                    color: AppColors.warning.withOpacity(0.06),
-                    borderRadius: BorderRadius.circular(10),
-                    border: Border.all(color: AppColors.warning.withOpacity(0.2)),
-                  ),
-                  child: Row(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      Icon(Icons.info_rounded, size: 16, color: AppColors.warning.withOpacity(0.9)),
-                      const SizedBox(width: 8),
-                      Expanded(
-                        child: Text(
-                          'Yönetici Notu: ${task.adminNotes}',
-                          style: AppTextStyles.labelSmall.copyWith(color: AppColors.textSecondary),
-                        ),
-                      ),
                     ],
                   ),
                 ),
-              ],
-            ],
-          ),
+              ),
+            ),
+          ],
         ),
       ),
     );

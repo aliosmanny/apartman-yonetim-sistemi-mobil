@@ -57,7 +57,7 @@ class StaffCompletedPage extends StatelessWidget {
                   child: Column(
                     mainAxisAlignment: MainAxisAlignment.center,
                     children: [
-                      Icon(Icons.history_rounded, size: 64, color: AppColors.textTertiary.withOpacity(0.5)),
+                      Icon(Icons.history_rounded, size: 64, color: AppColors.textTertiary.withAlpha(128)),
                       const SizedBox(height: 16),
                       Text(
                         'Henüz tamamlanmış işiniz yok',
@@ -99,7 +99,8 @@ class _StaffCompletedCard extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    const statusColor = AppColors.maintenanceCompleted;
+    final isCancelled = task.status == 'cancelled' || task.status == 'rejected' || task.status == 'x';
+    final statusColor = isCancelled ? AppColors.maintenanceCancelled : AppColors.maintenanceCompleted;
     final dateStr = DateFormat('dd MMM yyyy HH:mm').format(task.createdAt);
     final resolvedStr = task.resolvedAt != null
         ? DateFormat('dd MMM yyyy HH:mm').format(task.resolvedAt!)
@@ -107,127 +108,139 @@ class _StaffCompletedCard extends StatelessWidget {
 
     return Container(
       decoration: BoxDecoration(
-        color: AppColors.cardBackground,
+        color: isCancelled
+            ? AppColors.errorLight.withAlpha(51)
+            : AppColors.successLight.withAlpha(77),
         borderRadius: BorderRadius.circular(18),
-        border: Border.all(color: AppColors.border),
-        boxShadow: [
-          BoxShadow(
-            color: Colors.black.withOpacity(0.03),
-            blurRadius: 14,
-            offset: const Offset(0, 6),
-          ),
-        ],
+        border: Border.all(color: statusColor.withAlpha(51)),
       ),
-      child: Padding(
-        padding: const EdgeInsets.all(16),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
+      child: IntrinsicHeight(
+        child: Row(
           children: [
-            Row(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Container(
-                  padding: const EdgeInsets.all(10),
-                  decoration: BoxDecoration(
-                    color: AppColors.success.withOpacity(0.1),
-                    borderRadius: BorderRadius.circular(12),
-                  ),
-                  child: const Icon(Icons.check_circle_rounded, color: AppColors.success),
+            Container(
+              width: 5,
+              decoration: BoxDecoration(
+                color: statusColor,
+                borderRadius: const BorderRadius.only(
+                  topLeft: Radius.circular(18),
+                  bottomLeft: Radius.circular(18),
                 ),
-                const SizedBox(width: 12),
-                Expanded(
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      Row(
-                        mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                        children: [
-                          Expanded(
-                            child: Text(
-                              task.title,
-                              style: AppTextStyles.titleMedium,
-                              maxLines: 1,
-                              overflow: TextOverflow.ellipsis,
-                            ),
-                          ),
-                          const SizedBox(width: 8),
-                          Container(
-                            padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
-                            decoration: BoxDecoration(
-                              color: statusColor.withOpacity(0.1),
-                              borderRadius: BorderRadius.circular(8),
-                            ),
-                            child: Row(
-                              mainAxisSize: MainAxisSize.min,
-                              children: [
-                                Container(
-                                  width: 6,
-                                  height: 6,
-                                  decoration: BoxDecoration(color: statusColor, shape: BoxShape.circle),
-                                ),
-                                const SizedBox(width: 5),
-                                Text(
-                                  task.status == 'cancelled' || task.status == 'rejected' || task.status == 'x'
-                                      ? 'İptal Edildi'
-                                      : 'Tamamlandı',
-                                  style: AppTextStyles.labelSmall.copyWith(
-                                    color: task.status == 'cancelled' || task.status == 'rejected' || task.status == 'x'
-                                        ? AppColors.error
-                                        : statusColor,
-                                    fontWeight: FontWeight.w700,
-                                  ),
-                                ),
-                              ],
-                            ),
-                          ),
-                        ],
-                      ),
-                      const SizedBox(height: 4),
-                      Text(
-                        task.description,
-                        style: AppTextStyles.bodyMedium.copyWith(color: AppColors.textSecondary),
-                        maxLines: 2,
-                        overflow: TextOverflow.ellipsis,
-                      ),
-                    ],
-                  ),
-                ),
-              ],
+              ),
             ),
-            const SizedBox(height: 12),
-            const Divider(height: 1),
-            const SizedBox(height: 12),
-            Row(
-              mainAxisAlignment: MainAxisAlignment.spaceBetween,
-              children: [
-                Expanded(
-                  child: Row(
-                    children: [
-                      const Icon(Icons.apartment_rounded, size: 16, color: AppColors.textTertiary),
-                      const SizedBox(width: 4),
-                      Expanded(
-                        child: Text(
-                          task.unitDisplay ?? task.apartmentName ?? 'Genel Ortak Alan',
-                          style: AppTextStyles.labelSmall.copyWith(color: AppColors.textSecondary),
-                          maxLines: 1,
-                          overflow: TextOverflow.ellipsis,
-                        ),
-                      ),
-                    ],
-                  ),
-                ),
-                const SizedBox(width: 8),
-                Row(
+            Expanded(
+              child: Padding(
+                padding: const EdgeInsets.all(16),
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
-                    const Icon(Icons.access_time_rounded, size: 16, color: AppColors.textTertiary),
-                    const SizedBox(width: 4),
-                    Text(
-                      resolvedStr != null ? 'Çözüm: $resolvedStr' : 'Oluşturulma: $dateStr',
-                      style: AppTextStyles.labelSmall.copyWith(color: AppColors.textTertiary),
+                    Row(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Container(
+                          padding: const EdgeInsets.all(10),
+                          decoration: BoxDecoration(
+                            color: statusColor.withAlpha(26),
+                            borderRadius: BorderRadius.circular(12),
+                          ),
+                          child: Icon(
+                            isCancelled ? Icons.cancel_rounded : Icons.check_circle_rounded,
+                            color: statusColor,
+                          ),
+                        ),
+                        const SizedBox(width: 12),
+                        Expanded(
+                          child: Column(
+                            crossAxisAlignment: CrossAxisAlignment.start,
+                            children: [
+                              Row(
+                                mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                                children: [
+                                  Expanded(
+                                    child: Text(
+                                      task.title,
+                                      style: AppTextStyles.titleMedium,
+                                      maxLines: 1,
+                                      overflow: TextOverflow.ellipsis,
+                                    ),
+                                  ),
+                                  const SizedBox(width: 8),
+                                  Container(
+                                    padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+                                    decoration: BoxDecoration(
+                                      color: statusColor.withAlpha(26),
+                                      borderRadius: BorderRadius.circular(8),
+                                    ),
+                                    child: Row(
+                                      mainAxisSize: MainAxisSize.min,
+                                      children: [
+                                        Container(
+                                          width: 6,
+                                          height: 6,
+                                          decoration: BoxDecoration(color: statusColor, shape: BoxShape.circle),
+                                        ),
+                                        const SizedBox(width: 5),
+                                        Text(
+                                          isCancelled ? 'İptal Edildi' : 'Tamamlandı',
+                                          style: AppTextStyles.labelSmall.copyWith(
+                                            color: statusColor,
+                                            fontWeight: FontWeight.w700,
+                                          ),
+                                        ),
+                                      ],
+                                    ),
+                                  ),
+                                ],
+                              ),
+                              const SizedBox(height: 4),
+                              Text(
+                                task.description,
+                                style: AppTextStyles.bodyMedium.copyWith(color: AppColors.textSecondary),
+                                maxLines: 2,
+                                overflow: TextOverflow.ellipsis,
+                              ),
+                            ],
+                          ),
+                        ),
+                      ],
+                    ),
+                    const SizedBox(height: 12),
+                    const Divider(height: 1),
+                    const SizedBox(height: 12),
+                    Row(
+                      mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                      children: [
+                        Expanded(
+                          child: Row(
+                            children: [
+                              const Icon(Icons.apartment_rounded, size: 16, color: AppColors.textTertiary),
+                              const SizedBox(width: 4),
+                              Expanded(
+                                child: Text(
+                                  task.unitDisplay ?? task.apartmentName ?? 'Genel Ortak Alan',
+                                  style: AppTextStyles.labelSmall.copyWith(color: AppColors.textSecondary),
+                                  maxLines: 1,
+                                  overflow: TextOverflow.ellipsis,
+                                ),
+                              ),
+                            ],
+                          ),
+                        ),
+                        const SizedBox(width: 8),
+                        Row(
+                          children: [
+                            const Icon(Icons.access_time_rounded, size: 16, color: AppColors.textTertiary),
+                            const SizedBox(width: 4),
+                            Text(
+                              resolvedStr != null ? 'Çözüm: $resolvedStr' : 'Oluşturulma: $dateStr',
+                              style: AppTextStyles.labelSmall.copyWith(color: AppColors.textTertiary),
+                            ),
+                          ],
+                        ),
+                      ],
                     ),
                   ],
                 ),
-              ],
+              ),
             ),
           ],
         ),

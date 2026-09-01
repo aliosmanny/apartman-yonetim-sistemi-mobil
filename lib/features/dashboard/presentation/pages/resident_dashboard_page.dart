@@ -36,37 +36,45 @@ class ResidentDashboardPage extends StatelessWidget {
                   floating: false,
                   pinned: true,
                   elevation: 0,
-                  backgroundColor: const Color(0xFF0D9488),
+                  backgroundColor: const Color(0xFF0F766E),
                   flexibleSpace: FlexibleSpaceBar(
                     background: ClipRRect(
                       borderRadius: const BorderRadius.only(
-                        bottomLeft: Radius.circular(28),
-                        bottomRight: Radius.circular(28),
+                        bottomLeft: Radius.circular(32),
+                        bottomRight: Radius.circular(32),
                       ),
                       child: Container(
                         decoration: const BoxDecoration(
-                          gradient: LinearGradient(
-                            colors: [Color(0xFF0D9488), Color(0xFF0891B2)],
-                            begin: Alignment.topLeft,
-                            end: Alignment.bottomRight,
-                          ),
+                          gradient: AppColors.residentGradient,
                         ),
                         child: Stack(
                           children: [
                             Positioned(
-                              top: -30,
-                              right: -30,
+                              top: -40,
+                              right: -40,
                               child: Container(
-                                width: 140,
-                                height: 140,
+                                width: 160,
+                                height: 160,
                                 decoration: BoxDecoration(
                                   shape: BoxShape.circle,
-                                  color: Colors.white.withOpacity(0.05),
+                                  color: Colors.white.withAlpha(13),
+                                ),
+                              ),
+                            ),
+                            Positioned(
+                              bottom: -20,
+                              left: -20,
+                              child: Container(
+                                width: 90,
+                                height: 90,
+                                decoration: BoxDecoration(
+                                  shape: BoxShape.circle,
+                                  color: Colors.white.withAlpha(10),
                                 ),
                               ),
                             ),
                             Padding(
-                              padding: const EdgeInsets.fromLTRB(20, 60, 20, 20),
+                              padding: const EdgeInsets.fromLTRB(20, 60, 20, 24),
                               child: Column(
                                 crossAxisAlignment: CrossAxisAlignment.start,
                                 mainAxisAlignment: MainAxisAlignment.end,
@@ -81,13 +89,14 @@ class ResidentDashboardPage extends StatelessWidget {
                                               'Merhaba, ${user?.firstName ?? ''}! 👋',
                                               style: AppTextStyles.headlineMedium.copyWith(
                                                 color: AppColors.textOnPrimary,
+                                                fontWeight: FontWeight.w700,
                                               ),
                                             ),
                                             const SizedBox(height: 4),
                                             Text(
                                               user?.role.displayName ?? '',
                                               style: AppTextStyles.bodySmall.copyWith(
-                                                color: AppColors.textOnPrimary.withOpacity(0.8),
+                                                color: AppColors.textOnPrimary.withAlpha(204),
                                               ),
                                             ),
                                           ],
@@ -97,7 +106,7 @@ class ResidentDashboardPage extends StatelessWidget {
                                       const SizedBox(width: 8),
                                       Container(
                                         decoration: BoxDecoration(
-                                          color: Colors.white.withOpacity(0.15),
+                                          color: Colors.white.withAlpha(38),
                                           shape: BoxShape.circle,
                                         ),
                                         child: IconButton(
@@ -262,15 +271,25 @@ class _DebtCard extends StatelessWidget {
 
         final formatCurrency = NumberFormat.currency(locale: 'tr_TR', symbol: '₺');
 
+        // Gradient'i borç durumuna göre dinamik belirle
+        LinearGradient cardGrad;
+        if (totalUnpaid == 0) {
+          cardGrad = AppColors.debtFreeGradient;
+        } else if (hasOverdue) {
+          cardGrad = AppColors.debtOverdueGradient;
+        } else {
+          cardGrad = AppColors.debtPendingGradient;
+        }
+
         return Container(
           padding: const EdgeInsets.all(20),
           decoration: BoxDecoration(
-            gradient: AppColors.cardGradient,
-            borderRadius: BorderRadius.circular(20),
+            gradient: state is ResidentDashboardLoaded ? cardGrad : AppColors.cardGradient,
+            borderRadius: BorderRadius.circular(24),
             boxShadow: [
               BoxShadow(
-                color: AppColors.primary.withOpacity(0.25),
-                blurRadius: 15,
+                color: Colors.black.withAlpha(51),
+                blurRadius: 20,
                 offset: const Offset(0, 8),
               ),
             ],

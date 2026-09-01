@@ -64,30 +64,42 @@ class _ManagerDashboardPageState extends State<ManagerDashboardPage> {
                 flexibleSpace: FlexibleSpaceBar(
                   background: ClipRRect(
                     borderRadius: const BorderRadius.only(
-                      bottomLeft: Radius.circular(28),
-                      bottomRight: Radius.circular(28),
+                      bottomLeft: Radius.circular(32),
+                      bottomRight: Radius.circular(32),
                     ),
                     child: Container(
-                      // Elle renk yazmak yerine hazır gradient
                       decoration: const BoxDecoration(
                         gradient: AppColors.primaryGradient,
                       ),
                       child: Stack(
                         children: [
+                          // Dekoratif arka plan daireleri
                           Positioned(
-                            top: -30,
-                            right: -30,
+                            top: -40,
+                            right: -40,
                             child: Container(
-                              width: 140,
-                              height: 140,
+                              width: 160,
+                              height: 160,
                               decoration: BoxDecoration(
                                 shape: BoxShape.circle,
-                                color: Colors.white.withOpacity(0.05),
+                                color: Colors.white.withAlpha(13),
+                              ),
+                            ),
+                          ),
+                          Positioned(
+                            bottom: -20,
+                            left: -20,
+                            child: Container(
+                              width: 100,
+                              height: 100,
+                              decoration: BoxDecoration(
+                                shape: BoxShape.circle,
+                                color: Colors.white.withAlpha(10),
                               ),
                             ),
                           ),
                           Padding(
-                            padding: const EdgeInsets.fromLTRB(20, 60, 20, 24),
+                            padding: const EdgeInsets.fromLTRB(20, 60, 20, 28),
                             child: Column(
                               crossAxisAlignment: CrossAxisAlignment.start,
                               mainAxisAlignment: MainAxisAlignment.end,
@@ -102,28 +114,29 @@ class _ManagerDashboardPageState extends State<ManagerDashboardPage> {
                                             'İyi çalışmalar, ${user?.firstName ?? 'Yönetici'}!',
                                             style: AppTextStyles.headlineMedium.copyWith(
                                               color: AppColors.textOnPrimary,
+                                              fontWeight: FontWeight.w700,
                                             ),
                                           ),
                                           const SizedBox(height: 4),
                                           Text(
                                             'Yönetim Paneli Özeti',
                                             style: AppTextStyles.bodySmall.copyWith(
-                                              color: AppColors.textOnPrimary.withOpacity(0.75),
+                                              color: AppColors.textOnPrimary.withAlpha(179),
                                             ),
                                           ),
                                         ],
                                       ),
                                     ),
                                     const NotificationBell(routePath: '/manager/notifications'),
-                                    const SizedBox(width: 16),
+                                    const SizedBox(width: 12),
                                     Container(
-                                      width: 48,
-                                      height: 48,
+                                      width: 44,
+                                      height: 44,
                                       decoration: BoxDecoration(
-                                        color: Colors.white.withOpacity(0.18),
+                                        color: Colors.white.withAlpha(46),
                                         shape: BoxShape.circle,
                                         border: Border.all(
-                                          color: Colors.white.withOpacity(0.35),
+                                          color: Colors.white.withAlpha(89),
                                           width: 1.5,
                                         ),
                                       ),
@@ -132,8 +145,9 @@ class _ManagerDashboardPageState extends State<ManagerDashboardPage> {
                                           (user?.firstName != null && user!.firstName.isNotEmpty)
                                               ? user.firstName.substring(0, 1).toUpperCase()
                                               : 'Y',
-                                          style: AppTextStyles.headlineMedium.copyWith(
+                                          style: AppTextStyles.headlineSmall.copyWith(
                                             color: AppColors.textOnPrimary,
+                                            fontWeight: FontWeight.w700,
                                           ),
                                         ),
                                       ),
@@ -282,53 +296,64 @@ class _ManagerDashboardPageState extends State<ManagerDashboardPage> {
     required String trend,
   }) {
     return Container(
-      padding: const EdgeInsets.all(16),
       decoration: BoxDecoration(
         color: AppColors.cardBackground,
         borderRadius: BorderRadius.circular(20),
         border: Border.all(color: AppColors.border),
-        boxShadow: [
-          BoxShadow(
-            color: color.withOpacity(0.06),
-            blurRadius: 16,
-            offset: const Offset(0, 6),
-          ),
-        ],
       ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          Row(
-            children: [
-              Container(
-                padding: const EdgeInsets.all(9),
-                decoration: BoxDecoration(
-                  color: color.withOpacity(0.12),
-                  borderRadius: BorderRadius.circular(10),
-                ),
-                child: Icon(icon, color: color, size: 19),
+          // Üst renkli accent bar
+          Container(
+            height: 4,
+            decoration: BoxDecoration(
+              color: color,
+              borderRadius: const BorderRadius.only(
+                topLeft: Radius.circular(20),
+                topRight: Radius.circular(20),
               ),
-              const Spacer(),
-              Container(
-                padding: const EdgeInsets.symmetric(horizontal: 7, vertical: 3),
-                decoration: BoxDecoration(
-                  color: color.withOpacity(0.1),
-                  borderRadius: BorderRadius.circular(20),
-                ),
-                child: Text(
-                  trend,
-                  style: AppTextStyles.labelSmall.copyWith(
-                    color: color,
-                    fontWeight: FontWeight.w700,
-                  ),
-                ),
-              ),
-            ],
+            ),
           ),
-          const SizedBox(height: 14),
-          Text(title, style: AppTextStyles.labelSmall.copyWith(color: AppColors.textSecondary)),
-          const SizedBox(height: 4),
-          Text(amount, style: AppTextStyles.amountMedium),
+          Padding(
+            padding: const EdgeInsets.all(16),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Row(
+                  children: [
+                    Container(
+                      padding: const EdgeInsets.all(8),
+                      decoration: BoxDecoration(
+                        color: color.withAlpha(26),
+                        borderRadius: BorderRadius.circular(10),
+                      ),
+                      child: Icon(icon, color: color, size: 18),
+                    ),
+                    const Spacer(),
+                    Container(
+                      padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
+                      decoration: BoxDecoration(
+                        color: color.withAlpha(20),
+                        borderRadius: BorderRadius.circular(20),
+                      ),
+                      child: Text(
+                        trend,
+                        style: AppTextStyles.labelSmall.copyWith(
+                          color: color,
+                          fontWeight: FontWeight.w700,
+                        ),
+                      ),
+                    ),
+                  ],
+                ),
+                const SizedBox(height: 14),
+                Text(title, style: AppTextStyles.labelSmall.copyWith(color: AppColors.textSecondary)),
+                const SizedBox(height: 4),
+                Text(amount, style: AppTextStyles.amountMedium.copyWith(fontSize: 17)),
+              ],
+            ),
+          ),
         ],
       ),
     );
@@ -342,12 +367,24 @@ class _ManagerDashboardPageState extends State<ManagerDashboardPage> {
         mainAxisAlignment: MainAxisAlignment.center,
         children: [
           Container(
-            padding: const EdgeInsets.all(12),
+            width: 52,
+            height: 52,
             decoration: BoxDecoration(
-              color: color.withOpacity(0.1),
-              borderRadius: BorderRadius.circular(14),
+              gradient: LinearGradient(
+                colors: [color, color.withAlpha(200)],
+                begin: Alignment.topLeft,
+                end: Alignment.bottomRight,
+              ),
+              borderRadius: BorderRadius.circular(16),
+              boxShadow: [
+                BoxShadow(
+                  color: color.withAlpha(77),
+                  blurRadius: 10,
+                  offset: const Offset(0, 4),
+                ),
+              ],
             ),
-            child: Icon(icon, color: color, size: 22),
+            child: Icon(icon, color: Colors.white, size: 24),
           ),
           const SizedBox(height: 8),
           Text(

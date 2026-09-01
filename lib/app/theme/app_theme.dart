@@ -15,14 +15,9 @@ class FastPageTransitionsBuilder extends PageTransitionsBuilder {
     Animation<double> secondaryAnimation,
     Widget child,
   ) {
-    // Sadece çok hızlı bir fade (solma) efekti uygular, slide veya zoom yapmaz.
-    return FadeTransition(
-      opacity: animation,
-      child: child,
-    );
+    return FadeTransition(opacity: animation, child: child);
   }
 }
-
 
 abstract class AppTheme {
   static ThemeData get light {
@@ -40,19 +35,27 @@ abstract class AppTheme {
       scaffoldBackgroundColor: AppColors.background,
       fontFamily: 'Inter',
 
+      // ── Hızlı sayfa geçişleri ───────────────────
+      pageTransitionsTheme: const PageTransitionsTheme(
+        builders: {
+          TargetPlatform.android: FastPageTransitionsBuilder(),
+          TargetPlatform.iOS: FastPageTransitionsBuilder(),
+        },
+      ),
+
       // ── AppBar ──────────────────────────────────
       appBarTheme: const AppBarTheme(
         backgroundColor: Colors.transparent,
         elevation: 0,
         scrolledUnderElevation: 0,
-        centerTitle: false,
-        iconTheme: IconThemeData(color: AppColors.textPrimary, size: 28),
+        centerTitle: true,
+        iconTheme: IconThemeData(color: AppColors.textPrimary, size: 24),
         titleTextStyle: TextStyle(
           fontFamily: 'Inter',
-          fontSize: 26,
+          fontSize: 18,
           fontWeight: FontWeight.w700,
           color: AppColors.textPrimary,
-          letterSpacing: -0.8,
+          letterSpacing: -0.4,
         ),
         systemOverlayStyle: SystemUiOverlayStyle(
           statusBarColor: Colors.transparent,
@@ -66,7 +69,7 @@ abstract class AppTheme {
         selectedItemColor: AppColors.primary,
         unselectedItemColor: AppColors.textTertiary,
         type: BottomNavigationBarType.fixed,
-        elevation: 8,
+        elevation: 0,
         selectedLabelStyle: TextStyle(
           fontFamily: 'Inter',
           fontSize: 11,
@@ -82,41 +85,43 @@ abstract class AppTheme {
       // ── NavigationBar (Material 3) ────────────────
       navigationBarTheme: NavigationBarThemeData(
         backgroundColor: AppColors.surface,
-        indicatorColor: AppColors.primary.withOpacity(0.12),
+        indicatorColor: AppColors.primaryLight.withAlpha(38),
+        surfaceTintColor: Colors.transparent,
+        elevation: 0,
+        shadowColor: Colors.transparent,
+        overlayColor: WidgetStateProperty.all(Colors.transparent),
         iconTheme: WidgetStateProperty.resolveWith((states) {
           if (states.contains(WidgetState.selected)) {
-            return const IconThemeData(color: AppColors.primary);
+            return const IconThemeData(color: AppColors.primary, size: 22);
           }
-          return const IconThemeData(color: AppColors.textTertiary);
+          return const IconThemeData(color: AppColors.textTertiary, size: 22);
         }),
         labelTextStyle: WidgetStateProperty.resolveWith((states) {
           if (states.contains(WidgetState.selected)) {
             return const TextStyle(
               fontFamily: 'Inter',
-              fontSize: 11,
-              fontWeight: FontWeight.w600,
+              fontSize: 10,
+              fontWeight: FontWeight.w700,
               color: AppColors.primary,
             );
           }
           return const TextStyle(
             fontFamily: 'Inter',
-            fontSize: 11,
+            fontSize: 10,
             fontWeight: FontWeight.w400,
             color: AppColors.textTertiary,
           );
         }),
-        elevation: 8,
-        shadowColor: AppColors.border,
       ),
 
       // ── Card ─────────────────────────────────────
       cardTheme: CardThemeData(
         color: AppColors.cardBackground,
-        elevation: 12,
-        shadowColor: const Color(0xFF0F172A).withOpacity(0.06),
+        elevation: 0,
+        shadowColor: Colors.transparent,
         shape: RoundedRectangleBorder(
-          borderRadius: BorderRadius.circular(24),
-          side: BorderSide.none,
+          borderRadius: BorderRadius.circular(20),
+          side: const BorderSide(color: AppColors.border, width: 1),
         ),
         margin: EdgeInsets.zero,
       ),
@@ -126,12 +131,12 @@ abstract class AppTheme {
         style: ElevatedButton.styleFrom(
           backgroundColor: AppColors.primary,
           foregroundColor: AppColors.textOnPrimary,
-          elevation: 4,
-          shadowColor: AppColors.primary.withOpacity(0.3),
-          minimumSize: const Size(double.infinity, 54),
+          elevation: 0,
+          shadowColor: Colors.transparent,
+          minimumSize: const Size(double.infinity, 52),
           padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 14),
           shape: RoundedRectangleBorder(
-            borderRadius: BorderRadius.circular(16),
+            borderRadius: BorderRadius.circular(14),
           ),
           textStyle: AppTextStyles.buttonLarge.copyWith(fontWeight: FontWeight.w600),
         ),
@@ -144,7 +149,7 @@ abstract class AppTheme {
           minimumSize: const Size(double.infinity, 52),
           padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 14),
           shape: RoundedRectangleBorder(
-            borderRadius: BorderRadius.circular(16),
+            borderRadius: BorderRadius.circular(14),
           ),
           side: const BorderSide(color: AppColors.primary, width: 1.5),
           textStyle: AppTextStyles.buttonLarge,
@@ -169,23 +174,23 @@ abstract class AppTheme {
         fillColor: AppColors.surfaceVariant,
         contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
         border: OutlineInputBorder(
-          borderRadius: BorderRadius.circular(16),
+          borderRadius: BorderRadius.circular(14),
           borderSide: const BorderSide(color: AppColors.border),
         ),
         enabledBorder: OutlineInputBorder(
-          borderRadius: BorderRadius.circular(16),
+          borderRadius: BorderRadius.circular(14),
           borderSide: const BorderSide(color: AppColors.border),
         ),
         focusedBorder: OutlineInputBorder(
-          borderRadius: BorderRadius.circular(16),
+          borderRadius: BorderRadius.circular(14),
           borderSide: const BorderSide(color: AppColors.primary, width: 2),
         ),
         errorBorder: OutlineInputBorder(
-          borderRadius: BorderRadius.circular(16),
+          borderRadius: BorderRadius.circular(14),
           borderSide: const BorderSide(color: AppColors.error),
         ),
         focusedErrorBorder: OutlineInputBorder(
-          borderRadius: BorderRadius.circular(16),
+          borderRadius: BorderRadius.circular(14),
           borderSide: const BorderSide(color: AppColors.error, width: 2),
         ),
         hintStyle: AppTextStyles.inputHint,
@@ -200,7 +205,7 @@ abstract class AppTheme {
       // ── Chip ─────────────────────────────────────
       chipTheme: ChipThemeData(
         backgroundColor: AppColors.surfaceVariant,
-        selectedColor: AppColors.primary.withOpacity(0.12),
+        selectedColor: AppColors.primary.withAlpha(31),
         labelStyle: AppTextStyles.labelMedium,
         padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
         shape: RoundedRectangleBorder(
@@ -229,15 +234,17 @@ abstract class AppTheme {
         contentTextStyle: AppTextStyles.bodyMedium.copyWith(
           color: Colors.white,
         ),
-        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(14)),
         behavior: SnackBarBehavior.floating,
+        elevation: 8,
       ),
 
       // ── Dialog ───────────────────────────────────
       dialogTheme: DialogThemeData(
         backgroundColor: AppColors.surface,
-        elevation: 4,
-        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
+        elevation: 8,
+        shadowColor: AppColors.primary.withAlpha(20),
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(24)),
         titleTextStyle: AppTextStyles.headlineMedium,
         contentTextStyle: AppTextStyles.bodyMedium,
       ),
@@ -246,8 +253,8 @@ abstract class AppTheme {
       floatingActionButtonTheme: FloatingActionButtonThemeData(
         backgroundColor: AppColors.primary,
         foregroundColor: AppColors.textOnPrimary,
-        elevation: 8,
-        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
+        elevation: 6,
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(18)),
       ),
 
       // ── Progress ─────────────────────────────────
@@ -264,7 +271,7 @@ abstract class AppTheme {
         }),
         trackColor: WidgetStateProperty.resolveWith((states) {
           if (states.contains(WidgetState.selected)) {
-            return AppColors.primary.withOpacity(0.3);
+            return AppColors.primary.withAlpha(77);
           }
           return AppColors.border;
         }),
