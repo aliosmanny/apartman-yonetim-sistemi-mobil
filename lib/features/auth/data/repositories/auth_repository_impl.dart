@@ -152,4 +152,23 @@ class AuthRepositoryImpl implements AuthRepository {
       throw e.toFailure();
     }
   }
+
+  @override
+  Future<void> changePassword({
+    required String oldPassword,
+    required String newPassword,
+  }) async {
+    try {
+      if (_useMock) {
+        await Future.delayed(const Duration(seconds: 1));
+      } else {
+        await _remoteDataSource.changePassword(
+          oldPassword: oldPassword,
+          newPassword: newPassword,
+        );
+      }
+    } on ApiException catch (e) {
+      throw e.toFailure();
+    }
+  }
 }

@@ -2,6 +2,8 @@ import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
 import '../../../../app/theme/app_colors.dart';
 import '../../../../app/theme/app_text_styles.dart';
+import 'package:flutter_bloc/flutter_bloc.dart';
+import '../../../auth/presentation/controllers/auth_cubit.dart';
 
 class ChangePasswordPage extends StatefulWidget {
   const ChangePasswordPage({super.key});
@@ -12,28 +14,66 @@ class ChangePasswordPage extends StatefulWidget {
 
 class _ChangePasswordPageState extends State<ChangePasswordPage> {
   final _formKey = GlobalKey<FormState>();
+  final _currentPasswordController = TextEditingController();
+  final _newPasswordController = TextEditingController();
+  final _confirmPasswordController = TextEditingController();
+
   bool _isLoading = false;
   bool _obscureCurrent = true;
   bool _obscureNew = true;
   bool _obscureConfirm = true;
 
+  @override
+  void dispose() {
+    _currentPasswordController.dispose();
+    _newPasswordController.dispose();
+    _confirmPasswordController.dispose();
+    super.dispose();
+  }
+
   void _submit() async {
     if (!_formKey.currentState!.validate()) return;
     
+    if (_newPasswordController.text != _confirmPasswordController.text) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(
+          content: Text('Yeni şifreler eşleşmiyor.'),
+          backgroundColor: AppColors.error,
+          behavior: SnackBarBehavior.fixed,
+        ),
+      );
+      return;
+    }
+
     setState(() => _isLoading = true);
     
-    // Şifre değiştirme simülasyonu
-    await Future.delayed(const Duration(seconds: 1));
-    
-    if (!mounted) return;
-    ScaffoldMessenger.of(context).showSnackBar(
-      const SnackBar(
-        content: Text('Şifreniz başarıyla değiştirildi.'),
-        backgroundColor: AppColors.success,
-        behavior: SnackBarBehavior.fixed,
-      ),
-    );
-    context.pop();
+    try {
+      await context.read<AuthCubit>().changePassword(
+        oldPassword: _currentPasswordController.text,
+        newPassword: _newPasswordController.text,
+      );
+      
+      if (!mounted) return;
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(
+          content: Text('Şifreniz başarıyla değiştirildi.'),
+          backgroundColor: AppColors.success,
+          behavior: SnackBarBehavior.fixed,
+        ),
+      );
+      context.pop();
+    } catch (e) {
+      if (!mounted) return;
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text(e.toString().replaceAll('Exception: ', '')),
+          backgroundColor: AppColors.error,
+          behavior: SnackBarBehavior.fixed,
+        ),
+      );
+    } finally {
+      if (mounted) setState(() => _isLoading = false);
+    }
   }
 
   @override
@@ -58,6 +98,7 @@ class _ChangePasswordPageState extends State<ChangePasswordPage> {
               const SizedBox(height: 32),
               
               _buildPasswordField(
+                controller: _currentPasswordController,
                 label: 'Mevcut Şifre',
                 hint: 'Mevcut şifrenizi girin',
                 obscure: _obscureCurrent,
@@ -66,6 +107,7 @@ class _ChangePasswordPageState extends State<ChangePasswordPage> {
               const SizedBox(height: 20),
               
               _buildPasswordField(
+                controller: _newPasswordController,
                 label: 'Yeni Şifre',
                 hint: 'Yeni şifrenizi girin',
                 obscure: _obscureNew,
@@ -74,6 +116,7 @@ class _ChangePasswordPageState extends State<ChangePasswordPage> {
               const SizedBox(height: 20),
               
               _buildPasswordField(
+                controller: _confirmPasswordController,
                 label: 'Yeni Şifre (Tekrar)',
                 hint: 'Yeni şifrenizi tekrar girin',
                 obscure: _obscureConfirm,
@@ -117,6 +160,7 @@ class _ChangePasswordPageState extends State<ChangePasswordPage> {
   }
 
   Widget _buildPasswordField({
+    required TextEditingController controller,
     required String label,
     required String hint,
     required bool obscure,
@@ -128,6 +172,7 @@ class _ChangePasswordPageState extends State<ChangePasswordPage> {
         Text(label, style: AppTextStyles.inputLabel),
         const SizedBox(height: 8),
         TextFormField(
+          controller: controller,
           obscureText: obscure,
           decoration: InputDecoration(
             hintText: hint,

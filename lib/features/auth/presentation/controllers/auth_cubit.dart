@@ -109,4 +109,24 @@ class AuthCubit extends Cubit<AuthState> {
   }
 
   void resetState() => emit(const AuthUnauthenticated());
+
+  /// Profil sayfasından şifre değiştir.
+  Future<void> changePassword({
+    required String oldPassword,
+    required String newPassword,
+  }) async {
+    // We don't emit AuthActionLoading here because it might reset the whole page state if not handled,
+    // but the caller expects to await this Future.
+    // Or we could create a new state. Since it's returning a Future, throwing an exception is better for the UI.
+    try {
+      await _repository.changePassword(
+        oldPassword: oldPassword,
+        newPassword: newPassword,
+      );
+    } on Failure catch (e) {
+      throw Exception(e.message);
+    } catch (_) {
+      throw Exception('Şifreniz değiştirilemedi.');
+    }
+  }
 }

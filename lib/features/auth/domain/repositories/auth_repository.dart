@@ -32,4 +32,10 @@ abstract class AuthRepository {
     required String password,
     required String passwordConfirm,
   });
+
+  /// Şifre değiştirir.
+  Future<void> changePassword({
+    required String oldPassword,
+    required String newPassword,
+  });
 }
