@@ -94,8 +94,9 @@ class AuthRemoteDataSource {
       await _dio.post(
         '/profile/change-password/',
         data: {
-          'old_password': oldPassword,
+          'current_password': oldPassword,
           'new_password': newPassword,
+          'new_password_confirm': newPassword,
         },
       );
     } on DioException catch (e) {
