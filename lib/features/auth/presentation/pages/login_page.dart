@@ -119,7 +119,8 @@ class _LoginPageState extends State<LoginPage>
                                     borderRadius: BorderRadius.circular(22),
                                     boxShadow: [
                                       BoxShadow(
-                                        color: AppColors.primary.withOpacity(0.3),
+                                        color:
+                                            AppColors.primary.withOpacity(0.3),
                                         blurRadius: 20,
                                         offset: const Offset(0, 8),
                                       ),
@@ -150,7 +151,8 @@ class _LoginPageState extends State<LoginPage>
                           const SizedBox(height: 48),
 
                           // ── Telefon ──────────────────────────
-                          Text('Telefon Numarası', style: AppTextStyles.inputLabel),
+                          Text('Telefon Numarası',
+                              style: AppTextStyles.inputLabel),
                           const SizedBox(height: 8),
                           TextFormField(
                             controller: _phoneController,
@@ -166,7 +168,8 @@ class _LoginPageState extends State<LoginPage>
                                   mainAxisSize: MainAxisSize.min,
                                   children: [
                                     Icon(Icons.phone_outlined,
-                                        size: 20, color: AppColors.textTertiary),
+                                        size: 20,
+                                        color: AppColors.textTertiary),
                                     SizedBox(width: 8),
                                     Text('+90',
                                         style: TextStyle(
@@ -192,7 +195,8 @@ class _LoginPageState extends State<LoginPage>
                               if (value == null || value.trim().isEmpty) {
                                 return 'Telefon numarası gerekli';
                               }
-                              final digits = value.replaceAll(RegExp(r'\D'), '');
+                              final digits =
+                                  value.replaceAll(RegExp(r'\D'), '');
                               if (digits.length != 10 && digits.length != 11) {
                                 return 'Geçerli bir telefon numarası girin';
                               }
@@ -286,8 +290,8 @@ class _LoginPageState extends State<LoginPage>
                               TextButton(
                                 onPressed: isLoading
                                     ? null
-                                    : () => context.pushNamed(
-                                        RouteNames.forgotPassword),
+                                    : () => context
+                                        .pushNamed(RouteNames.forgotPassword),
                                 style: TextButton.styleFrom(
                                   padding: EdgeInsets.zero,
                                   minimumSize: Size.zero,
@@ -358,18 +362,6 @@ class _LoginPageState extends State<LoginPage>
                               ),
                             ),
                           ),
-                          const SizedBox(height: 16),
-                          Center(
-                            child: TextButton.icon(
-                              onPressed: () => _showQuickLoginSheet(context),
-                              icon: const Icon(Icons.bug_report_outlined, size: 18),
-                              label: const Text('Hızlı Test Girişi (Mock)'),
-                              style: TextButton.styleFrom(
-                                foregroundColor: AppColors.primary,
-                              ),
-                            ),
-                          ),
-
                           const SizedBox(height: 24),
                         ],
                       ),
@@ -380,99 +372,6 @@ class _LoginPageState extends State<LoginPage>
             ),
           );
         },
-      ),
-    );
-  }
-
-  void _showQuickLoginSheet(BuildContext context) {
-    showModalBottomSheet(
-      context: context,
-      shape: const RoundedRectangleBorder(
-        borderRadius: BorderRadius.vertical(top: Radius.circular(20)),
-      ),
-      builder: (context) => SafeArea(
-        child: Padding(
-          padding: const EdgeInsets.all(24),
-          child: Column(
-            mainAxisSize: MainAxisSize.min,
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              Text('Hızlı Test Girişi', style: AppTextStyles.headlineMedium),
-              const SizedBox(height: 8),
-              Text(
-                'Aşağıdaki rollerden biriyle şifre girmeden anında giriş yapabilirsiniz. (Sadece Mock modda çalışır)',
-                style: AppTextStyles.bodySmall,
-              ),
-              const SizedBox(height: 24),
-              _MockLoginButton(
-                title: '🏢 Sistem Yöneticisi',
-                phone: '5001234567',
-                onTap: (phone) {
-                  Navigator.pop(context);
-                  _phoneController.text = phone;
-                  _passwordController.text = '123456';
-                  _onLogin();
-                },
-              ),
-              const SizedBox(height: 12),
-              _MockLoginButton(
-                title: '🏠 Sakin (Ev Sahibi)',
-                phone: '5001234569',
-                onTap: (phone) {
-                  Navigator.pop(context);
-                  _phoneController.text = phone;
-                  _passwordController.text = '123456';
-                  _onLogin();
-                },
-              ),
-              const SizedBox(height: 12),
-              _MockLoginButton(
-                title: '👷 Personel',
-                phone: '5001234571',
-                onTap: (phone) {
-                  Navigator.pop(context);
-                  _phoneController.text = phone;
-                  _passwordController.text = '123456';
-                  _onLogin();
-                },
-              ),
-            ],
-          ),
-        ),
-      ),
-    );
-  }
-}
-
-class _MockLoginButton extends StatelessWidget {
-  final String title;
-  final String phone;
-  final Function(String) onTap;
-
-  const _MockLoginButton({
-    required this.title,
-    required this.phone,
-    required this.onTap,
-  });
-
-  @override
-  Widget build(BuildContext context) {
-    return InkWell(
-      onTap: () => onTap(phone),
-      borderRadius: BorderRadius.circular(12),
-      child: Container(
-        padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
-        decoration: BoxDecoration(
-          border: Border.all(color: AppColors.border),
-          borderRadius: BorderRadius.circular(12),
-        ),
-        child: Row(
-          mainAxisAlignment: MainAxisAlignment.spaceBetween,
-          children: [
-            Text(title, style: AppTextStyles.titleMedium),
-            Icon(Icons.arrow_forward_ios, size: 16, color: AppColors.textTertiary),
-          ],
-        ),
       ),
     );
   }
