@@ -84,14 +84,18 @@ class _CreateMaintenancePageState extends State<CreateMaintenancePage> {
   }
 
   Future<void> _pickImage() async {
-    final result = await FilePicker.platform.pickFiles(
-      type: FileType.image,
-      allowMultiple: false,
-    );
-    if (result != null && result.files.single.path != null) {
-      setState(() {
-        _selectedImage = XFile(result.files.single.path!);
-      });
+    try {
+      final picker = ImagePicker();
+      final pickedFile = await picker.pickImage(source: ImageSource.gallery);
+      if (pickedFile != null) {
+        setState(() {
+          _selectedImage = pickedFile;
+        });
+      }
+    } catch (e) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text('Fotoğraf seçilemedi: $e')),
+      );
     }
   }
 
