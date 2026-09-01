@@ -3,6 +3,27 @@ import 'package:flutter/services.dart';
 import 'app_colors.dart';
 import 'app_text_styles.dart';
 
+// Sayfalar arası geçişi hızlandırmak (minimize etmek) için özel transition builder
+class FastPageTransitionsBuilder extends PageTransitionsBuilder {
+  const FastPageTransitionsBuilder();
+
+  @override
+  Widget buildTransitions<T>(
+    PageRoute<T> route,
+    BuildContext context,
+    Animation<double> animation,
+    Animation<double> secondaryAnimation,
+    Widget child,
+  ) {
+    // Sadece çok hızlı bir fade (solma) efekti uygular, slide veya zoom yapmaz.
+    return FadeTransition(
+      opacity: animation,
+      child: child,
+    );
+  }
+}
+
+
 abstract class AppTheme {
   static ThemeData get light {
     return ThemeData(
