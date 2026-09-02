@@ -5,6 +5,8 @@ import '../../../auth/presentation/controllers/auth_cubit.dart';
 import '../../../auth/presentation/controllers/auth_state.dart';
 import '../../../../app/theme/app_colors.dart';
 import '../../../../app/theme/app_text_styles.dart';
+import '../../../../core/di/injection.dart';
+import '../../../users/domain/repositories/user_repository.dart';
 
 class StaffEditProfilePage extends StatefulWidget {
   const StaffEditProfilePage({super.key});
@@ -47,15 +49,47 @@ class _StaffEditProfilePageState extends State<StaffEditProfilePage> {
     super.dispose();
   }
 
-  void _saveProfile() {
+  bool _isLoading = false;
+
+  Future<void> _saveProfile() async {
     if (_formKey.currentState!.validate()) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(
-          content: Text('Profil bilgileri başarıyla güncellendi!'),
-          backgroundColor: AppColors.success,
-        ),
-      );
-      context.pop();
+      final state = context.read<AuthCubit>().state;
+      if (state is! AuthAuthenticated) return;
+
+      setState(() => _isLoading = true);
+      try {
+        final names = _nameController.text.trim().split(' ');
+        final firstName = names.first;
+        final lastName = names.length > 1 ? names.skip(1).join(' ') : '';
+
+        await sl<UserRepository>().updateUser(state.user.id, {
+          'first_name': firstName,
+          'last_name': lastName,
+          'email': _emailController.text.trim(),
+          'phone': _phoneController.text.trim(),
+        });
+
+        if (mounted) {
+          ScaffoldMessenger.of(context).showSnackBar(
+            const SnackBar(
+              content: Text('Profil bilgileri başarıyla güncellendi! Yeniden giriş yaptığınızda güncel bilgiler görünecektir.'),
+              backgroundColor: AppColors.success,
+            ),
+          );
+          context.pop();
+        }
+      } catch (e) {
+        if (mounted) {
+          ScaffoldMessenger.of(context).showSnackBar(
+            SnackBar(
+              content: Text('Hata: $e'),
+              backgroundColor: AppColors.error,
+            ),
+          );
+        }
+      } finally {
+        if (mounted) setState(() => _isLoading = false);
+      }
     }
   }
 
@@ -203,14 +237,20 @@ class _StaffEditProfilePageState extends State<StaffEditProfilePage> {
               SizedBox(
                 width: double.infinity,
                 child: ElevatedButton(
-                  onPressed: _saveProfile,
+                  onPressed: _isLoading ? null : _saveProfile,
                   style: ElevatedButton.styleFrom(
                     padding: const EdgeInsets.symmetric(vertical: 16),
                     backgroundColor: AppColors.primary,
                     foregroundColor: Colors.white,
                     shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
                   ),
-                  child: const Text('Değişiklikleri Kaydet', style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold)),
+                  child: _isLoading 
+                      ? const SizedBox(
+                          width: 20,
+                          height: 20,
+                          child: CircularProgressIndicator(color: Colors.white, strokeWidth: 2),
+                        )
+                      : const Text('Değişiklikleri Kaydet', style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold)),
                 ),
               ),
               const SizedBox(height: 40),
