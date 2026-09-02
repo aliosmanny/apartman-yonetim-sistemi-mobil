@@ -19,9 +19,17 @@ class ResidentDashboardPage extends StatelessWidget {
   Widget build(BuildContext context) {
     return MultiBlocProvider(
       providers: [
-        BlocProvider(create: (context) => sl<FinanceCubit>()..fetchDebts()),
+        BlocProvider(create: (context) {
+          final cubit = sl<FinanceCubit>();
+          Future.delayed(const Duration(milliseconds: 500), () => cubit.fetchDebts());
+          return cubit;
+        }),
         BlocProvider(create: (context) => sl<DashboardCubit>()..fetchResidentDashboard()),
-        BlocProvider(create: (context) => sl<NotificationCubit>()..fetchNotifications()),
+        BlocProvider(create: (context) {
+          final cubit = sl<NotificationCubit>();
+          Future.delayed(const Duration(milliseconds: 500), () => cubit.fetchNotifications());
+          return cubit;
+        }),
       ],
       child: BlocBuilder<AuthCubit, AuthState>(
         builder: (context, state) {

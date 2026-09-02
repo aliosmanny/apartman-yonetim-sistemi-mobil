@@ -25,8 +25,11 @@ class _ManagerDashboardPageState extends State<ManagerDashboardPage> {
   @override
   void initState() {
     super.initState();
-    // İlk sekme ziyaretlerindeki 1 saniyelik yükleme ekranlarını sıfırlamak için verileri arka planda önceden yükle.
-    WidgetsBinding.instance.addPostFrameCallback((_) {
+    // Diğer sekmelerin yüklenme sürelerini sıfırlamak için arkada veri çekiyoruz.
+    // Ancak ana sayfanın (Dashboard) yüklenmesini yavaşlatmamak adına
+    // bu istekleri yarım saniye geciktirerek sıraya sokuyoruz.
+    Future.delayed(const Duration(milliseconds: 500), () {
+      if (!mounted) return;
       sl<PropertiesCubit>().fetchAll();
       sl<FinanceCubit>().fetchManagerFinance();
       sl<UserCubit>().fetchUsers();
