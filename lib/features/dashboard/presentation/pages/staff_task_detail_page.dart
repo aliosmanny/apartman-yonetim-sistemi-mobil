@@ -3,10 +3,60 @@ import '../../../../app/theme/app_colors.dart';
 import '../../../../app/theme/app_text_styles.dart';
 import '../../../maintenance/domain/models/maintenance_request.dart';
 
-class StaffTaskDetailPage extends StatelessWidget {
+import 'package:flutter_bloc/flutter_bloc.dart';
+import '../../../maintenance/presentation/controllers/maintenance_cubit.dart';
+import '../../../../core/di/injection.dart';
+
+class StaffTaskDetailPage extends StatefulWidget {
   final MaintenanceRequest task;
 
   const StaffTaskDetailPage({super.key, required this.task});
+
+  @override
+  State<StaffTaskDetailPage> createState() => _StaffTaskDetailPageState();
+}
+
+class _StaffTaskDetailPageState extends State<StaffTaskDetailPage> {
+  final TextEditingController _noteController = TextEditingController();
+  bool _isLoading = false;
+
+  @override
+  void dispose() {
+    _noteController.dispose();
+    super.dispose();
+  }
+
+  Future<void> _completeTask() async {
+    setState(() => _isLoading = true);
+    try {
+      await sl<MaintenanceCubit>().updateRequestStatus(
+        widget.task.id,
+        'completed',
+        note: _noteController.text.trim(),
+      );
+      
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(
+            content: Text('İş başarıyla tamamlandı olarak işaretlendi!'),
+            backgroundColor: AppColors.success,
+          ),
+        );
+        Navigator.of(context).pop();
+      }
+    } catch (e) {
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text('Hata: $e'),
+            backgroundColor: AppColors.error,
+          ),
+        );
+      }
+    } finally {
+      if (mounted) setState(() => _isLoading = false);
+    }
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -47,16 +97,16 @@ class StaffTaskDetailPage extends StatelessWidget {
                           color: AppColors.surfaceVariant,
                           borderRadius: BorderRadius.circular(8),
                         ),
-                        child: Text(task.safeCategoryDisplay, style: AppTextStyles.labelSmall),
+                        child: Text(widget.task.safeCategoryDisplay, style: AppTextStyles.labelSmall),
                       ),
                       const Spacer(),
                       Text('Bugün, 14:30', style: AppTextStyles.labelSmall.copyWith(color: AppColors.textTertiary)),
                     ],
                   ),
                   const SizedBox(height: 16),
-                  Text(task.title, style: AppTextStyles.headlineSmall),
+                  Text(widget.task.title, style: AppTextStyles.headlineSmall),
                   const SizedBox(height: 8),
-                  Text(task.description, style: AppTextStyles.bodyMedium.copyWith(color: AppColors.textSecondary)),
+                  Text(widget.task.description, style: AppTextStyles.bodyMedium.copyWith(color: AppColors.textSecondary)),
                   const SizedBox(height: 16),
                   const Divider(height: 1),
                   const SizedBox(height: 16),
@@ -71,9 +121,11 @@ class StaffTaskDetailPage extends StatelessWidget {
                         child: const Icon(Icons.apartment_rounded, size: 18, color: AppColors.primary),
                       ),
                       const SizedBox(width: 10),
-                      Text('A Blok D:12', style: AppTextStyles.titleMedium),
-                      const Spacer(),
-                      Text('Ahmet Yılmaz', style: AppTextStyles.labelSmall.copyWith(color: AppColors.textSecondary)),
+                      Expanded(
+                        child: Text(widget.task.unitDisplay ?? widget.task.apartmentName ?? 'Genel Ortak Alan', style: AppTextStyles.titleMedium, overflow: TextOverflow.ellipsis),
+                      ),
+                      const SizedBox(width: 8),
+                      Text(widget.task.creatorName ?? 'Belirsiz', style: AppTextStyles.labelSmall.copyWith(color: AppColors.textSecondary)),
                     ],
                   ),
                 ],
@@ -81,7 +133,7 @@ class StaffTaskDetailPage extends StatelessWidget {
             ),
             const SizedBox(height: 24),
 
-            if (task.adminNotes != null) ...[
+            if (widget.task.adminNotes != null && widget.task.adminNotes!.isNotEmpty) ...[
               Text('Yönetici Notu', style: AppTextStyles.titleMedium.copyWith(fontWeight: FontWeight.bold)),
               const SizedBox(height: 12),
               Container(
@@ -99,7 +151,7 @@ class StaffTaskDetailPage extends StatelessWidget {
                     const SizedBox(width: 12),
                     Expanded(
                       child: Text(
-                        task.adminNotes!,
+                        widget.task.adminNotes!,
                         style: AppTextStyles.bodyMedium.copyWith(color: AppColors.textPrimary),
                       ),
                     ),
@@ -134,7 +186,7 @@ class StaffTaskDetailPage extends StatelessWidget {
                   InkWell(
                     onTap: () {
                       ScaffoldMessenger.of(context).showSnackBar(
-                        const SnackBar(content: Text('Fotoğraf seçici açılıyor...')),
+                        const SnackBar(content: Text('Fotoğraf seçici henüz aktif değil.')),
                       );
                     },
                     borderRadius: BorderRadius.circular(14),
@@ -170,9 +222,10 @@ class StaffTaskDetailPage extends StatelessWidget {
 
                   Text('Personel Notu', style: AppTextStyles.labelSmall.copyWith(color: AppColors.textSecondary)),
                   const SizedBox(height: 8),
-                  const TextField(
+                  TextField(
+                    controller: _noteController,
                     maxLines: 3,
-                    decoration: InputDecoration(
+                    decoration: const InputDecoration(
                       hintText: 'Yapılan işlemleri kısaca açıklayın...',
                     ),
                   ),
@@ -181,19 +234,21 @@ class StaffTaskDetailPage extends StatelessWidget {
             ),
             const SizedBox(height: 24),
 
-            ElevatedButton.icon(
-              onPressed: () {
-                ScaffoldMessenger.of(context).showSnackBar(
-                  const SnackBar(content: Text('İş başarıyla tamamlandı olarak işaretlendi!')),
-                );
-                Navigator.of(context).pop();
-              },
-              icon: const Icon(Icons.check_circle_rounded),
-              style: ElevatedButton.styleFrom(
-                backgroundColor: AppColors.maintenanceCompleted,
-                foregroundColor: Colors.white,
+            SizedBox(
+              width: double.infinity,
+              height: 56,
+              child: ElevatedButton.icon(
+                onPressed: _isLoading ? null : _completeTask,
+                icon: _isLoading 
+                    ? const SizedBox(width: 20, height: 20, child: CircularProgressIndicator(color: Colors.white, strokeWidth: 2))
+                    : const Icon(Icons.check_circle_rounded),
+                style: ElevatedButton.styleFrom(
+                  backgroundColor: AppColors.maintenanceCompleted,
+                  foregroundColor: Colors.white,
+                  shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(14)),
+                ),
+                label: Text(_isLoading ? 'Kaydediliyor...' : 'İşi Tamamla', style: const TextStyle(fontSize: 16, fontWeight: FontWeight.bold)),
               ),
-              label: const Text('İşi Tamamla'),
             ),
             const SizedBox(height: 40),
           ],
