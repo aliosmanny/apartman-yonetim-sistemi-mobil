@@ -24,7 +24,7 @@ class UserFormPage extends StatefulWidget {
 
 class _UserFormPageState extends State<UserFormPage> {
   final _formKey = GlobalKey<FormState>();
-  
+
   late TextEditingController _phoneController;
   late TextEditingController _emailController;
   late TextEditingController _firstNameController;
@@ -32,17 +32,17 @@ class _UserFormPageState extends State<UserFormPage> {
   late TextEditingController _companyController;
   late TextEditingController _passwordController;
   late TextEditingController _passwordConfirmController;
-  
+
   int? _selectedUnitId;
   int? _selectedBlockId;
   int? _selectedApartmentId;
   bool _isResident = false;
-  
+
   String _selectedRole = 'owner';
   bool _isStaff = true;
   bool _isSuperuser = false;
   bool _isSaving = false;
-  
+
   late String _currentUserRole;
 
   @override
@@ -50,22 +50,25 @@ class _UserFormPageState extends State<UserFormPage> {
     super.initState();
     _phoneController = TextEditingController(text: widget.user?.phone ?? '');
     _emailController = TextEditingController(text: widget.user?.email ?? '');
-    _firstNameController = TextEditingController(text: widget.user?.firstName ?? '');
-    _lastNameController = TextEditingController(text: widget.user?.lastName ?? '');
-    _companyController = TextEditingController(text: widget.user?.companyName ?? '');
+    _firstNameController =
+        TextEditingController(text: widget.user?.firstName ?? '');
+    _lastNameController =
+        TextEditingController(text: widget.user?.lastName ?? '');
+    _companyController =
+        TextEditingController(text: widget.user?.companyName ?? '');
     _passwordController = TextEditingController();
     _passwordConfirmController = TextEditingController();
-    
+
     // AuthCubit might be factory, but we can get it from context later or get the AuthCubit state from a singleton?
     // Wait, AuthCubit is a factory but there's no global AuthCubit.
     // Instead of sl<AuthCubit>(), let's just use 'system_admin' as default until build()
     _currentUserRole = 'system_admin';
-    
+
     final propCubit = sl<PropertiesCubit>();
     if (propCubit.state is! PropertiesLoaded) {
       propCubit.fetchAll();
     }
-    
+
     if (widget.user != null) {
       _selectedRole = widget.user!.role;
       _isStaff = widget.user!.isStaff;
@@ -87,12 +90,13 @@ class _UserFormPageState extends State<UserFormPage> {
       } else {
         _currentUserRole = 'system_admin';
       }
-      
+
       if (_currentUserRole == 'apartment_manager') {
-        if (_selectedRole == 'apartment_manager' || _selectedRole == 'system_admin') {
+        if (_selectedRole == 'apartment_manager' ||
+            _selectedRole == 'system_admin') {
           _selectedRole = 'owner';
         }
-        
+
         final propState = sl<PropertiesCubit>().state;
         if (propState is PropertiesLoaded && propState.apartments.isNotEmpty) {
           _selectedApartmentId ??= propState.apartments.first.id;
@@ -115,12 +119,14 @@ class _UserFormPageState extends State<UserFormPage> {
 
   Future<void> _save() async {
     if (!_formKey.currentState!.validate()) return;
-    
+
     setState(() => _isSaving = true);
-    
+
     final data = {
       'phone': _phoneController.text.trim(),
-      'email': _emailController.text.trim().isEmpty ? null : _emailController.text.trim(),
+      'email': _emailController.text.trim().isEmpty
+          ? null
+          : _emailController.text.trim(),
       'first_name': _firstNameController.text.trim(),
       'last_name': _lastNameController.text.trim(),
       'company_name': _companyController.text.trim(),
@@ -128,10 +134,12 @@ class _UserFormPageState extends State<UserFormPage> {
       'is_staff': _isStaff,
       'is_superuser': _isSuperuser,
     };
-    
+
     if (_passwordController.text.isNotEmpty) {
       if (_passwordController.text != _passwordConfirmController.text) {
-        ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('Şifreler eşleşmiyor'), backgroundColor: AppColors.error));
+        ScaffoldMessenger.of(context).showSnackBar(const SnackBar(
+            content: Text('Şifreler eşleşmiyor'),
+            backgroundColor: AppColors.error));
         setState(() => _isSaving = false);
         return;
       }
@@ -140,7 +148,8 @@ class _UserFormPageState extends State<UserFormPage> {
 
     if (_selectedUnitId != null) {
       data['unit_id'] = _selectedUnitId;
-      data['unit'] = _selectedUnitId; // Django backend might expect 'unit' instead of 'unit_id'
+      data['unit'] =
+          _selectedUnitId; // Django backend might expect 'unit' instead of 'unit_id'
     }
     if (_selectedRole == 'owner' || _selectedRole == 'tenant') {
       data['is_resident'] = _isResident;
@@ -152,17 +161,23 @@ class _UserFormPageState extends State<UserFormPage> {
       data['apartment_id'] = _selectedApartmentId;
       data['managed_apartment'] = null;
     }
-    
+
     try {
       if (widget.user == null) {
         // Create user requires a password usually, but wait, this is user management.
         // Usually creating users from manager panel might need a default password or trigger a reset link.
         // Django model allows creating without password but they can't login until they reset.
         await widget.cubit.createUser(data);
-        if (mounted) ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('Kullanıcı eklendi'), backgroundColor: AppColors.success));
+        if (mounted)
+          ScaffoldMessenger.of(context).showSnackBar(const SnackBar(
+              content: Text('Kullanıcı eklendi'),
+              backgroundColor: AppColors.success));
       } else {
         await widget.cubit.updateUser(widget.user!.id, data);
-        if (mounted) ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('Kullanıcı güncellendi'), backgroundColor: AppColors.success));
+        if (mounted)
+          ScaffoldMessenger.of(context).showSnackBar(const SnackBar(
+              content: Text('Kullanıcı güncellendi'),
+              backgroundColor: AppColors.success));
       }
       if (mounted) Navigator.pop(context);
     } catch (e) {
@@ -171,7 +186,10 @@ class _UserFormPageState extends State<UserFormPage> {
         if (e is DioException && e.response != null) {
           errorMsg = e.response!.data.toString();
         }
-        ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text('Hata: $errorMsg'), backgroundColor: AppColors.error, duration: const Duration(seconds: 5)));
+        ScaffoldMessenger.of(context).showSnackBar(SnackBar(
+            content: Text('Hata: $errorMsg'),
+            backgroundColor: AppColors.error,
+            duration: const Duration(seconds: 5)));
       }
     } finally {
       if (mounted) setState(() => _isSaving = false);
@@ -195,34 +213,48 @@ class _UserFormPageState extends State<UserFormPage> {
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
               _buildSectionTitle('Giriş Bilgileri'),
-              _buildTextField('Telefon Numarası *', _phoneController, hint: '5XXXXXXXXX', isPhone: true),
-              _buildTextField('E-posta Adresi', _emailController, hint: 'ornek@mail.com'),
-              
+              _buildTextField('Telefon Numarası *', _phoneController,
+                  hint: '5XXXXXXXXX', isPhone: true),
+              _buildTextField('E-posta Adresi', _emailController,
+                  hint: 'ornek@mail.com'),
               const SizedBox(height: 24),
               _buildSectionTitle('Kişisel Bilgiler'),
               _buildTextField('Ad *', _firstNameController),
               _buildTextField('Soyad *', _lastNameController),
-              _buildTextField('Firma / Yönetim Adı', _companyController, hint: 'Yalnızca yöneticiler için'),
-              
+              _buildTextField('Firma / Yönetim Adı', _companyController,
+                  hint: 'Yalnızca yöneticiler için'),
               const SizedBox(height: 24),
               _buildSectionTitle('Rol & Yetkiler'),
-              Text('Rol *', style: AppTextStyles.labelSmall.copyWith(color: AppColors.textSecondary)),
+              Text('Rol *',
+                  style: AppTextStyles.labelSmall
+                      .copyWith(color: AppColors.textSecondary)),
               const SizedBox(height: 8),
               DropdownButtonFormField<String>(
                 value: _selectedRole,
                 decoration: const InputDecoration(
                   filled: true,
                   fillColor: AppColors.surface,
-                  border: OutlineInputBorder(borderRadius: BorderRadius.all(Radius.circular(12)), borderSide: BorderSide(color: AppColors.border)),
-                  enabledBorder: OutlineInputBorder(borderRadius: BorderRadius.all(Radius.circular(12)), borderSide: BorderSide(color: AppColors.border)),
+                  border: OutlineInputBorder(
+                      borderRadius: BorderRadius.all(Radius.circular(12)),
+                      borderSide: BorderSide(color: AppColors.border)),
+                  enabledBorder: OutlineInputBorder(
+                      borderRadius: BorderRadius.all(Radius.circular(12)),
+                      borderSide: BorderSide(color: AppColors.border)),
                 ),
                 items: [
-                  const DropdownMenuItem(value: 'owner', child: Text('Kat Maliki')),
-                  const DropdownMenuItem(value: 'tenant', child: Text('Kiracı')),
-                  const DropdownMenuItem(value: 'staff', child: Text('Personel')),
+                  const DropdownMenuItem(
+                      value: 'owner', child: Text('Kat Maliki')),
+                  const DropdownMenuItem(
+                      value: 'tenant', child: Text('Kiracı')),
+                  const DropdownMenuItem(
+                      value: 'staff', child: Text('Personel')),
                   if (_currentUserRole == 'system_admin') ...[
-                    const DropdownMenuItem(value: 'apartment_manager', child: Text('Apartman Yöneticisi')),
-                    const DropdownMenuItem(value: 'system_admin', child: Text('Sistem Yöneticisi')),
+                    const DropdownMenuItem(
+                        value: 'apartment_manager',
+                        child: Text('Apartman Yöneticisi')),
+                    const DropdownMenuItem(
+                        value: 'system_admin',
+                        child: Text('Sistem Yöneticisi')),
                   ],
                 ],
                 onChanged: (val) {
@@ -230,7 +262,6 @@ class _UserFormPageState extends State<UserFormPage> {
                 },
               ),
               const SizedBox(height: 16),
-
               if (_selectedRole == 'owner' || _selectedRole == 'tenant') ...[
                 BlocBuilder<PropertiesCubit, PropertiesState>(
                   bloc: sl<PropertiesCubit>(),
@@ -239,28 +270,41 @@ class _UserFormPageState extends State<UserFormPage> {
                       final apartments = state.apartments;
                       final allBlocks = state.blocks;
                       final allUnits = state.units;
-                      
+
                       final isSingleApartment = apartments.length == 1;
-                      
+
                       // Auto-select apartment if manager or if only one apartment exists
-                      if (apartments.isNotEmpty && (isSingleApartment || _currentUserRole == 'apartment_manager')) {
-                        if (_selectedApartmentId == null || !apartments.any((a) => a.id == _selectedApartmentId)) {
+                      if (apartments.isNotEmpty &&
+                          (isSingleApartment ||
+                              _currentUserRole == 'apartment_manager')) {
+                        if (_selectedApartmentId == null ||
+                            !apartments
+                                .any((a) => a.id == _selectedApartmentId)) {
                           WidgetsBinding.instance.addPostFrameCallback((_) {
-                            if (mounted) setState(() => _selectedApartmentId = apartments.first.id);
+                            if (mounted)
+                              setState(() =>
+                                  _selectedApartmentId = apartments.first.id);
                           });
                         }
                       }
-                      
-                      final disableApartmentSelection = _currentUserRole == 'apartment_manager' || isSingleApartment;
-                      
-                      final filteredBlocks = _selectedApartmentId != null 
-                          ? allBlocks.where((b) => b.apartmentId == _selectedApartmentId).toList()
+
+                      final disableApartmentSelection =
+                          _currentUserRole == 'apartment_manager' ||
+                              isSingleApartment;
+
+                      final filteredBlocks = _selectedApartmentId != null
+                          ? allBlocks
+                              .where(
+                                  (b) => b.apartmentId == _selectedApartmentId)
+                              .toList()
                           : [];
-                          
+
                       return Column(
                         crossAxisAlignment: CrossAxisAlignment.start,
                         children: [
-                          Text('Bağlı Olduğu Apartman / Site *', style: AppTextStyles.labelSmall.copyWith(color: AppColors.textSecondary)),
+                          Text('Bağlı Olduğu Apartman / Site *',
+                              style: AppTextStyles.labelSmall
+                                  .copyWith(color: AppColors.textSecondary)),
                           const SizedBox(height: 8),
                           DropdownButtonFormField<int>(
                             value: _selectedApartmentId,
@@ -268,24 +312,38 @@ class _UserFormPageState extends State<UserFormPage> {
                               hintText: '--- Apartman Seçiniz ---',
                               filled: true,
                               fillColor: AppColors.surface,
-                              border: OutlineInputBorder(borderRadius: BorderRadius.all(Radius.circular(12)), borderSide: BorderSide(color: AppColors.border)),
-                              enabledBorder: OutlineInputBorder(borderRadius: BorderRadius.all(Radius.circular(12)), borderSide: BorderSide(color: AppColors.border)),
+                              border: OutlineInputBorder(
+                                  borderRadius:
+                                      BorderRadius.all(Radius.circular(12)),
+                                  borderSide:
+                                      BorderSide(color: AppColors.border)),
+                              enabledBorder: OutlineInputBorder(
+                                  borderRadius:
+                                      BorderRadius.all(Radius.circular(12)),
+                                  borderSide:
+                                      BorderSide(color: AppColors.border)),
                             ),
-                            items: apartments.map<DropdownMenuItem<int>>((a) => DropdownMenuItem<int>(
-                              value: a.id,
-                              child: Text(a.name),
-                            )).toList(),
-                            onChanged: disableApartmentSelection ? null : (val) {
-                              setState(() {
-                                _selectedApartmentId = val;
-                                _selectedBlockId = null;
-                                _selectedUnitId = null;
-                              });
-                            },
+                            items: apartments
+                                .map<DropdownMenuItem<int>>(
+                                    (a) => DropdownMenuItem<int>(
+                                          value: a.id,
+                                          child: Text(a.name),
+                                        ))
+                                .toList(),
+                            onChanged: disableApartmentSelection
+                                ? null
+                                : (val) {
+                                    setState(() {
+                                      _selectedApartmentId = val;
+                                      _selectedBlockId = null;
+                                      _selectedUnitId = null;
+                                    });
+                                  },
                           ),
                           const SizedBox(height: 16),
-                          
-                          Text('Bağlı Olduğu Blok', style: AppTextStyles.labelSmall.copyWith(color: AppColors.textSecondary)),
+                          Text('Bağlı Olduğu Blok',
+                              style: AppTextStyles.labelSmall
+                                  .copyWith(color: AppColors.textSecondary)),
                           const SizedBox(height: 8),
                           DropdownButtonFormField<int>(
                             value: _selectedBlockId,
@@ -293,13 +351,24 @@ class _UserFormPageState extends State<UserFormPage> {
                               hintText: '--- Blok Seçiniz ---',
                               filled: true,
                               fillColor: AppColors.surface,
-                              border: OutlineInputBorder(borderRadius: BorderRadius.all(Radius.circular(12)), borderSide: BorderSide(color: AppColors.border)),
-                              enabledBorder: OutlineInputBorder(borderRadius: BorderRadius.all(Radius.circular(12)), borderSide: BorderSide(color: AppColors.border)),
+                              border: OutlineInputBorder(
+                                  borderRadius:
+                                      BorderRadius.all(Radius.circular(12)),
+                                  borderSide:
+                                      BorderSide(color: AppColors.border)),
+                              enabledBorder: OutlineInputBorder(
+                                  borderRadius:
+                                      BorderRadius.all(Radius.circular(12)),
+                                  borderSide:
+                                      BorderSide(color: AppColors.border)),
                             ),
-                            items: filteredBlocks.map<DropdownMenuItem<int>>((b) => DropdownMenuItem<int>(
-                              value: b.id,
-                              child: Text(b.name),
-                            )).toList(),
+                            items: filteredBlocks
+                                .map<DropdownMenuItem<int>>(
+                                    (b) => DropdownMenuItem<int>(
+                                          value: b.id,
+                                          child: Text(b.name),
+                                        ))
+                                .toList(),
                             onChanged: (val) {
                               setState(() {
                                 _selectedBlockId = val;
@@ -308,8 +377,9 @@ class _UserFormPageState extends State<UserFormPage> {
                             },
                           ),
                           const SizedBox(height: 16),
-                          
-                          Text('Bağlı Olduğu Daire', style: AppTextStyles.labelSmall.copyWith(color: AppColors.textSecondary)),
+                          Text('Bağlı Olduğu Daire',
+                              style: AppTextStyles.labelSmall
+                                  .copyWith(color: AppColors.textSecondary)),
                           const SizedBox(height: 8),
                           DropdownButtonFormField<int>(
                             value: _selectedUnitId,
@@ -317,18 +387,36 @@ class _UserFormPageState extends State<UserFormPage> {
                               hintText: '--- Daire Seçiniz ---',
                               filled: true,
                               fillColor: AppColors.surface,
-                              border: OutlineInputBorder(borderRadius: BorderRadius.all(Radius.circular(12)), borderSide: BorderSide(color: AppColors.border)),
-                              enabledBorder: OutlineInputBorder(borderRadius: BorderRadius.all(Radius.circular(12)), borderSide: BorderSide(color: AppColors.border)),
+                              border: OutlineInputBorder(
+                                  borderRadius:
+                                      BorderRadius.all(Radius.circular(12)),
+                                  borderSide:
+                                      BorderSide(color: AppColors.border)),
+                              enabledBorder: OutlineInputBorder(
+                                  borderRadius:
+                                      BorderRadius.all(Radius.circular(12)),
+                                  borderSide:
+                                      BorderSide(color: AppColors.border)),
                             ),
-                            items: allUnits.where((u) {
-                              if (_selectedBlockId != null) return u.blockId == _selectedBlockId;
-                              if (_selectedApartmentId != null) return allBlocks.any((b) => b.apartmentId == _selectedApartmentId && b.id == u.blockId);
-                              return true;
-                            }).map<DropdownMenuItem<int>>((u) => DropdownMenuItem<int>(
-                              value: u.id,
-                              child: Text('Blok ${u.blockName} - Daire ${u.number}'),
-                            )).toList(),
-                            onChanged: (val) => setState(() => _selectedUnitId = val),
+                            items: allUnits
+                                .where((u) {
+                                  if (_selectedBlockId != null)
+                                    return u.blockId == _selectedBlockId;
+                                  if (_selectedApartmentId != null)
+                                    return allBlocks.any((b) =>
+                                        b.apartmentId == _selectedApartmentId &&
+                                        b.id == u.blockId);
+                                  return true;
+                                })
+                                .map<DropdownMenuItem<int>>(
+                                    (u) => DropdownMenuItem<int>(
+                                          value: u.id,
+                                          child: Text(
+                                              'Blok ${u.blockName} - Daire ${u.number}'),
+                                        ))
+                                .toList(),
+                            onChanged: (val) =>
+                                setState(() => _selectedUnitId = val),
                           ),
                         ],
                       );
@@ -340,7 +428,8 @@ class _UserFormPageState extends State<UserFormPage> {
                   const SizedBox(height: 16),
                   SwitchListTile(
                     contentPadding: EdgeInsets.zero,
-                    title: const Text('Kat Maliki Bu Dairede Mi İkamet Ediyor?', style: AppTextStyles.bodyMedium),
+                    title: const Text('Kat Maliki Bu Dairede Mi İkamet Ediyor?',
+                        style: AppTextStyles.bodyMedium),
                     value: _isResident,
                     onChanged: (val) => setState(() => _isResident = val),
                     activeColor: AppColors.primary,
@@ -348,43 +437,71 @@ class _UserFormPageState extends State<UserFormPage> {
                 ],
                 const SizedBox(height: 16),
               ],
-
-              if (_selectedRole == 'apartment_manager' || _selectedRole == 'staff') ...[
-                Text(_selectedRole == 'apartment_manager' ? 'Yönettiği Apartman / Site *' : 'Çalıştığı Apartman / Site *', style: AppTextStyles.labelSmall.copyWith(color: AppColors.textSecondary)),
+              if (_selectedRole == 'apartment_manager' ||
+                  _selectedRole == 'staff') ...[
+                Text(
+                    _selectedRole == 'apartment_manager'
+                        ? 'Yönettiği Apartman / Site *'
+                        : 'Çalıştığı Apartman / Site *',
+                    style: AppTextStyles.labelSmall
+                        .copyWith(color: AppColors.textSecondary)),
                 const SizedBox(height: 8),
                 BlocBuilder<PropertiesCubit, PropertiesState>(
                   bloc: sl<PropertiesCubit>(),
                   builder: (context, state) {
                     if (state is PropertiesLoaded) {
                       final apartments = state.apartments;
-                      
+
                       final isSingleApartment = apartments.length == 1;
-                      
+
                       // Auto-select apartment if manager or if only one apartment exists
-                      if (apartments.isNotEmpty && (isSingleApartment || _currentUserRole == 'apartment_manager')) {
-                        if (_selectedApartmentId == null || !apartments.any((a) => a.id == _selectedApartmentId)) {
+                      if (apartments.isNotEmpty &&
+                          (isSingleApartment ||
+                              _currentUserRole == 'apartment_manager')) {
+                        if (_selectedApartmentId == null ||
+                            !apartments
+                                .any((a) => a.id == _selectedApartmentId)) {
                           WidgetsBinding.instance.addPostFrameCallback((_) {
-                            if (mounted) setState(() => _selectedApartmentId = apartments.first.id);
+                            if (mounted)
+                              setState(() =>
+                                  _selectedApartmentId = apartments.first.id);
                           });
                         }
                       }
-                      
-                      final disableApartmentSelection = _currentUserRole == 'apartment_manager' || isSingleApartment;
-                      
+
+                      final disableApartmentSelection =
+                          _currentUserRole == 'apartment_manager' ||
+                              isSingleApartment;
+
                       return DropdownButtonFormField<int>(
-                        value: apartments.any((a) => a.id == _selectedApartmentId) ? _selectedApartmentId : null,
+                        value:
+                            apartments.any((a) => a.id == _selectedApartmentId)
+                                ? _selectedApartmentId
+                                : null,
                         decoration: const InputDecoration(
                           hintText: '--- Apartman Seçiniz ---',
                           filled: true,
                           fillColor: AppColors.surface,
-                          border: OutlineInputBorder(borderRadius: BorderRadius.all(Radius.circular(12)), borderSide: BorderSide(color: AppColors.border)),
-                          enabledBorder: OutlineInputBorder(borderRadius: BorderRadius.all(Radius.circular(12)), borderSide: BorderSide(color: AppColors.border)),
+                          border: OutlineInputBorder(
+                              borderRadius:
+                                  BorderRadius.all(Radius.circular(12)),
+                              borderSide: BorderSide(color: AppColors.border)),
+                          enabledBorder: OutlineInputBorder(
+                              borderRadius:
+                                  BorderRadius.all(Radius.circular(12)),
+                              borderSide: BorderSide(color: AppColors.border)),
                         ),
-                        items: apartments.map<DropdownMenuItem<int>>((a) => DropdownMenuItem<int>(
-                          value: a.id,
-                          child: Text(a.name),
-                        )).toList(),
-                        onChanged: disableApartmentSelection ? null : (val) => setState(() => _selectedApartmentId = val),
+                        items: apartments
+                            .map<DropdownMenuItem<int>>(
+                                (a) => DropdownMenuItem<int>(
+                                      value: a.id,
+                                      child: Text(a.name),
+                                    ))
+                            .toList(),
+                        onChanged: disableApartmentSelection
+                            ? null
+                            : (val) =>
+                                setState(() => _selectedApartmentId = val),
                         validator: (v) => v == null ? 'Zorunlu alan' : null,
                       );
                     }
@@ -393,18 +510,20 @@ class _UserFormPageState extends State<UserFormPage> {
                 ),
                 const SizedBox(height: 16),
               ],
-
               if (!isEdit) ...[
                 _buildSectionTitle('Güvenlik'),
                 _buildTextField('Şifre *', _passwordController),
                 _buildTextField('Şifre Tekrar *', _passwordConfirmController),
                 const SizedBox(height: 16),
               ],
-
               SwitchListTile(
                 contentPadding: EdgeInsets.zero,
-                title: const Text('Sisteme Giriş İzni (Zorunlu)', style: AppTextStyles.bodyMedium),
-                subtitle: Text('Kullanıcının panele giriş yapabilmesi için açık olmalıdır.', style: AppTextStyles.labelSmall.copyWith(color: AppColors.textSecondary)),
+                title: const Text('Sisteme Giriş İzni (Zorunlu)',
+                    style: AppTextStyles.bodyMedium),
+                subtitle: Text(
+                    'Kullanıcının panele giriş yapabilmesi için açık olmalıdır.',
+                    style: AppTextStyles.labelSmall
+                        .copyWith(color: AppColors.textSecondary)),
                 value: _isStaff,
                 onChanged: (val) => setState(() => _isStaff = val),
                 activeColor: AppColors.primary,
@@ -412,20 +531,24 @@ class _UserFormPageState extends State<UserFormPage> {
               if (_currentUserRole == 'system_admin')
                 SwitchListTile(
                   contentPadding: EdgeInsets.zero,
-                  title: const Text('Süper kullanıcı durumu', style: AppTextStyles.bodyMedium),
-                  subtitle: Text('Bu kullanıcıya ayrı ayrı izin atamadan tüm izinlerin verilip verilmeyeceğini belirler.', style: AppTextStyles.labelSmall.copyWith(color: AppColors.textSecondary)),
+                  title: const Text('Süper kullanıcı durumu',
+                      style: AppTextStyles.bodyMedium),
+                  subtitle: Text(
+                      'Bu kullanıcıya ayrı ayrı izin atamadan tüm izinlerin verilip verilmeyeceğini belirler.',
+                      style: AppTextStyles.labelSmall
+                          .copyWith(color: AppColors.textSecondary)),
                   value: _isSuperuser,
                   onChanged: (val) => setState(() => _isSuperuser = val),
                   activeColor: AppColors.primary,
                 ),
-              
               if (isEdit) ...[
                 const SizedBox(height: 24),
                 _buildSectionTitle('Tarihler'),
-                _buildReadOnlyField('Oluşturulma Tarihi', _formatDate(widget.user!.createdAt)),
-                _buildReadOnlyField('Güncellenme Tarihi', _formatDate(widget.user!.updatedAt)),
+                _buildReadOnlyField(
+                    'Oluşturulma Tarihi', _formatDate(widget.user!.createdAt)),
+                _buildReadOnlyField(
+                    'Güncellenme Tarihi', _formatDate(widget.user!.updatedAt)),
               ],
-              
               const SizedBox(height: 32),
               SizedBox(
                 width: double.infinity,
@@ -435,11 +558,18 @@ class _UserFormPageState extends State<UserFormPage> {
                   style: ElevatedButton.styleFrom(
                     backgroundColor: AppColors.primary,
                     foregroundColor: Colors.white,
-                    shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+                    shape: RoundedRectangleBorder(
+                        borderRadius: BorderRadius.circular(12)),
                   ),
                   child: _isSaving
-                      ? const SizedBox(height: 20, width: 20, child: CircularProgressIndicator(color: Colors.white, strokeWidth: 2))
-                      : const Text('Kaydet', style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold)),
+                      ? const SizedBox(
+                          height: 20,
+                          width: 20,
+                          child: CircularProgressIndicator(
+                              color: Colors.white, strokeWidth: 2))
+                      : const Text('Kaydet',
+                          style: TextStyle(
+                              fontSize: 16, fontWeight: FontWeight.bold)),
                 ),
               ),
             ],
@@ -452,17 +582,22 @@ class _UserFormPageState extends State<UserFormPage> {
   Widget _buildSectionTitle(String title) {
     return Padding(
       padding: const EdgeInsets.only(bottom: 12),
-      child: Text(title, style: AppTextStyles.titleMedium.copyWith(fontWeight: FontWeight.bold)),
+      child: Text(title,
+          style:
+              AppTextStyles.titleMedium.copyWith(fontWeight: FontWeight.bold)),
     );
   }
 
-  Widget _buildTextField(String label, TextEditingController controller, {String? hint, bool isPhone = false}) {
+  Widget _buildTextField(String label, TextEditingController controller,
+      {String? hint, bool isPhone = false}) {
     return Padding(
       padding: const EdgeInsets.only(bottom: 16),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          Text(label, style: AppTextStyles.labelSmall.copyWith(color: AppColors.textSecondary)),
+          Text(label,
+              style: AppTextStyles.labelSmall
+                  .copyWith(color: AppColors.textSecondary)),
           const SizedBox(height: 8),
           TextFormField(
             controller: controller,
@@ -472,8 +607,12 @@ class _UserFormPageState extends State<UserFormPage> {
               hintText: hint,
               filled: true,
               fillColor: AppColors.surface,
-              border: const OutlineInputBorder(borderRadius: BorderRadius.all(Radius.circular(12)), borderSide: BorderSide(color: AppColors.border)),
-              enabledBorder: const OutlineInputBorder(borderRadius: BorderRadius.all(Radius.circular(12)), borderSide: BorderSide(color: AppColors.border)),
+              border: const OutlineInputBorder(
+                  borderRadius: BorderRadius.all(Radius.circular(12)),
+                  borderSide: BorderSide(color: AppColors.border)),
+              enabledBorder: const OutlineInputBorder(
+                  borderRadius: BorderRadius.all(Radius.circular(12)),
+                  borderSide: BorderSide(color: AppColors.border)),
             ),
             validator: (val) {
               if (label.contains('*') && (val == null || val.trim().isEmpty)) {
@@ -487,7 +626,6 @@ class _UserFormPageState extends State<UserFormPage> {
               }
               return null;
             },
-
           ),
         ],
       ),
@@ -500,7 +638,9 @@ class _UserFormPageState extends State<UserFormPage> {
       child: Row(
         mainAxisAlignment: MainAxisAlignment.spaceBetween,
         children: [
-          Text(label, style: AppTextStyles.labelSmall.copyWith(color: AppColors.textSecondary)),
+          Text(label,
+              style: AppTextStyles.labelSmall
+                  .copyWith(color: AppColors.textSecondary)),
           Text(value, style: AppTextStyles.bodyMedium),
         ],
       ),
@@ -512,7 +652,21 @@ class _UserFormPageState extends State<UserFormPage> {
   }
 
   String _monthName(int month) {
-    const months = ['', 'Ocak', 'Şubat', 'Mart', 'Nisan', 'Mayıs', 'Haziran', 'Temmuz', 'Ağustos', 'Eylül', 'Ekim', 'Kasım', 'Aralık'];
+    const months = [
+      '',
+      'Ocak',
+      'Şubat',
+      'Mart',
+      'Nisan',
+      'Mayıs',
+      'Haziran',
+      'Temmuz',
+      'Ağustos',
+      'Eylül',
+      'Ekim',
+      'Kasım',
+      'Aralık'
+    ];
     return months[month];
   }
 }

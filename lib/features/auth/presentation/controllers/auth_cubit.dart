@@ -1,3 +1,4 @@
+import 'dart:io';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import '../../domain/repositories/auth_repository.dart';
 import '../../../../core/errors/failures.dart';
@@ -5,6 +6,8 @@ import 'auth_state.dart';
 import '../../../properties/presentation/controllers/properties_cubit.dart';
 import '../../../finance/presentation/controllers/finance_cubit.dart';
 import '../../../users/presentation/controllers/user_cubit.dart';
+import '../../../../core/di/injection.dart';
+import '../../../users/domain/repositories/user_repository.dart';
 
 class AuthCubit extends Cubit<AuthState> {
   final AuthRepository _repository;
@@ -18,6 +21,7 @@ class AuthCubit extends Cubit<AuthState> {
       final user = await _repository.getStoredUser();
       if (user != null) {
         emit(AuthAuthenticated(user));
+        _sendDeviceToken();
       } else {
         emit(const AuthUnauthenticated());
       }
@@ -32,6 +36,7 @@ class AuthCubit extends Cubit<AuthState> {
     try {
       final user = await _repository.login(phone: phone, password: password);
       emit(AuthAuthenticated(user));
+      _sendDeviceToken();
     } on ServerFailure catch (e) {
       emit(AuthError(e.message));
     } on ValidationFailure catch (e) {
@@ -42,6 +47,20 @@ class AuthCubit extends Cubit<AuthState> {
       emit(AuthError(e.message));
     } catch (e) {
       emit(const AuthError('Giriş sırasında bir hata oluştu.'));
+    }
+  }
+
+  /// TODO: firebase_messaging paketi projeye dahil edildiğinde
+  /// 'FirebaseMessaging.instance.getToken()' ile gerçek token alınacak.
+  void _sendDeviceToken() async {
+    try {
+      final deviceType = Platform.isIOS ? 'ios' : 'android';
+      // firebase_messaging kurulana kadar geçici (mock) token yolluyoruz ki backend testi patlamasın.
+      final mockToken =
+          'mock_fcm_token_${DateTime.now().millisecondsSinceEpoch}';
+      await sl<UserRepository>().saveDeviceToken(mockToken, deviceType);
+    } catch (e) {
+      // Token hatası uygulamanın çalışmasını durdurmamalı
     }
   }
 

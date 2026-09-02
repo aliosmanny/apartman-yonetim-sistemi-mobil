@@ -29,4 +29,19 @@ class UserRepositoryImpl implements UserRepository {
   Future<void> deleteUser(int id) async {
     await _remoteDataSource.deleteUser(id);
   }
+
+  @override
+  Future<void> saveDeviceToken(String token, String deviceType) async {
+    return await _remoteDataSource.saveDeviceToken(token, deviceType);
+  }
+
+  @override
+  Future<Map<String, dynamic>> getNotificationPreferences() async {
+    return await _remoteDataSource.getNotificationPreferences();
+  }
+
+  @override
+  Future<void> updateNotificationPreferences(Map<String, dynamic> data) async {
+    return await _remoteDataSource.updateNotificationPreferences(data);
+  }
 }

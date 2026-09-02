@@ -50,7 +50,10 @@ class _UserListPageState extends State<UserListPage> {
           {'value': 'tenant', 'label': 'Kiracı'},
           {'value': 'staff', 'label': 'Personel'},
           {'value': 'former_system_admin', 'label': 'Eski Sistem Yöneticisi'},
-          {'value': 'former_apartment_manager', 'label': 'Eski Apartman / Site Yöneticisi'},
+          {
+            'value': 'former_apartment_manager',
+            'label': 'Eski Apartman / Site Yöneticisi'
+          },
           {'value': 'former_owner', 'label': 'Eski Kat Maliki'},
           {'value': 'former_tenant', 'label': 'Eski Kiracı'},
           {'value': 'former_staff', 'label': 'Eski Personel'},
@@ -90,7 +93,8 @@ class _UserListPageState extends State<UserListPage> {
                     child: Row(
                       mainAxisAlignment: MainAxisAlignment.spaceBetween,
                       children: [
-                        Text('Kullanıcı Filtresi', style: AppTextStyles.headlineSmall),
+                        Text('Kullanıcı Filtresi',
+                            style: AppTextStyles.headlineSmall),
                         TextButton(
                           onPressed: () {
                             setBottomSheetState(() {
@@ -98,7 +102,8 @@ class _UserListPageState extends State<UserListPage> {
                               tempIsActive = 'all';
                             });
                           },
-                          child: const Text('Temizle', style: TextStyle(color: AppColors.error)),
+                          child: const Text('Temizle',
+                              style: TextStyle(color: AppColors.error)),
                         ),
                       ],
                     ),
@@ -108,7 +113,9 @@ class _UserListPageState extends State<UserListPage> {
                     child: ListView(
                       padding: const EdgeInsets.symmetric(horizontal: 20),
                       children: [
-                        Text('Rol süzgecine göre', style: AppTextStyles.titleMedium.copyWith(fontWeight: FontWeight.bold)),
+                        Text('Rol süzgecine göre',
+                            style: AppTextStyles.titleMedium
+                                .copyWith(fontWeight: FontWeight.bold)),
                         const SizedBox(height: 10),
                         Container(
                           decoration: BoxDecoration(
@@ -119,7 +126,8 @@ class _UserListPageState extends State<UserListPage> {
                             shrinkWrap: true,
                             physics: const NeverScrollableScrollPhysics(),
                             itemCount: roles.length,
-                            separatorBuilder: (_, __) => Divider(height: 1, color: Colors.grey.shade200),
+                            separatorBuilder: (_, __) =>
+                                Divider(height: 1, color: Colors.grey.shade200),
                             itemBuilder: (context, idx) {
                               final role = roles[idx];
                               final isSelected = tempRole == role['value'];
@@ -128,12 +136,17 @@ class _UserListPageState extends State<UserListPage> {
                                 title: Text(
                                   role['label']!,
                                   style: TextStyle(
-                                    color: isSelected ? AppColors.primary : AppColors.textPrimary,
-                                    fontWeight: isSelected ? FontWeight.bold : FontWeight.normal,
+                                    color: isSelected
+                                        ? AppColors.primary
+                                        : AppColors.textPrimary,
+                                    fontWeight: isSelected
+                                        ? FontWeight.bold
+                                        : FontWeight.normal,
                                   ),
                                 ),
-                                trailing: isSelected 
-                                    ? const Icon(Icons.check_circle_rounded, color: AppColors.primary)
+                                trailing: isSelected
+                                    ? const Icon(Icons.check_circle_rounded,
+                                        color: AppColors.primary)
                                     : null,
                                 onTap: () {
                                   setBottomSheetState(() {
@@ -145,26 +158,31 @@ class _UserListPageState extends State<UserListPage> {
                           ),
                         ),
                         const SizedBox(height: 24),
-                        Text('Sisteme Giriş İzni (Zorunlu) süzgecine göre', style: AppTextStyles.titleMedium.copyWith(fontWeight: FontWeight.bold)),
+                        Text('Sisteme Giriş İzni (Zorunlu) süzgecine göre',
+                            style: AppTextStyles.titleMedium
+                                .copyWith(fontWeight: FontWeight.bold)),
                         const SizedBox(height: 12),
                         Row(
                           children: [
                             _buildSegmentBtn(
-                              label: 'Tümü', 
+                              label: 'Tümü',
                               isSelected: tempIsActive == 'all',
-                              onTap: () => setBottomSheetState(() => tempIsActive = 'all'),
+                              onTap: () => setBottomSheetState(
+                                  () => tempIsActive = 'all'),
                             ),
                             const SizedBox(width: 8),
                             _buildSegmentBtn(
-                              label: 'Evet', 
+                              label: 'Evet',
                               isSelected: tempIsActive == 'yes',
-                              onTap: () => setBottomSheetState(() => tempIsActive = 'yes'),
+                              onTap: () => setBottomSheetState(
+                                  () => tempIsActive = 'yes'),
                             ),
                             const SizedBox(width: 8),
                             _buildSegmentBtn(
-                              label: 'Hayır', 
+                              label: 'Hayır',
                               isSelected: tempIsActive == 'no',
-                              onTap: () => setBottomSheetState(() => tempIsActive = 'no'),
+                              onTap: () => setBottomSheetState(
+                                  () => tempIsActive = 'no'),
                             ),
                           ],
                         ),
@@ -187,11 +205,15 @@ class _UserListPageState extends State<UserListPage> {
                         style: ElevatedButton.styleFrom(
                           backgroundColor: AppColors.primary,
                           padding: const EdgeInsets.symmetric(vertical: 16),
-                          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+                          shape: RoundedRectangleBorder(
+                              borderRadius: BorderRadius.circular(12)),
                         ),
                         child: Text(
                           'Sayıları göster ($count)',
-                          style: const TextStyle(color: Colors.white, fontWeight: FontWeight.bold, fontSize: 16),
+                          style: const TextStyle(
+                              color: Colors.white,
+                              fontWeight: FontWeight.bold,
+                              fontSize: 16),
                         ),
                       ),
                     ),
@@ -205,7 +227,10 @@ class _UserListPageState extends State<UserListPage> {
     );
   }
 
-  Widget _buildSegmentBtn({required String label, required bool isSelected, required VoidCallback onTap}) {
+  Widget _buildSegmentBtn(
+      {required String label,
+      required bool isSelected,
+      required VoidCallback onTap}) {
     return Expanded(
       child: GestureDetector(
         onTap: onTap,
@@ -213,8 +238,10 @@ class _UserListPageState extends State<UserListPage> {
           alignment: Alignment.center,
           padding: const EdgeInsets.symmetric(vertical: 12),
           decoration: BoxDecoration(
-            color: isSelected ? AppColors.primary.withOpacity(0.1) : Colors.white,
-            border: Border.all(color: isSelected ? AppColors.primary : Colors.grey.shade300),
+            color:
+                isSelected ? AppColors.primary.withOpacity(0.1) : Colors.white,
+            border: Border.all(
+                color: isSelected ? AppColors.primary : Colors.grey.shade300),
             borderRadius: BorderRadius.circular(12),
           ),
           child: Text(
@@ -249,7 +276,8 @@ class _UserListPageState extends State<UserListPage> {
         body: Column(
           children: [
             Padding(
-              padding: const EdgeInsets.symmetric(horizontal: 20.0, vertical: 10.0),
+              padding:
+                  const EdgeInsets.symmetric(horizontal: 20.0, vertical: 10.0),
               child: Row(
                 children: [
                   Expanded(
@@ -259,7 +287,9 @@ class _UserListPageState extends State<UserListPage> {
                         prefixIcon: Icon(Icons.search),
                         filled: true,
                         fillColor: AppColors.surface,
-                        border: OutlineInputBorder(borderRadius: BorderRadius.all(Radius.circular(12)), borderSide: BorderSide.none),
+                        border: OutlineInputBorder(
+                            borderRadius: BorderRadius.all(Radius.circular(12)),
+                            borderSide: BorderSide.none),
                       ),
                       onChanged: (val) {
                         setState(() {
@@ -271,18 +301,27 @@ class _UserListPageState extends State<UserListPage> {
                   const SizedBox(width: 12),
                   BlocBuilder<UserCubit, UserState>(
                     builder: (context, state) {
-                      final allUsers = state is UserLoaded ? state.users : <AppUser>[];
-                      final hasFilter = _selectedRole != 'all' || _selectedIsActive != 'all';
+                      final allUsers =
+                          state is UserLoaded ? state.users : <AppUser>[];
+                      final hasFilter =
+                          _selectedRole != 'all' || _selectedIsActive != 'all';
                       return IconButton(
-                        onPressed: state is UserLoaded ? () => _showFilterBottomSheet(context, allUsers) : null,
+                        onPressed: state is UserLoaded
+                            ? () => _showFilterBottomSheet(context, allUsers)
+                            : null,
                         icon: Icon(
                           Icons.filter_list_rounded,
-                          color: hasFilter ? AppColors.primary : AppColors.textSecondary,
+                          color: hasFilter
+                              ? AppColors.primary
+                              : AppColors.textSecondary,
                         ),
                         style: IconButton.styleFrom(
-                          backgroundColor: hasFilter ? AppColors.primary.withOpacity(0.1) : AppColors.surface,
+                          backgroundColor: hasFilter
+                              ? AppColors.primary.withOpacity(0.1)
+                              : AppColors.surface,
                           padding: const EdgeInsets.all(12),
-                          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+                          shape: RoundedRectangleBorder(
+                              borderRadius: BorderRadius.circular(12)),
                         ),
                       );
                     },
@@ -296,15 +335,22 @@ class _UserListPageState extends State<UserListPage> {
                   if (state is UserLoading) {
                     return const Center(child: CircularProgressIndicator());
                   } else if (state is UserError) {
-                    return Center(child: Text('Hata: ${state.message}', style: const TextStyle(color: AppColors.error)));
+                    return Center(
+                        child: Text('Hata: ${state.message}',
+                            style: const TextStyle(color: AppColors.error)));
                   } else if (state is UserLoaded) {
                     final users = state.users.where((u) {
                       // Basic normalization for Turkish characters in search
-                      String normalize(String s) => s.toLowerCase()
-                          .replaceAll('i̇', 'i').replaceAll('ı', 'i')
-                          .replaceAll('ğ', 'g').replaceAll('ü', 'u')
-                          .replaceAll('ş', 's').replaceAll('ö', 'o').replaceAll('ç', 'c');
-                          
+                      String normalize(String s) => s
+                          .toLowerCase()
+                          .replaceAll('i̇', 'i')
+                          .replaceAll('ı', 'i')
+                          .replaceAll('ğ', 'g')
+                          .replaceAll('ü', 'u')
+                          .replaceAll('ş', 's')
+                          .replaceAll('ö', 'o')
+                          .replaceAll('ç', 'c');
+
                       final query = normalize(_searchQuery);
                       final fullName = normalize(u.fullName);
                       final email = normalize(u.email ?? '');
@@ -316,9 +362,10 @@ class _UserListPageState extends State<UserListPage> {
                           phone.contains(query) ||
                           email.contains(query) ||
                           role.contains(query);
-                      
-                      final matchesRole = _selectedRole == 'all' || u.role == _selectedRole;
-                      
+
+                      final matchesRole =
+                          _selectedRole == 'all' || u.role == _selectedRole;
+
                       final matchesIsActive = _selectedIsActive == 'all' ||
                           (_selectedIsActive == 'yes' && u.isActive) ||
                           (_selectedIsActive == 'no' && !u.isActive);
@@ -331,7 +378,8 @@ class _UserListPageState extends State<UserListPage> {
                     }
 
                     return ListView.separated(
-                      padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 10),
+                      padding: const EdgeInsets.symmetric(
+                          horizontal: 20, vertical: 10),
                       itemCount: users.length,
                       separatorBuilder: (_, __) => const SizedBox(height: 12),
                       itemBuilder: (context, index) {
@@ -367,49 +415,73 @@ class _UserCard extends StatelessWidget {
     return Card(
       child: InkWell(
         borderRadius: BorderRadius.circular(24),
-        onTap: () => context.push('/manager/users/edit', extra: {'user': user, 'cubit': context.read<UserCubit>()}),
+        onTap: () => context.push('/manager/users/edit',
+            extra: {'user': user, 'cubit': context.read<UserCubit>()}),
         child: Padding(
           padding: const EdgeInsets.all(8.0),
           child: ListTile(
-            contentPadding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+            contentPadding:
+                const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
             leading: CircleAvatar(
               radius: 24,
               backgroundColor: AppColors.primary.withValues(alpha: 0.1),
               child: Text(
-                user.firstName.isNotEmpty ? user.firstName[0].toUpperCase() : '?',
-                style: const TextStyle(color: AppColors.primary, fontWeight: FontWeight.bold, fontSize: 18),
+                user.firstName.isNotEmpty
+                    ? user.firstName[0].toUpperCase()
+                    : '?',
+                style: const TextStyle(
+                    color: AppColors.primary,
+                    fontWeight: FontWeight.bold,
+                    fontSize: 18),
               ),
             ),
             title: Text(
               user.fullName,
-              style: AppTextStyles.titleMedium.copyWith(fontWeight: FontWeight.bold),
+              style: AppTextStyles.titleMedium
+                  .copyWith(fontWeight: FontWeight.bold),
             ),
             subtitle: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
                 const SizedBox(height: 4),
-                Text(user.phone, style: AppTextStyles.labelSmall.copyWith(color: AppColors.textSecondary)),
+                Text(user.phone,
+                    style: AppTextStyles.labelSmall
+                        .copyWith(color: AppColors.textSecondary)),
                 const SizedBox(height: 4),
                 Row(
                   children: [
                     Container(
-                      padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 2),
+                      padding: const EdgeInsets.symmetric(
+                          horizontal: 8, vertical: 2),
                       decoration: BoxDecoration(
                         color: AppColors.primary.withValues(alpha: 0.1),
                         borderRadius: BorderRadius.circular(8),
                       ),
-                      child: Text(user.roleDisplay ?? user.role, style: TextStyle(fontSize: 10, color: AppColors.primary, fontWeight: FontWeight.bold)),
+                      child: Text(user.roleDisplay ?? user.role,
+                          style: TextStyle(
+                              fontSize: 10,
+                              color: AppColors.primary,
+                              fontWeight: FontWeight.bold)),
                     ),
                     const SizedBox(width: 8),
                     Container(
-                      padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 2),
+                      padding: const EdgeInsets.symmetric(
+                          horizontal: 8, vertical: 2),
                       decoration: BoxDecoration(
-                        color: (user.isActive ? AppColors.success : AppColors.error).withValues(alpha: 0.1),
+                        color: (user.isActive
+                                ? AppColors.success
+                                : AppColors.error)
+                            .withValues(alpha: 0.1),
                         borderRadius: BorderRadius.circular(8),
                       ),
                       child: Text(
                         user.isActive ? 'Aktif' : 'Pasif',
-                        style: TextStyle(fontSize: 10, color: user.isActive ? AppColors.success : AppColors.error, fontWeight: FontWeight.bold),
+                        style: TextStyle(
+                            fontSize: 10,
+                            color: user.isActive
+                                ? AppColors.success
+                                : AppColors.error,
+                            fontWeight: FontWeight.bold),
                       ),
                     ),
                   ],
@@ -420,9 +492,13 @@ class _UserCard extends StatelessWidget {
               mainAxisSize: MainAxisSize.min,
               children: [
                 IconButton(
-                  icon: const Icon(Icons.edit_outlined, color: AppColors.textSecondary, size: 20),
+                  icon: const Icon(Icons.edit_outlined,
+                      color: AppColors.textSecondary, size: 20),
                   onPressed: () {
-                    context.push('/manager/users/edit', extra: {'user': user, 'cubit': context.read<UserCubit>()});
+                    context.push('/manager/users/edit', extra: {
+                      'user': user,
+                      'cubit': context.read<UserCubit>()
+                    });
                   },
                 ),
               ],

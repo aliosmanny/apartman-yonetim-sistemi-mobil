@@ -54,8 +54,12 @@ class UserDto {
       isSuperuser: json['is_superuser'] ?? false,
       createdAt: json['created_at'] ?? DateTime.now().toIso8601String(),
       updatedAt: json['updated_at'] ?? DateTime.now().toIso8601String(),
-      ownedUnits: (json['owned_units'] as List?)?.map((e) => e.toString()).toList() ?? [],
-      rentedUnits: (json['rented_units'] as List?)?.map((e) => e.toString()).toList() ?? [],
+      ownedUnits:
+          (json['owned_units'] as List?)?.map((e) => e.toString()).toList() ??
+              [],
+      rentedUnits:
+          (json['rented_units'] as List?)?.map((e) => e.toString()).toList() ??
+              [],
       managedApartmentId: json['managed_apartment_id'] as int?,
       managedApartmentName: json['managed_apartment_name'] as String?,
     );
