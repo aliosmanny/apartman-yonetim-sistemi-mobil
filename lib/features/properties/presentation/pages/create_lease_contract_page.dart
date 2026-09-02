@@ -115,7 +115,7 @@ if (state is PropertiesLoading) {
                   DropdownButtonFormField<int>(
                     decoration: const InputDecoration(labelText: 'Daire'),
                     value: _selectedUnitId,
-                    items: units.map<DropdownMenuItem<int>>((u) => DropdownMenuItem(value: u.id, child: Text(u.display))).toList(),
+                    items: units.map<DropdownMenuItem<int>>((u) => DropdownMenuItem(value: u.id, child: Text('${u.blockName} - No: ${u.number}'))).toList(),
                     onChanged: (v) => setState(() => _selectedUnitId = v),
                     validator: (v) => v == null ? 'Zorunlu alan' : null,
                   ),
