@@ -27,6 +27,7 @@ import '../../features/dashboard/presentation/pages/manager_edit_transaction_pag
 import '../../features/dashboard/presentation/pages/manager_add_expense_page.dart';
 import '../../features/dashboard/presentation/pages/manager_maintenance_page.dart';
 import '../../features/dashboard/presentation/pages/manager_services_page.dart';
+import '../../features/dashboard/presentation/pages/staff_task_detail_page.dart';
 import '../../features/staff/domain/models/staff_member.dart';
 import '../../features/staff/presentation/controllers/staff_cubit.dart';
 import '../../features/dashboard/presentation/pages/manager_staff_form_page.dart';
@@ -604,6 +605,16 @@ class AppRouter {
                   path: '/staff/assigned',
                   name: RouteNames.staffAssigned,
                   builder: (_, __) => const StaffAssignedPage(),
+                  routes: [
+                    GoRoute(
+                      path: 'detail',
+                      name: 'staffTaskDetail',
+                      builder: (context, state) {
+                        final task = state.extra as MaintenanceRequest;
+                        return StaffTaskDetailPage(task: task);
+                      },
+                    ),
+                  ],
                 ),
               ],
             ),
