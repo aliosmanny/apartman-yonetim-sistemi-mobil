@@ -628,16 +628,7 @@ class AppRouter {
                 ),
               ],
             ),
-            // Branch 3: Bildirimler
-            StatefulShellBranch(
-              routes: [
-                GoRoute(
-                  path: '/staff/notifications',
-                  name: RouteNames.staffNotifications,
-                  builder: (_, __) => const _PlaceholderPage(title: 'Bildirimler'),
-                ),
-              ],
-            ),
+
             // Branch 4: Profil
             StatefulShellBranch(
               routes: [
@@ -773,7 +764,7 @@ class _StaffShell extends StatelessWidget {
           NavigationDestination(icon: Icon(Icons.home_outlined), selectedIcon: Icon(Icons.home), label: 'Ana Sayfa'),
           NavigationDestination(icon: Icon(Icons.assignment_outlined), selectedIcon: Icon(Icons.assignment), label: 'Atanan'),
           NavigationDestination(icon: Icon(Icons.check_circle_outline), selectedIcon: Icon(Icons.check_circle), label: 'Tamamlanan'),
-          NavigationDestination(icon: Icon(Icons.notifications_outlined), selectedIcon: Icon(Icons.notifications), label: 'Bildirimler'),
+
           NavigationDestination(icon: Icon(Icons.person_outlined), selectedIcon: Icon(Icons.person), label: 'Profil'),
         ],
       ),
