@@ -8,17 +8,16 @@ import '../../../../app/theme/app_text_styles.dart';
 import '../../../../core/di/injection.dart';
 import '../../../users/domain/repositories/user_repository.dart';
 
-class ManagerProfilePage extends StatefulWidget {
-  const ManagerProfilePage({super.key});
+class ResidentEditProfilePage extends StatefulWidget {
+  const ResidentEditProfilePage({super.key});
 
   @override
-  State<ManagerProfilePage> createState() => _ManagerProfilePageState();
+  State<ResidentEditProfilePage> createState() => _ResidentEditProfilePageState();
 }
 
-class _ManagerProfilePageState extends State<ManagerProfilePage> {
+class _ResidentEditProfilePageState extends State<ResidentEditProfilePage> {
   final _formKey = GlobalKey<FormState>();
   
-  // Örnek yönetici verileri (Mock)
   late TextEditingController _nameController;
   late TextEditingController _emailController;
   late TextEditingController _phoneController;
@@ -27,9 +26,9 @@ class _ManagerProfilePageState extends State<ManagerProfilePage> {
   void initState() {
     super.initState();
     final state = context.read<AuthCubit>().state;
-    String name = 'Yönetici';
-    String email = 'yonetici@apartman.com';
-    String phone = '0555 000 11 22';
+    String name = 'Sakin';
+    String email = 'personel@apartman.com';
+    String phone = '0555 123 45 67';
     
     if (state is AuthAuthenticated) {
       name = state.user.fullName;
@@ -77,9 +76,6 @@ class _ManagerProfilePageState extends State<ManagerProfilePage> {
               backgroundColor: AppColors.success,
             ),
           );
-          // manager_profile_page usually doesn't pop because it's a root tab.
-          // context.pop(); // Remove pop if it's a tab, or keep it if it's pushed. Let's see if there's a pop in original.
-          // Wait, original had context.pop(); - let's keep it if it was there.
           context.pop();
         }
       } catch (e) {
@@ -133,7 +129,7 @@ class _ManagerProfilePageState extends State<ManagerProfilePage> {
                       ),
                       child: Center(
                         child: Text(
-                          _nameController.text.isNotEmpty ? _nameController.text.substring(0, 1).toUpperCase() : 'Y',
+                          _nameController.text.isNotEmpty ? _nameController.text.substring(0, 1).toUpperCase() : 'P',
                           style: AppTextStyles.displayMedium.copyWith(color: AppColors.textOnPrimary),
                         ),
                       ),
@@ -209,31 +205,7 @@ class _ManagerProfilePageState extends State<ManagerProfilePage> {
               ),
               const SizedBox(height: 24),
 
-              // Şifre Değiştir
-              Container(
-                decoration: BoxDecoration(
-                  color: AppColors.cardBackground,
-                  borderRadius: BorderRadius.circular(16),
-                  border: Border.all(color: AppColors.border),
-                ),
-                child: ListTile(
-                  contentPadding: const EdgeInsets.symmetric(horizontal: 20, vertical: 4),
-                  leading: Container(
-                    padding: const EdgeInsets.all(8),
-                    decoration: BoxDecoration(
-                      color: AppColors.primary.withOpacity(0.1),
-                      borderRadius: BorderRadius.circular(8),
-                    ),
-                    child: const Icon(Icons.lock_outline_rounded, color: AppColors.primary),
-                  ),
-                  title: Text('Şifre Değiştir', style: AppTextStyles.titleMedium),
-                  trailing: const Icon(Icons.chevron_right_rounded, color: AppColors.textTertiary),
-                  onTap: () {
-                    context.pushNamed('managerChangePassword');
-                  },
-                ),
-              ),
-              const SizedBox(height: 40),
+
 
               // Kaydet Butonu
               SizedBox(

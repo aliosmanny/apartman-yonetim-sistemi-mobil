@@ -50,6 +50,7 @@ import '../../features/maintenance/presentation/pages/maintenance_list_page.dart
 import '../../features/maintenance/presentation/pages/create_maintenance_page.dart';
 import '../../features/maintenance/presentation/pages/manager_create_maintenance_page.dart';
 import '../../features/profile/presentation/pages/profile_page.dart';
+import '../../features/profile/presentation/pages/resident_edit_profile_page.dart';
 import '../../features/profile/presentation/pages/change_password_page.dart';
 import '../../features/profile/presentation/pages/notification_settings_page.dart';
 import '../../features/announcements/presentation/pages/announcement_list_page.dart';
@@ -558,6 +559,11 @@ class AppRouter {
                   name: RouteNames.residentProfile,
                   builder: (_, __) => const ProfilePage(),
                   routes: [
+                    GoRoute(
+                      path: 'edit',
+                      name: 'residentEditProfile',
+                      builder: (_, __) => const ResidentEditProfilePage(),
+                    ),
                     GoRoute(
                       path: 'change-password',
                       name: 'residentChangePassword',

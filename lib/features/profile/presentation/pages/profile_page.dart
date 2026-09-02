@@ -23,6 +23,13 @@ class ProfilePage extends StatelessWidget {
             elevation: 0,
             backgroundColor: AppColors.primary,
             foregroundColor: Colors.white,
+            actions: [
+              IconButton(
+                icon: const Icon(Icons.edit_rounded),
+                tooltip: 'Profili Düzenle',
+                onPressed: () => context.pushNamed('residentEditProfile'),
+              ),
+            ],
           ),
           body: SingleChildScrollView(
             child: Column(
