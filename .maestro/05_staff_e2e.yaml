@@ -1,0 +1,52 @@
+appId: com.example.apartman_yonetim_sistemi_mobil
+---
+# ── 1. GİRİŞ ──
+- launchApp:
+    clearState: true
+- tapOn: "5XX XXX XX XX"
+- inputText: "5814904199"
+- tapOn: "••••••••"
+- inputText: "DemoUser123!"
+- hideKeyboard
+- tapOn: "Giriş Yap"
+- waitForAnimationToEnd:
+    timeout: 8000
+
+# ── 2. ANA SAYFA KAYDIRMA ──
+- swipe:
+    direction: UP
+    duration: 800
+- swipe:
+    direction: DOWN
+    duration: 500
+
+# ── 3. ATANAN GÖREVLER SEKMESİ (Tab 2) ──
+- tapOn:
+    point: "37%, 95%"
+- waitForAnimationToEnd:
+    timeout: 5000
+- swipe:
+    direction: UP
+    duration: 600
+
+# ── 4. TAMAMLANAN GÖREVLER SEKMESİ (Tab 3) ──
+- tapOn:
+    point: "62%, 95%"
+- waitForAnimationToEnd:
+    timeout: 5000
+- swipe:
+    direction: UP
+    duration: 600
+
+# ── 5. PROFİL SEKMESİ (Tab 4) & ÇIKIŞ ──
+- tapOn:
+    point: "87%, 95%"
+- waitForAnimationToEnd:
+    timeout: 5000
+- tapOn: "Çıkış Yap"
+- waitForAnimationToEnd:
+    timeout: 2000
+- tapOn: "Çıkış Yap"
+- waitForAnimationToEnd:
+    timeout: 5000
+- assertVisible: "Tekrar Hoş Geldiniz"

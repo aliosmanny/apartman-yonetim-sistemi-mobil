@@ -1,0 +1,13 @@
+appId: com.example.apartman_yonetim_sistemi_mobil
+---
+- launchApp:
+    clearState: true
+- assertVisible: "Tekrar Hoş Geldiniz"
+- tapOn: "5XX XXX XX XX"
+- inputText: "5353641829"
+- tapOn: "••••••••"
+- inputText: "1234123412341234"
+- hideKeyboard
+- tapOn: "Giriş Yap"
+- waitForAnimationToEnd:
+    timeout: 8000
