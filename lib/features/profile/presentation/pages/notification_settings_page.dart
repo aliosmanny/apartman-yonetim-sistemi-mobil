@@ -3,7 +3,7 @@ import 'package:shared_preferences/shared_preferences.dart';
 import '../../../../app/theme/app_colors.dart';
 import '../../../../app/theme/app_text_styles.dart';
 import '../../../../core/di/injection.dart';
-import '../../notifications/data/datasources/notification_remote_data_source.dart';
+import '../../../notifications/data/datasources/notification_remote_data_source.dart';
 
 class NotificationSettingsPage extends StatefulWidget {
   const NotificationSettingsPage({super.key});
