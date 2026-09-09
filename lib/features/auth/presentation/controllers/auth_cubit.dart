@@ -8,6 +8,7 @@ import '../../../finance/presentation/controllers/finance_cubit.dart';
 import '../../../users/presentation/controllers/user_cubit.dart';
 import '../../../../core/di/injection.dart';
 import '../../../users/domain/repositories/user_repository.dart';
+import '../../../../core/services/fcm_service.dart';
 
 class AuthCubit extends Cubit<AuthState> {
   final AuthRepository _repository;
@@ -50,24 +51,18 @@ class AuthCubit extends Cubit<AuthState> {
     }
   }
 
-  /// TODO: firebase_messaging paketi projeye dahil edildiğinde
-  /// 'FirebaseMessaging.instance.getToken()' ile gerçek token alınacak.
+  /// Gerçek FCM token senkronizasyonu
   void _sendDeviceToken() async {
     try {
-      final deviceType = Platform.isIOS ? 'ios' : 'android';
-      // firebase_messaging kurulana kadar geçici (mock) token yolluyoruz ki backend testi patlamasın.
-      final mockToken =
-          'mock_fcm_token_${DateTime.now().millisecondsSinceEpoch}';
-      await sl<UserRepository>().saveDeviceToken(mockToken, deviceType);
-    } catch (e) {
-      // Token hatası uygulamanın çalışmasını durdurmamalı
-    }
+      await FcmService().syncTokenWithBackend();
+    } catch (_) {}
   }
 
   /// Oturumu kapat.
   Future<void> logout() async {
     emit(const AuthActionLoading());
     try {
+      await FcmService().deleteTokenOnLogout();
       await _repository.logout();
       // Oturum kapatıldığında statik önbellekleri temizle
       PropertiesCubit.clearCache();
