@@ -1,7 +1,7 @@
 appId: com.example.apartman_yonetim_sistemi_mobil
 ---
 # ══════════════════════════════════════════════════════════════════
-# 1. PERSONEL GİRİŞİ
+# 1. PERSONEL GİRİŞİ (ALİ KAYA)
 # ══════════════════════════════════════════════════════════════════
 - launchApp:
     clearState: true
@@ -18,22 +18,22 @@ appId: com.example.apartman_yonetim_sistemi_mobil
 # 2. PERSONEL ANA SAYFA VE KISAYOLLAR
 # ══════════════════════════════════════════════════════════════════
 # 2.1. İstatistik Kısayolu: Bekleyen
-- tapOn: "Bekleyen"
+- tapOn: ".*Bekleyen.*"
 - waitForAnimationToEnd:
     timeout: 2500
 # Ana Sayfaya Geri Dön (Sekme 0)
 - tapOn:
-    point: "18%, 90%"
+    point: "12%, 90%"
 - waitForAnimationToEnd:
     timeout: 2000
 
 # 2.2. İstatistik Kısayolu: Tamamlanan
-- tapOn: "Tamamlanan"
+- tapOn: ".*Tamamlanan.*"
 - waitForAnimationToEnd:
     timeout: 2500
 # Ana Sayfaya Geri Dön
 - tapOn:
-    point: "18%, 90%"
+    point: "12%, 90%"
 - waitForAnimationToEnd:
     timeout: 2000
 
@@ -43,51 +43,83 @@ appId: com.example.apartman_yonetim_sistemi_mobil
     timeout: 2500
 # Ana Sayfaya Geri Dön
 - tapOn:
-    point: "18%, 90%"
+    point: "12%, 90%"
 - waitForAnimationToEnd:
     timeout: 2000
 
-# 2.4. Ana Sayfayı Kaydırarak İncele
+# 2.4. Ana Sayfayı Güvenli Kaydırarak İncele
 - swipe:
-    direction: UP
-    duration: 600
+    start: "50%, 65%"
+    end: "50%, 35%"
+    duration: 400
+- waitForAnimationToEnd:
+    timeout: 1000
 - swipe:
-    direction: DOWN
-    duration: 600
+    start: "50%, 35%"
+    end: "50%, 65%"
+    duration: 400
+- waitForAnimationToEnd:
+    timeout: 1000
 
 # ══════════════════════════════════════════════════════════════════
-# 3. ATANAN GÖREVLER SEKMESİ
+# 3. ATANAN GÖREVLER SEKMESİ & İŞİ TAMAMLAMA AKIŞI
 # ══════════════════════════════════════════════════════════════════
 - tapOn:
-    point: "40%, 90%"
+    point: "38%, 90%"
 - waitForAnimationToEnd:
     timeout: 3000
+
+# 3.1. Atanan İşe Tıkla ve Detay Sayfasına Git
+- tapOn: ".*Otopark.*"
+- waitForAnimationToEnd:
+    timeout: 3000
+- assertVisible: "İş Detayı"
+
+# 3.2. Personel Notu Ekle
+- tapOn: "Yapılan işlemleri kısaca açıklayın..."
+- inputText: "Kapı sensörü temizlendi ve onarım tamamlandı."
+- hideKeyboard
+
+# 3.3. 'İşi Tamamla' Butonuna Bas
 - swipe:
-    direction: UP
-    duration: 600
-- swipe:
-    direction: DOWN
-    duration: 500
+    start: "50%, 75%"
+    end: "50%, 35%"
+    duration: 350
+- tapOn: "İşi Tamamla"
+- waitForAnimationToEnd:
+    timeout: 4000
 
 # ══════════════════════════════════════════════════════════════════
-# 4. TAMAMLANAN GÖREVLER SEKMESİ
+# 4. TAMAMLANAN GÖREVLER SEKMESİ & DOĞRULAMA
 # ══════════════════════════════════════════════════════════════════
 - tapOn:
     point: "62%, 90%"
 - waitForAnimationToEnd:
     timeout: 3000
+
+# 4.1. Tamamlanan Listesinde Görevin Olduğunu Doğrula
+- assertVisible: ".*Otopark.*"
+- assertVisible: ".*Tamamlandı.*"
+
+# 4.2. Tamamlananlar Listesini Kaydır
 - swipe:
-    direction: UP
-    duration: 600
+    start: "50%, 65%"
+    end: "50%, 35%"
+    duration: 400
+- waitForAnimationToEnd:
+    timeout: 1000
 - swipe:
-    direction: DOWN
-    duration: 500
+    start: "50%, 35%"
+    end: "50%, 65%"
+    duration: 400
+- waitForAnimationToEnd:
+    timeout: 1000
 
 # ══════════════════════════════════════════════════════════════════
 # 5. PROFİL, AYARLAR VE ÇIKIŞ YAP
 # ══════════════════════════════════════════════════════════════════
 - tapOn:
-    point: "84%, 90%"
+    point: "88%, 90%"
 - waitForAnimationToEnd:
     timeout: 3000
 
