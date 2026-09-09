@@ -9,8 +9,23 @@ import '../../../maintenance/domain/models/maintenance_request.dart';
 import '../../../maintenance/presentation/controllers/maintenance_cubit.dart';
 import '../../../maintenance/presentation/controllers/maintenance_state.dart';
 
-class StaffAssignedPage extends StatelessWidget {
+class StaffAssignedPage extends StatefulWidget {
   const StaffAssignedPage({super.key});
+
+  @override
+  State<StaffAssignedPage> createState() => _StaffAssignedPageState();
+}
+
+class _StaffAssignedPageState extends State<StaffAssignedPage> {
+  @override
+  void initState() {
+    super.initState();
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      if (mounted) {
+        context.read<MaintenanceCubit>().fetchRequests();
+      }
+    });
+  }
 
   @override
   Widget build(BuildContext context) {

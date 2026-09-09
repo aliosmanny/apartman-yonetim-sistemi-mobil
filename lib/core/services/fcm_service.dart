@@ -25,7 +25,10 @@ class FcmService {
     if (_initialized) return;
 
     try {
-      await Firebase.initializeApp();
+      await Firebase.initializeApp().timeout(
+        const Duration(seconds: 4),
+        onTimeout: () => Firebase.app(),
+      );
       FirebaseMessaging.onBackgroundMessage(firebaseMessagingBackgroundHandler);
 
       final messaging = FirebaseMessaging.instance;
@@ -36,6 +39,21 @@ class FcmService {
         badge: true,
         sound: true,
         provisional: false,
+      ).timeout(
+        const Duration(seconds: 3),
+        onTimeout: () => const NotificationSettings(
+          alert: AppleNotificationSetting.notSupported,
+          announcement: AppleNotificationSetting.notSupported,
+          authorizationStatus: AuthorizationStatus.authorized,
+          badge: AppleNotificationSetting.notSupported,
+          carPlay: AppleNotificationSetting.notSupported,
+          criticalAlert: AppleNotificationSetting.notSupported,
+          sound: AppleNotificationSetting.notSupported,
+          lockScreen: AppleNotificationSetting.notSupported,
+          notificationCenter: AppleNotificationSetting.notSupported,
+          showPreviews: AppleShowPreviewSetting.notSupported,
+          timeSensitive: AppleNotificationSetting.notSupported,
+        ),
       );
 
       // Foreground mesaj dinleyicisi
@@ -65,15 +83,20 @@ class FcmService {
   /// Cihaz token'ını al ve Django backend'e kaydet
   Future<void> syncTokenWithBackend() async {
     try {
-      if (!_initialized) await initialize();
-      final token = await FirebaseMessaging.instance.getToken();
+      if (!_initialized) {
+        await initialize().timeout(const Duration(seconds: 4), onTimeout: () => null);
+      }
+      final token = await FirebaseMessaging.instance.getToken().timeout(
+        const Duration(seconds: 4),
+        onTimeout: () => null,
+      );
       if (token != null && token.isNotEmpty) {
         _lastToken = token;
         final remoteDs = sl<NotificationRemoteDataSource>();
         await remoteDs.registerDeviceToken(
           token,
           deviceType: defaultTargetPlatform == TargetPlatform.iOS ? 'ios' : 'android',
-        );
+        ).timeout(const Duration(seconds: 4), onTimeout: () => null);
         debugPrint('FCM Token successfully synced with backend: $token');
       }
     } catch (e) {
@@ -86,12 +109,19 @@ class FcmService {
     try {
       if (_lastToken != null) {
         final remoteDs = sl<NotificationRemoteDataSource>();
-        await remoteDs.deleteDeviceToken(_lastToken!);
+        await remoteDs.deleteDeviceToken(_lastToken!).timeout(
+          const Duration(seconds: 3),
+          onTimeout: () => null,
+        );
       }
-      await FirebaseMessaging.instance.deleteToken();
+      await FirebaseMessaging.instance.deleteToken().timeout(
+        const Duration(seconds: 3),
+        onTimeout: () => null,
+      );
       _lastToken = null;
     } catch (e) {
       debugPrint('FCM token deletion failed: $e');
     }
   }
 }
+

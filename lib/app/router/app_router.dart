@@ -726,26 +726,48 @@ class _ManagerShell extends StatelessWidget {
         BlocProvider(create: (_) => sl<DocumentCubit>()..fetchDocuments()),
         BlocProvider(create: (_) => sl<NotificationCubit>()..fetchNotifications()),
       ],
-      child: Scaffold(
-        body: navigationShell,
-        bottomNavigationBar: NavigationBar(
-          labelBehavior: NavigationDestinationLabelBehavior.alwaysShow,
-          selectedIndex: navigationShell.currentIndex,
-          onDestinationSelected: (i) {
-            navigationShell.goBranch(
-              i,
-              initialLocation: true,
-            );
-          },
-          destinations: const [
-            NavigationDestination(icon: Icon(Icons.home_outlined), selectedIcon: Icon(Icons.home), label: 'Ana Sayfa'),
-            NavigationDestination(icon: Icon(Icons.people_outline), selectedIcon: Icon(Icons.people), label: 'Kullanıcılar'),
-            NavigationDestination(icon: Icon(Icons.apartment_outlined), selectedIcon: Icon(Icons.apartment), label: 'Yapı Sakin'),
-            NavigationDestination(icon: Icon(Icons.account_balance_wallet_outlined), selectedIcon: Icon(Icons.account_balance_wallet), label: 'Finans'),
-            NavigationDestination(icon: Icon(Icons.dashboard_customize_outlined), selectedIcon: Icon(Icons.dashboard_customize), label: 'Hizmetler'),
-            NavigationDestination(icon: Icon(Icons.more_horiz), selectedIcon: Icon(Icons.more_horiz), label: 'Menü'),
-          ],
-        ),
+      child: Builder(
+        builder: (context) {
+          return Scaffold(
+            body: navigationShell,
+            bottomNavigationBar: NavigationBar(
+              labelBehavior: NavigationDestinationLabelBehavior.alwaysShow,
+              selectedIndex: navigationShell.currentIndex,
+              onDestinationSelected: (i) {
+                navigationShell.goBranch(
+                  i,
+                  initialLocation: true,
+                );
+                switch (i) {
+                  case 0:
+                    context.read<DashboardCubit>().fetchManagerDashboard();
+                    break;
+                  case 1:
+                    context.read<UserCubit>().fetchUsers();
+                    break;
+                  case 2:
+                    context.read<PropertiesCubit>().fetchAll();
+                    break;
+                  case 3:
+                    context.read<FinanceCubit>().fetchManagerFinance();
+                    break;
+                  case 4:
+                    context.read<MaintenanceCubit>().fetchRequests();
+                    context.read<AnnouncementCubit>().fetchAnnouncements();
+                    break;
+                }
+              },
+              destinations: const [
+                NavigationDestination(icon: Icon(Icons.home_outlined), selectedIcon: Icon(Icons.home), label: 'Ana Sayfa'),
+                NavigationDestination(icon: Icon(Icons.people_outline), selectedIcon: Icon(Icons.people), label: 'Kullanıcılar'),
+                NavigationDestination(icon: Icon(Icons.apartment_outlined), selectedIcon: Icon(Icons.apartment), label: 'Yapı Sakin'),
+                NavigationDestination(icon: Icon(Icons.account_balance_wallet_outlined), selectedIcon: Icon(Icons.account_balance_wallet), label: 'Finans'),
+                NavigationDestination(icon: Icon(Icons.dashboard_customize_outlined), selectedIcon: Icon(Icons.dashboard_customize), label: 'Hizmetler'),
+                NavigationDestination(icon: Icon(Icons.more_horiz), selectedIcon: Icon(Icons.more_horiz), label: 'Menü'),
+              ],
+            ),
+          );
+        },
       ),
     );
   }
@@ -767,25 +789,44 @@ class _ResidentShell extends StatelessWidget {
         BlocProvider(create: (_) => sl<DocumentCubit>()..fetchDocuments(status: 'active')),
         BlocProvider(create: (_) => sl<NotificationCubit>()..fetchNotifications()),
       ],
-      child: Scaffold(
-        body: navigationShell,
-        bottomNavigationBar: NavigationBar(
-          labelBehavior: NavigationDestinationLabelBehavior.alwaysShow,
-          selectedIndex: navigationShell.currentIndex,
-          onDestinationSelected: (i) {
-            navigationShell.goBranch(
-              i,
-              initialLocation: true,
-            );
-          },
-          destinations: const [
-            NavigationDestination(icon: Icon(Icons.home_outlined), selectedIcon: Icon(Icons.home), label: 'Ana Sayfa'),
-            NavigationDestination(icon: Icon(Icons.apartment_outlined), selectedIcon: Icon(Icons.apartment), label: 'Yapı Sakin'),
-            NavigationDestination(icon: Icon(Icons.account_balance_wallet_outlined), selectedIcon: Icon(Icons.account_balance_wallet), label: 'Finans'),
-            NavigationDestination(icon: Icon(Icons.build_outlined), selectedIcon: Icon(Icons.build), label: 'Operasyon'),
-            NavigationDestination(icon: Icon(Icons.person_outline), selectedIcon: Icon(Icons.person), label: 'Profil'),
-          ],
-        ),
+      child: Builder(
+        builder: (context) {
+          return Scaffold(
+            body: navigationShell,
+            bottomNavigationBar: NavigationBar(
+              labelBehavior: NavigationDestinationLabelBehavior.alwaysShow,
+              selectedIndex: navigationShell.currentIndex,
+              onDestinationSelected: (i) {
+                navigationShell.goBranch(
+                  i,
+                  initialLocation: true,
+                );
+                switch (i) {
+                  case 0:
+                    context.read<DashboardCubit>().fetchResidentDashboard();
+                    break;
+                  case 1:
+                    context.read<PropertiesCubit>().fetchContracts();
+                    break;
+                  case 2:
+                    context.read<FinanceCubit>().fetchDebts();
+                    break;
+                  case 3:
+                    context.read<MaintenanceCubit>().fetchRequests();
+                    context.read<DocumentCubit>().fetchDocuments(status: 'active');
+                    break;
+                }
+              },
+              destinations: const [
+                NavigationDestination(icon: Icon(Icons.home_outlined), selectedIcon: Icon(Icons.home), label: 'Ana Sayfa'),
+                NavigationDestination(icon: Icon(Icons.apartment_outlined), selectedIcon: Icon(Icons.apartment), label: 'Yapı Sakin'),
+                NavigationDestination(icon: Icon(Icons.account_balance_wallet_outlined), selectedIcon: Icon(Icons.account_balance_wallet), label: 'Finans'),
+                NavigationDestination(icon: Icon(Icons.build_outlined), selectedIcon: Icon(Icons.build), label: 'Operasyon'),
+                NavigationDestination(icon: Icon(Icons.person_outline), selectedIcon: Icon(Icons.person), label: 'Profil'),
+              ],
+            ),
+          );
+        },
       ),
     );
   }
@@ -803,24 +844,33 @@ class _StaffShell extends StatelessWidget {
         BlocProvider(create: (_) => sl<MaintenanceCubit>()..fetchRequests()),
         BlocProvider(create: (_) => sl<NotificationCubit>()..fetchNotifications()),
       ],
-      child: Scaffold(
-        body: navigationShell,
-        bottomNavigationBar: NavigationBar(
-          labelBehavior: NavigationDestinationLabelBehavior.alwaysShow,
-          selectedIndex: navigationShell.currentIndex,
-          onDestinationSelected: (i) {
-            navigationShell.goBranch(
-              i,
-              initialLocation: true,
-            );
-          },
-          destinations: const [
-            NavigationDestination(icon: Icon(Icons.home_outlined), selectedIcon: Icon(Icons.home), label: 'Ana Sayfa'),
-            NavigationDestination(icon: Icon(Icons.assignment_outlined), selectedIcon: Icon(Icons.assignment), label: 'Atanan'),
-            NavigationDestination(icon: Icon(Icons.check_circle_outline), selectedIcon: Icon(Icons.check_circle), label: 'Tamamlanan'),
-            NavigationDestination(icon: Icon(Icons.person_outlined), selectedIcon: Icon(Icons.person), label: 'Profil'),
-          ],
-        ),
+      child: Builder(
+        builder: (context) {
+          return Scaffold(
+            body: navigationShell,
+            bottomNavigationBar: NavigationBar(
+              labelBehavior: NavigationDestinationLabelBehavior.alwaysShow,
+              selectedIndex: navigationShell.currentIndex,
+              onDestinationSelected: (i) {
+                navigationShell.goBranch(
+                  i,
+                  initialLocation: true,
+                );
+                if (i == 0) {
+                  context.read<DashboardCubit>().fetchStaffDashboard();
+                } else if (i == 1 || i == 2) {
+                  context.read<MaintenanceCubit>().fetchRequests();
+                }
+              },
+              destinations: const [
+                NavigationDestination(icon: Icon(Icons.home_outlined), selectedIcon: Icon(Icons.home), label: 'Ana Sayfa'),
+                NavigationDestination(icon: Icon(Icons.assignment_outlined), selectedIcon: Icon(Icons.assignment), label: 'Atanan'),
+                NavigationDestination(icon: Icon(Icons.check_circle_outline), selectedIcon: Icon(Icons.check_circle), label: 'Tamamlanan'),
+                NavigationDestination(icon: Icon(Icons.person_outlined), selectedIcon: Icon(Icons.person), label: 'Profil'),
+              ],
+            ),
+          );
+        },
       ),
     );
   }

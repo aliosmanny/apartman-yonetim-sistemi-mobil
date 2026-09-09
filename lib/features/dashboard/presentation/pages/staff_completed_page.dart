@@ -8,8 +8,23 @@ import '../../../maintenance/domain/models/maintenance_request.dart';
 import '../../../maintenance/presentation/controllers/maintenance_cubit.dart';
 import '../../../maintenance/presentation/controllers/maintenance_state.dart';
 
-class StaffCompletedPage extends StatelessWidget {
+class StaffCompletedPage extends StatefulWidget {
   const StaffCompletedPage({super.key});
+
+  @override
+  State<StaffCompletedPage> createState() => _StaffCompletedPageState();
+}
+
+class _StaffCompletedPageState extends State<StaffCompletedPage> {
+  @override
+  void initState() {
+    super.initState();
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      if (mounted) {
+        context.read<MaintenanceCubit>().fetchRequests();
+      }
+    });
+  }
 
   @override
   Widget build(BuildContext context) {

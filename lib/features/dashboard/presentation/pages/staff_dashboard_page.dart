@@ -23,8 +23,15 @@ class StaffDashboardPage extends StatelessWidget {
 
           return Scaffold(
             backgroundColor: AppColors.background,
-            body: CustomScrollView(
-              slivers: [
+            body: RefreshIndicator(
+              onRefresh: () async {
+                await Future.wait([
+                  context.read<DashboardCubit>().fetchStaffDashboard(),
+                  context.read<MaintenanceCubit>().fetchRequests(),
+                ]);
+              },
+              child: CustomScrollView(
+                slivers: [
                 SliverAppBar(
                   expandedHeight: 150,
                   floating: false,

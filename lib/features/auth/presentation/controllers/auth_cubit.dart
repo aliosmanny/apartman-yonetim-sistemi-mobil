@@ -1,3 +1,4 @@
+import 'dart:async';
 import 'dart:io';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import '../../domain/repositories/auth_repository.dart';
@@ -51,18 +52,20 @@ class AuthCubit extends Cubit<AuthState> {
     }
   }
 
-  /// Gerçek FCM token senkronizasyonu
-  void _sendDeviceToken() async {
-    try {
-      await FcmService().syncTokenWithBackend();
-    } catch (_) {}
+  /// Gerçek FCM token senkronizasyonu (arka planda çalışır, girişi geciktirmez)
+  void _sendDeviceToken() {
+    unawaited(
+      FcmService().syncTokenWithBackend().catchError((_) {}),
+    );
   }
 
   /// Oturumu kapat.
   Future<void> logout() async {
     emit(const AuthActionLoading());
     try {
-      await FcmService().deleteTokenOnLogout();
+      unawaited(
+        FcmService().deleteTokenOnLogout().catchError((_) {}),
+      );
       await _repository.logout();
       // Oturum kapatıldığında statik önbellekleri temizle
       PropertiesCubit.clearCache();
