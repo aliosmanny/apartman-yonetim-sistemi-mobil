@@ -6,14 +6,24 @@ import 'properties_state.dart';
 class PropertiesCubit extends Cubit<PropertiesState> {
   final PropertiesRepository _repo;
   static PropertiesLoaded? _cachedState;
+  static DateTime? _lastFetch;
+  static const _cacheTtl = Duration(seconds: 60);
+
+  static bool get _isFresh =>
+      _lastFetch != null && DateTime.now().difference(_lastFetch!) < _cacheTtl;
 
   static void clearCache() {
     _cachedState = null;
+    _lastFetch = null;
   }
 
   PropertiesCubit(this._repo) : super(_cachedState ?? PropertiesInitial());
 
-  Future<void> fetchAll() async {
+  Future<void> fetchAll({bool forceRefresh = false}) async {
+    if (!forceRefresh && _isFresh && state is PropertiesLoaded && !(state as PropertiesLoaded).isUnitsLoading) {
+      return;
+    }
+
     if (state is! PropertiesLoaded) {
       emit(PropertiesLoading());
     }
@@ -89,6 +99,7 @@ class PropertiesCubit extends Cubit<PropertiesState> {
         isUnitsLoading: false,
       );
       _cachedState = finalLoadedState;
+      _lastFetch = DateTime.now();
       emit(finalLoadedState);
     } catch (e) {
       emit(PropertiesError(e.toString()));

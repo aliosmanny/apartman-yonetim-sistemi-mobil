@@ -51,16 +51,11 @@ class _ManagerMaintenanceDetailPageState
     _selectedStatus = _normalize(widget.request.status);
     _notesController =
         TextEditingController(text: widget.request.adminNotes ?? '');
-
-    // Tek bir StaffCubit instance'ı oluştur ve sakla
-    _staffCubit = sl<StaffCubit>();
-    _staffCubit.fetchStaff();
   }
 
   @override
   void dispose() {
     _notesController.dispose();
-    _staffCubit.close();
     super.dispose();
   }
 
@@ -68,11 +63,9 @@ class _ManagerMaintenanceDetailPageState
   Widget build(BuildContext context) {
     final request = widget.request;
 
-    return BlocProvider<StaffCubit>.value(
-      value: _staffCubit, // Aynı instance'ı kullan
-      child: Scaffold(
-        backgroundColor: AppColors.background,
-        appBar: AppBar(
+    return Scaffold(
+      backgroundColor: AppColors.background,
+      appBar: AppBar(
           title: Text(request.title, style: AppTextStyles.titleMedium),
           centerTitle: true,
         ),
@@ -176,7 +169,7 @@ class _ManagerMaintenanceDetailPageState
               child: ElevatedButton(
                 onPressed: () async {
                   try {
-                    await sl<MaintenanceCubit>().updateRequestStatus(
+                    await context.read<MaintenanceCubit>().updateRequestStatus(
                       request.id,
                       _selectedStatus, // artık her zaman uzun form
                       assignedStaffId: _selectedStaffId,
@@ -206,8 +199,7 @@ class _ManagerMaintenanceDetailPageState
             ),
           ),
         ),
-      ),
-    );
+      );
   }
 
   Widget _infoRow(String label, String value) {

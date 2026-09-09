@@ -10,17 +10,16 @@ import '../../../../app/theme/app_text_styles.dart';
 import '../../../../core/di/injection.dart';
 import '../controllers/dashboard_cubit.dart';
 import '../../../maintenance/data/datasources/maintenance_remote_data_source.dart';
+import '../../../maintenance/presentation/controllers/maintenance_cubit.dart';
 
 class StaffDashboardPage extends StatelessWidget {
   const StaffDashboardPage({super.key});
 
   @override
   Widget build(BuildContext context) {
-    return BlocProvider<DashboardCubit>(
-      create: (context) => sl<DashboardCubit>()..fetchStaffDashboard(),
-      child: BlocBuilder<AuthCubit, AuthState>(
-        builder: (context, authState) {
-          final user = authState is AuthAuthenticated ? authState.user : null;
+    return BlocBuilder<AuthCubit, AuthState>(
+      builder: (context, authState) {
+        final user = authState is AuthAuthenticated ? authState.user : null;
 
           return Scaffold(
             backgroundColor: AppColors.background,
@@ -165,6 +164,7 @@ class StaffDashboardPage extends StatelessWidget {
                                     value: data.pendingCount.toString(),
                                     color: AppColors.primary,
                                     icon: Icons.assignment_rounded,
+                                    onTap: () => context.go('/staff/assigned'),
                                   ),
                                 ),
                                 const SizedBox(width: 12),
@@ -174,6 +174,7 @@ class StaffDashboardPage extends StatelessWidget {
                                     value: data.inProgressCount.toString(),
                                     color: AppColors.maintenanceInProgress,
                                     icon: Icons.autorenew_rounded,
+                                    onTap: () => context.go('/staff/assigned'),
                                   ),
                                 ),
                                 const SizedBox(width: 12),
@@ -183,6 +184,7 @@ class StaffDashboardPage extends StatelessWidget {
                                     value: data.completedCount.toString(),
                                     color: AppColors.maintenanceCompleted,
                                     icon: Icons.check_circle_rounded,
+                                    onTap: () => context.go('/staff/completed'),
                                   ),
                                 ),
                               ],
@@ -200,7 +202,7 @@ class StaffDashboardPage extends StatelessWidget {
                             child: Text('Bugünkü İşlerim', style: AppTextStyles.headlineSmall),
                           ),
                           TextButton(
-                            onPressed: () {}, // İleride tasks listesine eklenebilir
+                            onPressed: () => context.go('/staff/assigned'),
                             child: const Text('Tümü'),
                           ),
                         ],
@@ -239,8 +241,7 @@ class StaffDashboardPage extends StatelessWidget {
             ),
           );
         },
-      ),
-    );
+      );
   }
 }
 
@@ -249,56 +250,62 @@ class _StatCard extends StatelessWidget {
   final String value;
   final Color color;
   final IconData icon;
+  final VoidCallback? onTap;
 
   const _StatCard({
     required this.label,
     required this.value,
     required this.color,
     required this.icon,
+    this.onTap,
   });
 
   @override
   Widget build(BuildContext context) {
-    return Container(
-      decoration: BoxDecoration(
-        color: AppColors.cardBackground,
-        borderRadius: BorderRadius.circular(16),
-        border: Border.all(color: AppColors.border),
-      ),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          Container(
-            height: 3,
-            decoration: BoxDecoration(
-              color: color,
-              borderRadius: const BorderRadius.only(
-                topLeft: Radius.circular(16),
-                topRight: Radius.circular(16),
+    return InkWell(
+      onTap: onTap,
+      borderRadius: BorderRadius.circular(16),
+      child: Container(
+        decoration: BoxDecoration(
+          color: AppColors.cardBackground,
+          borderRadius: BorderRadius.circular(16),
+          border: Border.all(color: AppColors.border),
+        ),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Container(
+              height: 3,
+              decoration: BoxDecoration(
+                color: color,
+                borderRadius: const BorderRadius.only(
+                  topLeft: Radius.circular(16),
+                  topRight: Radius.circular(16),
+                ),
               ),
             ),
-          ),
-          Padding(
-            padding: const EdgeInsets.all(14),
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Container(
-                  padding: const EdgeInsets.all(6),
-                  decoration: BoxDecoration(
-                    color: color.withAlpha(26),
-                    borderRadius: BorderRadius.circular(8),
+            Padding(
+              padding: const EdgeInsets.all(14),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Container(
+                    padding: const EdgeInsets.all(6),
+                    decoration: BoxDecoration(
+                      color: color.withAlpha(26),
+                      borderRadius: BorderRadius.circular(8),
+                    ),
+                    child: Icon(icon, color: color, size: 18),
                   ),
-                  child: Icon(icon, color: color, size: 18),
-                ),
-                const SizedBox(height: 10),
-                Text(value, style: AppTextStyles.headlineMedium.copyWith(color: color)),
-                const SizedBox(height: 2),
-                Text(label, style: AppTextStyles.bodySmall),
-              ],
+                  const SizedBox(height: 10),
+                  Text(value, style: AppTextStyles.headlineMedium.copyWith(color: color)),
+                  const SizedBox(height: 2),
+                  Text(label, style: AppTextStyles.bodySmall),
+                ],
+              ),
             ),
-          ),
-        ],
+          ],
+        ),
       ),
     );
   }
@@ -475,6 +482,8 @@ class _StaffTaskCard extends StatelessWidget {
   }
 
   void _showEditBottomSheet(BuildContext context) {
+    final maintenanceCubit = context.read<MaintenanceCubit>();
+    final dashboardCubit = context.read<DashboardCubit>();
     showModalBottomSheet(
       context: context,
       isScrollControlled: true,
@@ -486,8 +495,9 @@ class _StaffTaskCard extends StatelessWidget {
         status: status,
         statusDisplay: statusDisplay,
         onUpdated: () {
-          // Dashboard'u yenile
-          context.read<DashboardCubit>().fetchStaffDashboard();
+          // Dashboard ve talepleri yenile
+          dashboardCubit.fetchStaffDashboard();
+          maintenanceCubit.fetchRequests();
         },
       ),
     );

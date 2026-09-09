@@ -29,7 +29,7 @@ class _StaffTaskDetailPageState extends State<StaffTaskDetailPage> {
   Future<void> _completeTask() async {
     setState(() => _isLoading = true);
     try {
-      await sl<MaintenanceCubit>().updateRequestStatus(
+      await context.read<MaintenanceCubit>().updateRequestStatus(
         widget.task.id,
         'completed',
         note: _noteController.text.trim(),

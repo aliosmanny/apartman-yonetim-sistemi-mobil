@@ -8,10 +8,18 @@ class DocumentCubit extends Cubit<DocumentState> {
 
   DocumentCubit(this._repository) : super(DocumentInitial());
 
-  Future<void> fetchDocuments({String? category, String? status}) async {
+  DateTime? _lastFetch;
+  static const _cacheTtl = Duration(seconds: 60);
+  bool get _isFresh =>
+      _lastFetch != null && DateTime.now().difference(_lastFetch!) < _cacheTtl;
+
+  Future<void> fetchDocuments({String? category, String? status, bool forceRefresh = false}) async {
+    if (!forceRefresh && _isFresh && state is DocumentLoaded) return;
+
     emit(DocumentLoading());
     try {
       final documents = await _repository.getDocuments(category: category, status: status);
+      _lastFetch = DateTime.now();
       emit(DocumentLoaded(documents: documents));
     } catch (e) {
       emit(DocumentError(message: e.toString()));
@@ -33,7 +41,8 @@ class DocumentCubit extends Cubit<DocumentState> {
         status: status,
         file: file,
       );
-      await fetchDocuments();
+      _lastFetch = null;
+      await fetchDocuments(forceRefresh: true);
     } catch (e) {
       throw Exception(e.toString());
     }
@@ -55,7 +64,8 @@ class DocumentCubit extends Cubit<DocumentState> {
         status: status,
         file: file,
       );
-      await fetchDocuments();
+      _lastFetch = null;
+      await fetchDocuments(forceRefresh: true);
     } catch (e) {
       throw Exception(e.toString());
     }
@@ -64,7 +74,8 @@ class DocumentCubit extends Cubit<DocumentState> {
   Future<void> deleteDocument(int id) async {
     try {
       await _repository.deleteDocument(id);
-      await fetchDocuments();
+      _lastFetch = null;
+      await fetchDocuments(forceRefresh: true);
     } catch (e) {
       throw Exception(e.toString());
     }

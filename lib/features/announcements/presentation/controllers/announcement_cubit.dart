@@ -7,10 +7,19 @@ class AnnouncementCubit extends Cubit<AnnouncementState> {
 
   AnnouncementCubit(this._repository) : super(AnnouncementInitial());
 
-  Future<void> fetchAnnouncements({String? status}) async {
+  DateTime? _lastFetch;
+  static const _cacheTtl = Duration(seconds: 60);
+  bool get _isFresh =>
+      _lastFetch != null && DateTime.now().difference(_lastFetch!) < _cacheTtl;
+
+  Future<void> fetchAnnouncements({String? status, bool forceRefresh = false}) async {
+    // Cache varsa ve taze ise tekrar API'ye gitme
+    if (!forceRefresh && _isFresh && state is AnnouncementLoaded) return;
+
     emit(AnnouncementLoading());
     try {
       final announcements = await _repository.getAnnouncements(status: status);
+      _lastFetch = DateTime.now();
       emit(AnnouncementLoaded(announcements: announcements));
     } catch (e) {
       emit(AnnouncementError(message: e.toString()));
@@ -30,7 +39,8 @@ class AnnouncementCubit extends Cubit<AnnouncementState> {
         apartmentId: apartmentId,
         status: status,
       );
-      await fetchAnnouncements();
+      _lastFetch = null;
+      await fetchAnnouncements(forceRefresh: true);
     } catch (e) {
       throw Exception(e.toString());
     }
@@ -50,7 +60,8 @@ class AnnouncementCubit extends Cubit<AnnouncementState> {
         apartmentId: apartmentId,
         status: status,
       );
-      await fetchAnnouncements();
+      _lastFetch = null;
+      await fetchAnnouncements(forceRefresh: true);
     } catch (e) {
       throw Exception(e.toString());
     }
@@ -59,7 +70,8 @@ class AnnouncementCubit extends Cubit<AnnouncementState> {
   Future<void> deleteAnnouncement(int id) async {
     try {
       await _repository.deleteAnnouncement(id);
-      await fetchAnnouncements();
+      _lastFetch = null;
+      await fetchAnnouncements(forceRefresh: true);
     } catch (e) {
       throw Exception(e.toString());
     }

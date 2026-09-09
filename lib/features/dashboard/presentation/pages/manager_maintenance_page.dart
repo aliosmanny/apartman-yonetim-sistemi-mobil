@@ -71,20 +71,21 @@ class _ManagerMaintenancePageState extends State<ManagerMaintenancePage> {
     return r.categoryDisplay ?? r.category;
   }
 
-  List<MaintenanceRequest> _getFilteredRequests(List<MaintenanceRequest> requests) {
-    if (_currentIndex == 1) {
+  List<MaintenanceRequest> _getFilteredRequests(List<MaintenanceRequest> requests, [int? segmentIndex]) {
+    final idx = segmentIndex ?? _currentIndex;
+    if (idx == 1) {
       return requests.where((r) {
         final s = r.status.toLowerCase();
         return s == 'in_progress' || s == 'assigned' || s == 'i' || s == 'a' || s == 'devam ediyor' || s == 'işlemde';
       }).toList();
     }
-    if (_currentIndex == 2) {
+    if (idx == 2) {
       return requests.where((r) {
         final s = r.status.toLowerCase();
         return s == 'completed' || s == 'cancelled' || s == 'resolved' || s == 'rejected' || s == 'tamamlandı' || s == 'i̇ptal edildi' || s == 'c' || s == 'çözüldü';
       }).toList();
     }
-    // _currentIndex == 0 (Açık). Any request that is not in progress or resolved is considered Open/Pending.
+    // idx == 0 (Açık). Any request that is not in progress or resolved is considered Open/Pending.
     return requests.where((r) {
       final s = r.status.toLowerCase();
       final isInProgress = s == 'in_progress' || s == 'assigned' || s == 'i' || s == 'a' || s == 'devam ediyor' || s == 'işlemde';
@@ -249,18 +250,70 @@ class _ManagerMaintenancePageState extends State<ManagerMaintenancePage> {
     );
   }
 
+  Widget _buildTabList(MaintenanceLoaded state, int segmentIndex) {
+    final segmentRequests = _getFilteredRequests(state.requests, segmentIndex);
+    final filtered = segmentRequests.where((r) {
+      final matchesStatus = _selectedStatus == 'all' || _normalizeStatusDisplay(r) == _selectedStatus;
+      final matchesCat = _selectedCategory == 'all' || _normalizeCategoryDisplay(r) == _selectedCategory;
+      return matchesStatus && matchesCat;
+    }).toList();
+
+    if (filtered.isEmpty) {
+      return Center(
+        child: Column(
+          mainAxisAlignment: MainAxisAlignment.center,
+          children: [
+            Icon(Icons.check_circle_outline_rounded, size: 64, color: AppColors.textTertiary.withOpacity(0.5)),
+            const SizedBox(height: 16),
+            Text(
+              'Bu kategoride talep bulunmuyor',
+              style: AppTextStyles.titleMedium.copyWith(color: AppColors.textTertiary),
+            ),
+          ],
+        ),
+      );
+    }
+
+    return RefreshIndicator(
+      onRefresh: () => context.read<MaintenanceCubit>().fetchRequests(),
+      child: ListView.builder(
+        padding: const EdgeInsets.all(20),
+        itemCount: filtered.length,
+        itemBuilder: (context, index) {
+          final request = filtered[index];
+          return Padding(
+            padding: const EdgeInsets.only(bottom: 12),
+            child: _ManagerMaintenanceCard(
+              request: request,
+              onStatusChanged: (newStatus) {
+                context.read<MaintenanceCubit>().updateRequestStatus(request.id, newStatus);
+              },
+            ),
+          );
+        },
+      ),
+    );
+  }
+
   @override
   Widget build(BuildContext context) {
-    return MultiBlocProvider(
-      providers: [
-        BlocProvider(create: (context) => sl<MaintenanceCubit>()..fetchRequests()),
-        BlocProvider(create: (context) => sl<StaffCubit>()..fetchStaff()),
-      ],
+    return DefaultTabController(
+      length: 3,
       child: Scaffold(
         backgroundColor: AppColors.background,
         appBar: AppBar(
           title: const Text('Talepler ve Arızalar'),
           centerTitle: true,
+          bottom: const TabBar(
+            labelColor: AppColors.primary,
+            unselectedLabelColor: AppColors.textSecondary,
+            indicatorColor: AppColors.primary,
+            tabs: [
+              Tab(text: 'Açık'),
+              Tab(text: 'İşlemde'),
+              Tab(text: 'Çözülen'),
+            ],
+          ),
           actions: [
             BlocBuilder<MaintenanceCubit, MaintenanceState>(
               builder: (context, state) {
@@ -285,91 +338,35 @@ class _ManagerMaintenancePageState extends State<ManagerMaintenancePage> {
           ],
         ),
         floatingActionButton: FloatingActionButton(
-          onPressed: () {
-            context.push('/manager/maintenance/create');
+          tooltip: 'Talep Ekle',
+          onPressed: () async {
+            await context.push('/manager/maintenance/create');
+            if (context.mounted) {
+              context.read<MaintenanceCubit>().fetchRequests();
+            }
           },
           backgroundColor: const Color(0xFF1B1B2F),
           child: const Icon(Icons.add, color: Colors.white),
         ),
-        body: Column(
-          children: [
-            Container(
-              width: double.infinity,
-              color: AppColors.surface,
-              padding: const EdgeInsets.fromLTRB(20, 4, 20, 16),
-              child: Container(
-                padding: const EdgeInsets.all(4),
-                decoration: BoxDecoration(
-                  color: AppColors.surfaceVariant,
-                  borderRadius: BorderRadius.circular(12),
-                ),
-                child: Row(
-                  children: [
-                    Expanded(child: _buildSegment('Açık', 0)),
-                    Expanded(child: _buildSegment('İşlemde', 1)),
-                    Expanded(child: _buildSegment('Çözülen', 2)),
-                  ],
-                ),
-              ),
-            ),
-            Expanded(
-              child: BlocBuilder<MaintenanceCubit, MaintenanceState>(
-                builder: (context, state) {
-                  if (state is MaintenanceLoading) {
-                    return const Center(child: CircularProgressIndicator());
-                  } else if (state is MaintenanceError) {
-                    return Center(
-                      child: Text(state.message, style: AppTextStyles.bodyMedium.copyWith(color: AppColors.error)),
-                    );
-                  } else if (state is MaintenanceLoaded) {
-                    final segmentRequests = _getFilteredRequests(state.requests);
-                    final filtered = segmentRequests.where((r) {
-                      final matchesStatus = _selectedStatus == 'all' || _normalizeStatusDisplay(r) == _selectedStatus;
-                      final matchesCat = _selectedCategory == 'all' || _normalizeCategoryDisplay(r) == _selectedCategory;
-                      return matchesStatus && matchesCat;
-                    }).toList();
-                    
-                    if (filtered.isEmpty) {
-                      return Center(
-                        child: Column(
-                          mainAxisAlignment: MainAxisAlignment.center,
-                          children: [
-                            Icon(Icons.check_circle_outline_rounded, size: 64, color: AppColors.textTertiary.withOpacity(0.5)),
-                            const SizedBox(height: 16),
-                            Text(
-                              'Bu kategoride talep bulunmuyor',
-                              style: AppTextStyles.titleMedium.copyWith(color: AppColors.textTertiary),
-                            ),
-                          ],
-                        ),
-                      );
-                    }
-
-                    return RefreshIndicator(
-                      onRefresh: () => context.read<MaintenanceCubit>().fetchRequests(),
-                      child: ListView.builder(
-                        padding: const EdgeInsets.all(20),
-                        itemCount: filtered.length,
-                        itemBuilder: (context, index) {
-                          final request = filtered[index];
-                          return Padding(
-                            padding: const EdgeInsets.only(bottom: 12),
-                            child: _ManagerMaintenanceCard(
-                              request: request,
-                              onStatusChanged: (newStatus) {
-                                context.read<MaintenanceCubit>().updateRequestStatus(request.id, newStatus);
-                              },
-                            ),
-                          );
-                        },
-                      ),
-                    );
-                  }
-                  return const SizedBox.shrink();
-                },
-              ),
-            ),
-          ],
+        body: BlocBuilder<MaintenanceCubit, MaintenanceState>(
+          builder: (context, state) {
+            if (state is MaintenanceLoading) {
+              return const Center(child: CircularProgressIndicator());
+            } else if (state is MaintenanceError) {
+              return Center(
+                child: Text(state.message, style: AppTextStyles.bodyMedium.copyWith(color: AppColors.error)),
+              );
+            } else if (state is MaintenanceLoaded) {
+              return TabBarView(
+                children: [
+                  _buildTabList(state, 0),
+                  _buildTabList(state, 1),
+                  _buildTabList(state, 2),
+                ],
+              );
+            }
+            return const SizedBox.shrink();
+          },
         ),
       ),
     );
@@ -432,9 +429,12 @@ class _ManagerMaintenanceCard extends StatelessWidget {
     }
 
     return GestureDetector(
-      onTap: () {
+      onTap: () async {
         // Detay sayfasına gönder
-        context.push('/manager/maintenance/${request.id}', extra: request);
+        await context.push('/manager/maintenance/${request.id}', extra: request);
+        if (context.mounted) {
+          context.read<MaintenanceCubit>().fetchRequests();
+        }
       },
       child: Container(
         decoration: BoxDecoration(

@@ -18,8 +18,8 @@ class ManagerPropertiesPage extends StatefulWidget {
 }
 
 class _ManagerPropertiesPageState extends State<ManagerPropertiesPage> {
-  late final PropertiesCubit _cubit;
-  late final UserCubit _userCubit;
+  PropertiesCubit get _cubit => context.read<PropertiesCubit>();
+  UserCubit get _userCubit => context.read<UserCubit>();
 
   // Apartman Filtreleri (Tab 0)
   String _selectedApartmentCity = 'all';
@@ -41,19 +41,6 @@ class _ManagerPropertiesPageState extends State<ManagerPropertiesPage> {
 
   // Sözleşmeler Filtreleri (Tab 5)
   String _selectedContractStatus = 'all';
-
-  @override
-  void initState() {
-    super.initState();
-    _cubit = sl<PropertiesCubit>()..fetchAll();
-    _userCubit = sl<UserCubit>()..fetchUsers();
-  }
-
-  @override
-  void dispose() {
-    _cubit.close();
-    super.dispose();
-  }
 
   List<Map<String, String>> _toOptions(Iterable<String> list) {
     return list.map((e) => {'value': e, 'label': e == 'all' ? 'Tümü' : e}).toList();
@@ -388,9 +375,7 @@ class _ManagerPropertiesPageState extends State<ManagerPropertiesPage> {
 
   @override
   Widget build(BuildContext context) {
-    return BlocProvider.value(
-      value: _cubit,
-      child: DefaultTabController(
+    return DefaultTabController(
         length: 6,
         child: Scaffold(
           backgroundColor: AppColors.background,
@@ -547,8 +532,7 @@ class _ManagerPropertiesPageState extends State<ManagerPropertiesPage> {
             },
           ),
         ),
-      ),
-    );
+      );
   }
 
   Widget _buildList<T>({

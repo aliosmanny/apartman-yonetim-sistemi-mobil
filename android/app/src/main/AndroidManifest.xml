@@ -1,7 +1,10 @@
 <manifest xmlns:android="http://schemas.android.com/apk/res/android">
     <uses-permission android:name="android.permission.INTERNET"/>
+    <!-- Android 13+ (API 33+) için bildirim izni -->
+    <uses-permission android:name="android.permission.POST_NOTIFICATIONS"/>
+    <uses-permission android:name="android.permission.RECEIVE_BOOT_COMPLETED"/>
     <application
-        android:label="apartman_yonetim_sistemi_mobil"
+        android:label="Apartman Yönetim"
         android:name="${applicationName}"
         android:icon="@mipmap/ic_launcher">
         <activity

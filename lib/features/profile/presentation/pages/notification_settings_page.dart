@@ -1,9 +1,11 @@
 import 'package:flutter/material.dart';
+import 'package:shared_preferences/shared_preferences.dart';
 import '../../../../app/theme/app_colors.dart';
 import '../../../../app/theme/app_text_styles.dart';
-import '../../../../core/di/injection.dart';
-import '../../../users/domain/repositories/user_repository.dart';
 
+/// Bildirim tercihleri yerel olarak (SharedPreferences) saklanır.
+/// Backend'de /users/notification-preferences/ endpoint'i olmadığından
+/// sadece cihaz üzerinde kalıcı hale getirilir.
 class NotificationSettingsPage extends StatefulWidget {
   const NotificationSettingsPage({super.key});
 
@@ -22,6 +24,12 @@ class _NotificationSettingsPageState extends State<NotificationSettingsPage> {
   bool _isLoading = true;
   bool _isSaving = false;
 
+  static const _kPushAnnouncements = 'notif_push_announcements';
+  static const _kPushDebts = 'notif_push_debts';
+  static const _kPushMaintenance = 'notif_push_maintenance';
+  static const _kEmailNewsletter = 'notif_email_newsletter';
+  static const _kSmsAlerts = 'notif_sms_alerts';
+
   @override
   void initState() {
     super.initState();
@@ -30,41 +38,38 @@ class _NotificationSettingsPageState extends State<NotificationSettingsPage> {
 
   Future<void> _loadPreferences() async {
     try {
-      final prefs = await sl<UserRepository>().getNotificationPreferences();
+      final prefs = await SharedPreferences.getInstance();
       if (mounted) {
         setState(() {
-          _pushAnnouncements = prefs['push_announcements'] ?? true;
-          _pushDebts = prefs['push_debts'] ?? true;
-          _pushMaintenance = prefs['push_maintenance'] ?? true;
-          _emailNewsletter = prefs['email_newsletter'] ?? false;
-          _smsAlerts = prefs['sms_alerts'] ?? true;
+          _pushAnnouncements = prefs.getBool(_kPushAnnouncements) ?? true;
+          _pushDebts = prefs.getBool(_kPushDebts) ?? true;
+          _pushMaintenance = prefs.getBool(_kPushMaintenance) ?? true;
+          _emailNewsletter = prefs.getBool(_kEmailNewsletter) ?? false;
+          _smsAlerts = prefs.getBool(_kSmsAlerts) ?? true;
           _isLoading = false;
         });
       }
     } catch (e) {
-      if (mounted) {
-        setState(() => _isLoading = false);
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text('Ayarlar yüklenemedi: $e')),
-        );
-      }
+      if (mounted) setState(() => _isLoading = false);
     }
   }
 
   Future<void> _savePreferences() async {
     setState(() => _isSaving = true);
     try {
-      await sl<UserRepository>().updateNotificationPreferences({
-        'push_announcements': _pushAnnouncements,
-        'push_debts': _pushDebts,
-        'push_maintenance': _pushMaintenance,
-        'email_newsletter': _emailNewsletter,
-        'sms_alerts': _smsAlerts,
-      });
+      final prefs = await SharedPreferences.getInstance();
+      await prefs.setBool(_kPushAnnouncements, _pushAnnouncements);
+      await prefs.setBool(_kPushDebts, _pushDebts);
+      await prefs.setBool(_kPushMaintenance, _pushMaintenance);
+      await prefs.setBool(_kEmailNewsletter, _emailNewsletter);
+      await prefs.setBool(_kSmsAlerts, _smsAlerts);
+
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
           const SnackBar(
-              content: Text('Bildirim tercihleriniz başarıyla kaydedildi!')),
+            content: Text('Bildirim tercihleriniz başarıyla kaydedildi!'),
+            backgroundColor: AppColors.success,
+          ),
         );
         Navigator.pop(context);
       }
@@ -93,7 +98,7 @@ class _NotificationSettingsPageState extends State<NotificationSettingsPage> {
               padding: const EdgeInsets.all(20),
               children: [
                 const Text(
-                  'Uygulama İçi (Push) Bildirimler',
+                  'Uygulama İçi Bildirimler',
                   style: AppTextStyles.titleMedium,
                 ),
                 const SizedBox(height: 12),

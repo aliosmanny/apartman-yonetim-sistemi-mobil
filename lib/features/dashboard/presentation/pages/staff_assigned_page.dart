@@ -14,15 +14,13 @@ class StaffAssignedPage extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return BlocProvider(
-      create: (context) => sl<MaintenanceCubit>()..fetchRequests(),
-      child: Scaffold(
-        backgroundColor: AppColors.background,
-        appBar: AppBar(
-          title: const Text('Bana Atanan İşler'),
-          centerTitle: true,
-        ),
-        body: BlocBuilder<MaintenanceCubit, MaintenanceState>(
+    return Scaffold(
+      backgroundColor: AppColors.background,
+      appBar: AppBar(
+        title: const Text('Bana Atanan İşler'),
+        centerTitle: true,
+      ),
+      body: BlocBuilder<MaintenanceCubit, MaintenanceState>(
           builder: (context, state) {
             if (state is MaintenanceLoading || state is MaintenanceInitial) {
               return const Center(child: CircularProgressIndicator());
@@ -88,7 +86,6 @@ class StaffAssignedPage extends StatelessWidget {
             return const SizedBox.shrink();
           },
         ),
-      ),
     );
   }
 }
@@ -126,7 +123,12 @@ class _StaffAssignedCard extends StatelessWidget {
             ),
             Expanded(
               child: InkWell(
-                onTap: () => context.pushNamed('staffTaskDetail', extra: task),
+                onTap: () async {
+                  await context.pushNamed('staffTaskDetail', extra: task);
+                  if (context.mounted) {
+                    context.read<MaintenanceCubit>().fetchRequests();
+                  }
+                },
                 borderRadius: const BorderRadius.only(
                   topRight: Radius.circular(18),
                   bottomRight: Radius.circular(18),

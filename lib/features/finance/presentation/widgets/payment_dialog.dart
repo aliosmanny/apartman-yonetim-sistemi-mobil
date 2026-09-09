@@ -6,6 +6,9 @@ import '../../domain/models/debt.dart';
 import '../../data/dto/finance_dto.dart';
 import '../controllers/finance_cubit.dart';
 import 'payment_webview_page.dart';
+import '../../../auth/presentation/controllers/auth_cubit.dart';
+import '../../../auth/presentation/controllers/auth_state.dart';
+import '../../../auth/domain/models/auth_user.dart';
 
 class PaymentDialog extends StatefulWidget {
   final Debt debt;
@@ -95,7 +98,13 @@ class _PaymentDialogState extends State<PaymentDialog> {
         );
         
         if (success == true) {
-          cubit.fetchManagerFinance();
+          final authState = context.read<AuthCubit>().state;
+          final isManager = authState is AuthAuthenticated && authState.user.role.isManager;
+          if (isManager) {
+            cubit.fetchManagerFinance();
+          } else {
+            cubit.fetchDebts();
+          }
         }
       } else {
         Navigator.of(context).pop();
@@ -103,7 +112,13 @@ class _PaymentDialogState extends State<PaymentDialog> {
           content: Text('Ödeme başarıyla alındı!'),
           backgroundColor: AppColors.success,
         ));
-        cubit.fetchManagerFinance();
+        final authState = context.read<AuthCubit>().state;
+        final isManager = authState is AuthAuthenticated && authState.user.role.isManager;
+        if (isManager) {
+          cubit.fetchManagerFinance();
+        } else {
+          cubit.fetchDebts();
+        }
       }
     } catch (e) {
       ScaffoldMessenger.of(context).showSnackBar(SnackBar(

@@ -20,9 +20,6 @@ class ResidentOperationsPage extends StatefulWidget {
 }
 
 class _ResidentOperationsPageState extends State<ResidentOperationsPage> {
-  late final MaintenanceCubit _maintenanceCubit;
-  late final AnnouncementCubit _announcementCubit;
-
   // Maintenance Filters
   String _selectedMaintenanceStatus = 'all';
   String _selectedMaintenanceCategory = 'all';
@@ -30,20 +27,6 @@ class _ResidentOperationsPageState extends State<ResidentOperationsPage> {
   // Announcement Filters
   String _selectedAnnouncementStatus = 'all';
   String _selectedAnnouncementApartment = 'all';
-
-  @override
-  void initState() {
-    super.initState();
-    _maintenanceCubit = sl<MaintenanceCubit>()..fetchRequests();
-    _announcementCubit = sl<AnnouncementCubit>()..fetchAnnouncements(status: 'published');
-  }
-
-  @override
-  void dispose() {
-    _maintenanceCubit.close();
-    _announcementCubit.close();
-    super.dispose();
-  }
 
   String _normalizeStatusDisplay(MaintenanceRequest r) {
     final status = (r.statusDisplay ?? r.status).toLowerCase();
@@ -363,12 +346,7 @@ class _ResidentOperationsPageState extends State<ResidentOperationsPage> {
 
   @override
   Widget build(BuildContext context) {
-    return MultiBlocProvider(
-      providers: [
-        BlocProvider.value(value: _maintenanceCubit),
-        BlocProvider.value(value: _announcementCubit),
-      ],
-      child: DefaultTabController(
+    return DefaultTabController(
         length: 2,
         child: Scaffold(
           appBar: AppBar(
@@ -469,7 +447,6 @@ class _ResidentOperationsPageState extends State<ResidentOperationsPage> {
             },
           ),
         ),
-      ),
-    );
+      );
   }
 }

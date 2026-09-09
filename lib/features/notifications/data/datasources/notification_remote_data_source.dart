@@ -18,8 +18,15 @@ class NotificationRemoteDataSourceImpl implements NotificationRemoteDataSource {
   Future<List<NotificationDto>> getNotifications() async {
     try {
       final response = await _dio.get('/notifications/');
-      final results = response.data['results'] as List;
-      return results.map((e) => NotificationDto.fromJson(e)).toList();
+      List<dynamic> results;
+      if (response.data is Map && response.data['results'] != null) {
+        results = response.data['results'] as List;
+      } else if (response.data is List) {
+        results = response.data as List;
+      } else {
+        results = [];
+      }
+      return results.map((e) => NotificationDto.fromJson(Map<String, dynamic>.from(e as Map))).toList();
     } on DioException catch (e) {
       throw ApiException.fromDioException(e);
     }
@@ -29,7 +36,14 @@ class NotificationRemoteDataSourceImpl implements NotificationRemoteDataSource {
   Future<int> getUnreadCount() async {
     try {
       final response = await _dio.get('/notifications/unread-count/');
-      return response.data['unread_count'] as int? ?? 0;
+      if (response.data is Map) {
+        final val = response.data['unread_count'] ?? response.data['count'];
+        if (val is int) return val;
+        if (val is String) return int.tryParse(val) ?? 0;
+      } else if (response.data is int) {
+        return response.data as int;
+      }
+      return 0;
     } on DioException catch (e) {
       throw ApiException.fromDioException(e);
     }

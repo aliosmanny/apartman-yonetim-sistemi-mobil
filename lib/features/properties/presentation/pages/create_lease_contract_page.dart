@@ -123,7 +123,7 @@ if (state is PropertiesLoading) {
                   DropdownButtonFormField<int>(
                     decoration: const InputDecoration(labelText: 'Kat Maliki'),
                     value: _selectedOwnerId,
-                    items: owners.map<DropdownMenuItem<int>>((o) => DropdownMenuItem(value: o.id, child: Text(o.firstName))).toList(),
+                    items: owners.map<DropdownMenuItem<int>>((o) => DropdownMenuItem(value: o.id, child: Text(o.userName))).toList(),
                     onChanged: (v) => setState(() => _selectedOwnerId = v),
                     validator: (v) => v == null ? 'Zorunlu alan' : null,
                   ),
@@ -131,7 +131,7 @@ if (state is PropertiesLoading) {
                   DropdownButtonFormField<int>(
                     decoration: const InputDecoration(labelText: 'Kiracı'),
                     value: _selectedTenantId,
-                    items: tenants.map<DropdownMenuItem<int>>((t) => DropdownMenuItem(value: t.id, child: Text(t.firstName))).toList(),
+                    items: tenants.map<DropdownMenuItem<int>>((t) => DropdownMenuItem(value: t.id, child: Text(t.userName))).toList(),
                     onChanged: (v) => setState(() => _selectedTenantId = v),
                     validator: (v) => v == null ? 'Zorunlu alan' : null,
                   ),

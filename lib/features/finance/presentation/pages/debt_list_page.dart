@@ -90,16 +90,13 @@ class DebtListPage extends StatelessWidget {
       );
     }
 
-    return BlocProvider(
-      create: (context) => sl<FinanceCubit>()..fetchDebts(),
-      child: Scaffold(
-        backgroundColor: AppColors.background,
-        appBar: showAppBar ? AppBar(
-          title: const Text('Borçlarım ve Ödemeler'),
-          centerTitle: false,
-        ) : null,
-        body: mainBody,
-      ),
+    return Scaffold(
+      backgroundColor: AppColors.background,
+      appBar: showAppBar ? AppBar(
+        title: const Text('Borçlarım ve Ödemeler'),
+        centerTitle: false,
+      ) : null,
+      body: mainBody,
     );
   }
 }

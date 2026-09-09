@@ -58,16 +58,7 @@ class _UserFormPageState extends State<UserFormPage> {
         TextEditingController(text: widget.user?.companyName ?? '');
     _passwordController = TextEditingController();
     _passwordConfirmController = TextEditingController();
-
-    // AuthCubit might be factory, but we can get it from context later or get the AuthCubit state from a singleton?
-    // Wait, AuthCubit is a factory but there's no global AuthCubit.
-    // Instead of sl<AuthCubit>(), let's just use 'system_admin' as default until build()
     _currentUserRole = 'system_admin';
-
-    final propCubit = sl<PropertiesCubit>();
-    if (propCubit.state is! PropertiesLoaded) {
-      propCubit.fetchAll();
-    }
 
     if (widget.user != null) {
       _selectedRole = widget.user!.role;
@@ -97,7 +88,7 @@ class _UserFormPageState extends State<UserFormPage> {
           _selectedRole = 'owner';
         }
 
-        final propState = sl<PropertiesCubit>().state;
+        final propState = context.read<PropertiesCubit>().state;
         if (propState is PropertiesLoaded && propState.apartments.isNotEmpty) {
           _selectedApartmentId ??= propState.apartments.first.id;
         }
@@ -264,7 +255,6 @@ class _UserFormPageState extends State<UserFormPage> {
               const SizedBox(height: 16),
               if (_selectedRole == 'owner' || _selectedRole == 'tenant') ...[
                 BlocBuilder<PropertiesCubit, PropertiesState>(
-                  bloc: sl<PropertiesCubit>(),
                   builder: (context, state) {
                     if (state is PropertiesLoaded) {
                       final apartments = state.apartments;
@@ -447,7 +437,6 @@ class _UserFormPageState extends State<UserFormPage> {
                         .copyWith(color: AppColors.textSecondary)),
                 const SizedBox(height: 8),
                 BlocBuilder<PropertiesCubit, PropertiesState>(
-                  bloc: sl<PropertiesCubit>(),
                   builder: (context, state) {
                     if (state is PropertiesLoaded) {
                       final apartments = state.apartments;

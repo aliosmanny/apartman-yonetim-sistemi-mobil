@@ -20,10 +20,7 @@ class ManagerFinancePage extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return BlocProvider(
-      create: (context) => sl<FinanceCubit>()..fetchManagerFinance(),
-      child: const _ManagerFinanceView(),
-    );
+    return const _ManagerFinanceView();
   }
 }
 

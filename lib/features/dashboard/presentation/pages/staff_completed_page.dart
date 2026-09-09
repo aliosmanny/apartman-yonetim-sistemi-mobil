@@ -13,14 +13,12 @@ class StaffCompletedPage extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return BlocProvider(
-      create: (context) => sl<MaintenanceCubit>()..fetchRequests(),
-      child: Scaffold(
-        backgroundColor: AppColors.background,
-        appBar: AppBar(
-          title: const Text('Tamamlanan İşler'),
-          centerTitle: true,
-        ),
+    return Scaffold(
+      backgroundColor: AppColors.background,
+      appBar: AppBar(
+        title: const Text('Tamamlanan İşler'),
+        centerTitle: true,
+      ),
         body: BlocBuilder<MaintenanceCubit, MaintenanceState>(
           builder: (context, state) {
             if (state is MaintenanceLoading || state is MaintenanceInitial) {
@@ -87,7 +85,6 @@ class StaffCompletedPage extends StatelessWidget {
             return const SizedBox.shrink();
           },
         ),
-      ),
     );
   }
 }

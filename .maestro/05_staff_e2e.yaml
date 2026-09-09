@@ -1,6 +1,8 @@
 appId: com.example.apartman_yonetim_sistemi_mobil
 ---
-# ── 1. GİRİŞ ──
+# ══════════════════════════════════════════════════════════════════
+# 1. PERSONEL GİRİŞİ
+# ══════════════════════════════════════════════════════════════════
 - launchApp:
     clearState: true
 - tapOn: "5XX XXX XX XX"
@@ -12,41 +14,113 @@ appId: com.example.apartman_yonetim_sistemi_mobil
 - waitForAnimationToEnd:
     timeout: 8000
 
-# ── 2. ANA SAYFA KAYDIRMA ──
+# ══════════════════════════════════════════════════════════════════
+# 2. PERSONEL ANA SAYFA VE KISAYOLLAR
+# ══════════════════════════════════════════════════════════════════
+# 2.1. İstatistik Kısayolu: Bekleyen
+- tapOn: "Bekleyen"
+- waitForAnimationToEnd:
+    timeout: 2500
+# Ana Sayfaya Geri Dön (Sekme 0)
+- tapOn:
+    point: "18%, 90%"
+- waitForAnimationToEnd:
+    timeout: 2000
+
+# 2.2. İstatistik Kısayolu: Tamamlanan
+- tapOn: "Tamamlanan"
+- waitForAnimationToEnd:
+    timeout: 2500
+# Ana Sayfaya Geri Dön
+- tapOn:
+    point: "18%, 90%"
+- waitForAnimationToEnd:
+    timeout: 2000
+
+# 2.3. 'Tümü' Kısayol Butonu
+- tapOn: "Tümü"
+- waitForAnimationToEnd:
+    timeout: 2500
+# Ana Sayfaya Geri Dön
+- tapOn:
+    point: "18%, 90%"
+- waitForAnimationToEnd:
+    timeout: 2000
+
+# 2.4. Ana Sayfayı Kaydırarak İncele
 - swipe:
     direction: UP
-    duration: 800
+    duration: 600
+- swipe:
+    direction: DOWN
+    duration: 600
+
+# ══════════════════════════════════════════════════════════════════
+# 3. ATANAN GÖREVLER SEKMESİ
+# ══════════════════════════════════════════════════════════════════
+- tapOn:
+    point: "40%, 90%"
+- waitForAnimationToEnd:
+    timeout: 3000
+- swipe:
+    direction: UP
+    duration: 600
 - swipe:
     direction: DOWN
     duration: 500
 
-# ── 3. ATANAN GÖREVLER SEKMESİ (Tab 2) ──
+# ══════════════════════════════════════════════════════════════════
+# 4. TAMAMLANAN GÖREVLER SEKMESİ
+# ══════════════════════════════════════════════════════════════════
 - tapOn:
-    point: "37%, 95%"
+    point: "62%, 90%"
 - waitForAnimationToEnd:
-    timeout: 5000
+    timeout: 3000
 - swipe:
     direction: UP
     duration: 600
-
-# ── 4. TAMAMLANAN GÖREVLER SEKMESİ (Tab 3) ──
-- tapOn:
-    point: "62%, 95%"
-- waitForAnimationToEnd:
-    timeout: 5000
 - swipe:
-    direction: UP
-    duration: 600
+    direction: DOWN
+    duration: 500
 
-# ── 5. PROFİL SEKMESİ (Tab 4) & ÇIKIŞ ──
+# ══════════════════════════════════════════════════════════════════
+# 5. PROFİL, AYARLAR VE ÇIKIŞ YAP
+# ══════════════════════════════════════════════════════════════════
 - tapOn:
-    point: "87%, 95%"
+    point: "84%, 90%"
 - waitForAnimationToEnd:
-    timeout: 5000
+    timeout: 3000
+
+# 5.1. Profil Bilgileri Sayfasına Gir ve Geri Dön
+- tapOn: "Profil Bilgileri"
+- waitForAnimationToEnd:
+    timeout: 2000
+- back
+- waitForAnimationToEnd:
+    timeout: 2000
+
+# 5.2. Uygulama Ayarları Sayfasına Gir ve Geri Dön
+- tapOn: "Uygulama Ayarları"
+- waitForAnimationToEnd:
+    timeout: 2000
+- back
+- waitForAnimationToEnd:
+    timeout: 2000
+
+# 5.3. Şifre Değiştir Sayfasına Gir ve Geri Dön
+- tapOn: "Şifre Değiştir"
+- waitForAnimationToEnd:
+    timeout: 2000
+- back
+- waitForAnimationToEnd:
+    timeout: 2000
+
+# 5.4. Çıkış Yap
 - tapOn: "Çıkış Yap"
 - waitForAnimationToEnd:
     timeout: 2000
-- tapOn: "Çıkış Yap"
+- tapOn:
+    point: "72%, 56%"
 - waitForAnimationToEnd:
     timeout: 5000
 - assertVisible: "Tekrar Hoş Geldiniz"

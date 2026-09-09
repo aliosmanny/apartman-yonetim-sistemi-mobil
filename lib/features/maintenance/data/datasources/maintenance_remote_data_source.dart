@@ -64,11 +64,32 @@ class MaintenanceRemoteDataSourceImpl implements MaintenanceRemoteDataSource {
       await updateAssignedStaff(id, assignedStaffId);
     }
 
-    final data = <String, dynamic>{'status': status};
-    if (note != null && note.isNotEmpty) {
-      data['note'] = note;
+    final data = <String, dynamic>{
+      'status': status,
+      if (note != null && note.isNotEmpty) ...{
+        'staff_note': note,
+        'admin_notes': note,
+      }
+    };
+
+    Response response;
+    try {
+      // 1. Standart DRF PATCH endpoint'i (/maintenance-requests/{id}/)
+      response = await _dio.patch('/maintenance-requests/$id/', data: data);
+    } catch (_) {
+      try {
+        // 2. /status/ endpoint'i (sadece status ile)
+        response = await _dio.patch('/maintenance-requests/$id/status/', data: {'status': status});
+        if (note != null && note.isNotEmpty) {
+          try {
+            await _dio.patch('/maintenance-requests/$id/', data: {'staff_note': note});
+          } catch (_) {}
+        }
+      } catch (_) {
+        // 3. /status/ endpoint'i full data ile
+        response = await _dio.patch('/maintenance-requests/$id/status/', data: data);
+      }
     }
-    final response = await _dio.patch('/maintenance-requests/$id/status/', data: data);
     
     if (response.data is Map<String, dynamic> && response.data.containsKey('id')) {
       return MaintenanceDto.fromJson(response.data as Map<String, dynamic>);

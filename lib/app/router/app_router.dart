@@ -44,6 +44,7 @@ import '../../features/dashboard/presentation/pages/resident_dashboard_page.dart
 import '../../features/dashboard/presentation/pages/resident_properties_page.dart';
 import '../../features/dashboard/presentation/pages/resident_finance_page.dart';
 import '../../features/dashboard/presentation/pages/resident_operations_page.dart';
+import '../../features/notifications/presentation/pages/notifications_page.dart';
 
 import '../../features/finance/presentation/pages/debt_list_page.dart';
 import '../../features/finance/domain/models/debt.dart';
@@ -72,6 +73,10 @@ import '../../features/users/presentation/pages/user_list_page.dart';
 import '../../features/users/presentation/pages/user_form_page.dart';
 import '../../features/users/presentation/controllers/user_cubit.dart';
 import '../../features/users/domain/models/user.dart';
+import '../../features/maintenance/presentation/controllers/maintenance_cubit.dart';
+import '../../features/dashboard/presentation/controllers/dashboard_cubit.dart';
+import '../../features/notifications/presentation/controllers/notification_cubit.dart';
+import '../../core/di/injection.dart';
 
 class AppRouter {
   static GoRouter router(AuthCubit authCubit) {
@@ -137,6 +142,13 @@ class AppRouter {
                   path: '/manager',
                   name: RouteNames.managerDashboard,
                   builder: (_, __) => const ManagerDashboardPage(),
+                  routes: [
+                    GoRoute(
+                      path: 'notifications',
+                      name: 'managerNotifications',
+                      builder: (_, __) => const NotificationsPage(),
+                    ),
+                  ],
                 ),
               ],
             ),
@@ -414,21 +426,23 @@ class AppRouter {
                 ),
                 GoRoute(
                   path: '/manager/maintenance',
-                  name: RouteNames.managerMaintenance,
+                  name: 'managerMaintenance',
                   builder: (_, __) => const ManagerMaintenancePage(),
-                ),
-                GoRoute(
-                  path: '/manager/maintenance/create',
-                  name: 'managerMaintenanceCreate',
-                  builder: (_, __) => const ManagerCreateMaintenancePage(),
-                ),
-                GoRoute(
-                  path: '/manager/maintenance/:id',
-                  name: 'managerMaintenanceDetail',
-                  builder: (_, state) {
-                    final req = state.extra as MaintenanceRequest;
-                    return ManagerMaintenanceDetailPage(request: req);
-                  },
+                  routes: [
+                    GoRoute(
+                      path: 'create',
+                      name: 'managerMaintenanceCreate',
+                      builder: (_, __) => const ManagerCreateMaintenancePage(),
+                    ),
+                    GoRoute(
+                      path: ':id',
+                      name: 'managerMaintenanceDetail',
+                      builder: (_, state) {
+                        final req = state.extra as MaintenanceRequest;
+                        return ManagerMaintenanceDetailPage(request: req);
+                      },
+                    ),
+                  ],
                 ),
               ],
             ),
@@ -509,6 +523,13 @@ class AppRouter {
                   path: '/resident',
                   name: RouteNames.residentDashboard,
                   builder: (_, __) => const ResidentDashboardPage(),
+                  routes: [
+                    GoRoute(
+                      path: 'notifications',
+                      name: 'residentNotifications',
+                      builder: (_, __) => const NotificationsPage(),
+                    ),
+                  ],
                 ),
               ],
             ),
@@ -572,7 +593,7 @@ class AppRouter {
                     ),
                     GoRoute(
                       path: 'notifications',
-                      name: 'residentNotifications',
+                      name: 'residentNotificationSettings',
                       builder: (_, __) => const NotificationSettingsPage(),
                     ),
                   ],
@@ -693,24 +714,38 @@ class _ManagerShell extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return Scaffold(
-      body: navigationShell,
-      bottomNavigationBar: NavigationBar(
-        selectedIndex: navigationShell.currentIndex,
-        onDestinationSelected: (i) {
-          navigationShell.goBranch(
-            i,
-            initialLocation: i == navigationShell.currentIndex,
-          );
-        },
-        destinations: const [
-          NavigationDestination(icon: Icon(Icons.home_outlined), selectedIcon: Icon(Icons.home), label: 'Ana Sayfa'),
-          NavigationDestination(icon: Icon(Icons.people_outline), selectedIcon: Icon(Icons.people), label: 'Kullanıcılar'),
-          NavigationDestination(icon: Icon(Icons.apartment_outlined), selectedIcon: Icon(Icons.apartment), label: 'Yapı Sakin'),
-          NavigationDestination(icon: Icon(Icons.account_balance_wallet_outlined), selectedIcon: Icon(Icons.account_balance_wallet), label: 'Finans'),
-          NavigationDestination(icon: Icon(Icons.dashboard_customize_outlined), selectedIcon: Icon(Icons.dashboard_customize), label: 'Hizmetler'),
-          NavigationDestination(icon: Icon(Icons.more_horiz), selectedIcon: Icon(Icons.more_horiz), label: 'Menü'),
-        ],
+    return MultiBlocProvider(
+      providers: [
+        BlocProvider(create: (_) => sl<DashboardCubit>()..fetchManagerDashboard()),
+        BlocProvider(create: (_) => sl<PropertiesCubit>()..fetchAll()),
+        BlocProvider(create: (_) => sl<UserCubit>()..fetchUsers()),
+        BlocProvider(create: (_) => sl<FinanceCubit>()..fetchManagerFinance()),
+        BlocProvider(create: (_) => sl<MaintenanceCubit>()..fetchRequests()),
+        BlocProvider(create: (_) => sl<StaffCubit>()..fetchStaff()),
+        BlocProvider(create: (_) => sl<AnnouncementCubit>()..fetchAnnouncements()),
+        BlocProvider(create: (_) => sl<DocumentCubit>()..fetchDocuments()),
+        BlocProvider(create: (_) => sl<NotificationCubit>()..fetchNotifications()),
+      ],
+      child: Scaffold(
+        body: navigationShell,
+        bottomNavigationBar: NavigationBar(
+          labelBehavior: NavigationDestinationLabelBehavior.alwaysShow,
+          selectedIndex: navigationShell.currentIndex,
+          onDestinationSelected: (i) {
+            navigationShell.goBranch(
+              i,
+              initialLocation: true,
+            );
+          },
+          destinations: const [
+            NavigationDestination(icon: Icon(Icons.home_outlined), selectedIcon: Icon(Icons.home), label: 'Ana Sayfa'),
+            NavigationDestination(icon: Icon(Icons.people_outline), selectedIcon: Icon(Icons.people), label: 'Kullanıcılar'),
+            NavigationDestination(icon: Icon(Icons.apartment_outlined), selectedIcon: Icon(Icons.apartment), label: 'Yapı Sakin'),
+            NavigationDestination(icon: Icon(Icons.account_balance_wallet_outlined), selectedIcon: Icon(Icons.account_balance_wallet), label: 'Finans'),
+            NavigationDestination(icon: Icon(Icons.dashboard_customize_outlined), selectedIcon: Icon(Icons.dashboard_customize), label: 'Hizmetler'),
+            NavigationDestination(icon: Icon(Icons.more_horiz), selectedIcon: Icon(Icons.more_horiz), label: 'Menü'),
+          ],
+        ),
       ),
     );
   }
@@ -722,23 +757,35 @@ class _ResidentShell extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return Scaffold(
-      body: navigationShell,
-      bottomNavigationBar: NavigationBar(
-        selectedIndex: navigationShell.currentIndex,
-        onDestinationSelected: (i) {
-          navigationShell.goBranch(
-            i,
-            initialLocation: i == navigationShell.currentIndex,
-          );
-        },
-        destinations: const [
-          NavigationDestination(icon: Icon(Icons.home_outlined), selectedIcon: Icon(Icons.home), label: 'Ana Sayfa'),
-          NavigationDestination(icon: Icon(Icons.apartment_outlined), selectedIcon: Icon(Icons.apartment), label: 'Yapı Sakin'),
-          NavigationDestination(icon: Icon(Icons.account_balance_wallet_outlined), selectedIcon: Icon(Icons.account_balance_wallet), label: 'Finans'),
-          NavigationDestination(icon: Icon(Icons.build_outlined), selectedIcon: Icon(Icons.build), label: 'Operasyon'),
-          NavigationDestination(icon: Icon(Icons.person_outline), selectedIcon: Icon(Icons.person), label: 'Profil'),
-        ],
+    return MultiBlocProvider(
+      providers: [
+        BlocProvider(create: (_) => sl<DashboardCubit>()..fetchResidentDashboard()),
+        BlocProvider(create: (_) => sl<PropertiesCubit>()..fetchContracts()),
+        BlocProvider(create: (_) => sl<FinanceCubit>()..fetchDebts()),
+        BlocProvider(create: (_) => sl<MaintenanceCubit>()..fetchRequests()),
+        BlocProvider(create: (_) => sl<AnnouncementCubit>()..fetchAnnouncements(status: 'published')),
+        BlocProvider(create: (_) => sl<DocumentCubit>()..fetchDocuments(status: 'active')),
+        BlocProvider(create: (_) => sl<NotificationCubit>()..fetchNotifications()),
+      ],
+      child: Scaffold(
+        body: navigationShell,
+        bottomNavigationBar: NavigationBar(
+          labelBehavior: NavigationDestinationLabelBehavior.alwaysShow,
+          selectedIndex: navigationShell.currentIndex,
+          onDestinationSelected: (i) {
+            navigationShell.goBranch(
+              i,
+              initialLocation: true,
+            );
+          },
+          destinations: const [
+            NavigationDestination(icon: Icon(Icons.home_outlined), selectedIcon: Icon(Icons.home), label: 'Ana Sayfa'),
+            NavigationDestination(icon: Icon(Icons.apartment_outlined), selectedIcon: Icon(Icons.apartment), label: 'Yapı Sakin'),
+            NavigationDestination(icon: Icon(Icons.account_balance_wallet_outlined), selectedIcon: Icon(Icons.account_balance_wallet), label: 'Finans'),
+            NavigationDestination(icon: Icon(Icons.build_outlined), selectedIcon: Icon(Icons.build), label: 'Operasyon'),
+            NavigationDestination(icon: Icon(Icons.person_outline), selectedIcon: Icon(Icons.person), label: 'Profil'),
+          ],
+        ),
       ),
     );
   }
@@ -750,23 +797,30 @@ class _StaffShell extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return Scaffold(
-      body: navigationShell,
-      bottomNavigationBar: NavigationBar(
-        selectedIndex: navigationShell.currentIndex,
-        onDestinationSelected: (i) {
-          navigationShell.goBranch(
-            i,
-            initialLocation: i == navigationShell.currentIndex,
-          );
-        },
-        destinations: const [
-          NavigationDestination(icon: Icon(Icons.home_outlined), selectedIcon: Icon(Icons.home), label: 'Ana Sayfa'),
-          NavigationDestination(icon: Icon(Icons.assignment_outlined), selectedIcon: Icon(Icons.assignment), label: 'Atanan'),
-          NavigationDestination(icon: Icon(Icons.check_circle_outline), selectedIcon: Icon(Icons.check_circle), label: 'Tamamlanan'),
-
-          NavigationDestination(icon: Icon(Icons.person_outlined), selectedIcon: Icon(Icons.person), label: 'Profil'),
-        ],
+    return MultiBlocProvider(
+      providers: [
+        BlocProvider(create: (_) => sl<DashboardCubit>()..fetchStaffDashboard()),
+        BlocProvider(create: (_) => sl<MaintenanceCubit>()..fetchRequests()),
+        BlocProvider(create: (_) => sl<NotificationCubit>()..fetchNotifications()),
+      ],
+      child: Scaffold(
+        body: navigationShell,
+        bottomNavigationBar: NavigationBar(
+          labelBehavior: NavigationDestinationLabelBehavior.alwaysShow,
+          selectedIndex: navigationShell.currentIndex,
+          onDestinationSelected: (i) {
+            navigationShell.goBranch(
+              i,
+              initialLocation: true,
+            );
+          },
+          destinations: const [
+            NavigationDestination(icon: Icon(Icons.home_outlined), selectedIcon: Icon(Icons.home), label: 'Ana Sayfa'),
+            NavigationDestination(icon: Icon(Icons.assignment_outlined), selectedIcon: Icon(Icons.assignment), label: 'Atanan'),
+            NavigationDestination(icon: Icon(Icons.check_circle_outline), selectedIcon: Icon(Icons.check_circle), label: 'Tamamlanan'),
+            NavigationDestination(icon: Icon(Icons.person_outlined), selectedIcon: Icon(Icons.person), label: 'Profil'),
+          ],
+        ),
       ),
     );
   }

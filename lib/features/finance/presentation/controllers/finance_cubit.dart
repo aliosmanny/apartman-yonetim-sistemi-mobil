@@ -13,14 +13,22 @@ import 'finance_state.dart';
 class FinanceCubit extends Cubit<FinanceState> {
   final FinanceRepository _repository;
   static FinanceLoaded? _cachedState;
+  static DateTime? _lastFetch;
+  static const _cacheTtl = Duration(seconds: 60);
+
+  static bool get _isFresh =>
+      _lastFetch != null && DateTime.now().difference(_lastFetch!) < _cacheTtl;
 
   static void clearCache() {
     _cachedState = null;
+    _lastFetch = null;
   }
 
   FinanceCubit(this._repository) : super(_cachedState ?? FinanceInitial());
 
-  Future<void> fetchDebts() async {
+  Future<void> fetchDebts({bool forceRefresh = false}) async {
+    if (!forceRefresh && _isFresh && state is FinanceLoaded) return;
+
     if (state is! FinanceLoaded) {
       emit(FinanceLoading());
     }
@@ -33,13 +41,16 @@ class FinanceCubit extends Cubit<FinanceState> {
       final payments = results[1] as List<Payment>;
       final loadedState = FinanceLoaded(debts: debts, payments: payments);
       _cachedState = loadedState;
+      _lastFetch = DateTime.now();
       emit(loadedState);
     } catch (e) {
       emit(FinanceError(message: 'Borçlar yüklenirken bir hata oluştu: ${e.toString()}'));
     }
   }
 
-  Future<void> fetchManagerFinance() async {
+  Future<void> fetchManagerFinance({bool forceRefresh = false}) async {
+    if (!forceRefresh && _isFresh && state is FinanceLoaded && (state as FinanceLoaded).summary != null) return;
+
     if (state is! FinanceLoaded) {
       emit(FinanceLoading());
     }
@@ -82,6 +93,7 @@ class FinanceCubit extends Cubit<FinanceState> {
         expenses: expenses,
       );
       _cachedState = loadedState;
+      _lastFetch = DateTime.now();
       emit(loadedState);
     } catch (e) {
       emit(FinanceError(message: 'Finans verileri yüklenirken bir hata oluştu: ${e.toString()}'));

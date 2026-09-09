@@ -27,8 +27,6 @@ class _CreateMaintenancePageState extends State<CreateMaintenancePage> {
   XFile? _selectedImage;
   bool _isLoading = false;
 
-  final DashboardCubit _dashboardCubit = sl<DashboardCubit>();
-
   final List<Map<String, String>> _categories = [
     {'value': 'plumbing', 'label': 'Tesisat'},
     {'value': 'electrical', 'label': 'Elektrik'},
@@ -36,12 +34,6 @@ class _CreateMaintenancePageState extends State<CreateMaintenancePage> {
     {'value': 'elevator', 'label': 'Asansör'},
     {'value': 'other', 'label': 'Diğer'},
   ];
-
-  @override
-  void initState() {
-    super.initState();
-    _dashboardCubit.fetchResidentDashboard();
-  }
 
   void _submit() async {
     if (!_formKey.currentState!.validate()) return;
@@ -56,7 +48,7 @@ class _CreateMaintenancePageState extends State<CreateMaintenancePage> {
     setState(() => _isLoading = true);
 
     try {
-      await sl<MaintenanceCubit>().createRequest(
+      await context.read<MaintenanceCubit>().createRequest(
         title: _title,
         description: _description,
         category: _category,
@@ -65,6 +57,7 @@ class _CreateMaintenancePageState extends State<CreateMaintenancePage> {
       );
 
       if (!mounted) return;
+      context.read<DashboardCubit>().fetchResidentDashboard();
       ScaffoldMessenger.of(context).showSnackBar(
         const SnackBar(
           content: Text('Talebiniz başarıyla oluşturuldu.'),
@@ -141,7 +134,6 @@ class _CreateMaintenancePageState extends State<CreateMaintenancePage> {
               Text('Daire Seçin', style: AppTextStyles.inputLabel),
               const SizedBox(height: 8),
               BlocBuilder<DashboardCubit, DashboardState>(
-                bloc: _dashboardCubit,
                 builder: (context, state) {
                   if (state is DashboardLoading) {
                     return const Center(child: CircularProgressIndicator());

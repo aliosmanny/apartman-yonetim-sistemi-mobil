@@ -17,22 +17,8 @@ class ResidentFinancePage extends StatefulWidget {
 }
 
 class _ResidentFinancePageState extends State<ResidentFinancePage> {
-  late final FinanceCubit _cubit;
-
   String _selectedDebtStatus = 'all';
   String _selectedDebtApartment = 'all';
-
-  @override
-  void initState() {
-    super.initState();
-    _cubit = sl<FinanceCubit>()..fetchDebts();
-  }
-
-  @override
-  void dispose() {
-    _cubit.close();
-    super.dispose();
-  }
 
   List<Map<String, String>> _toOptions(Iterable<String> list) {
     return list.map((e) => {'value': e, 'label': e == 'all' ? 'Tümü' : e}).toList();
@@ -199,9 +185,7 @@ class _ResidentFinancePageState extends State<ResidentFinancePage> {
 
   @override
   Widget build(BuildContext context) {
-    return BlocProvider.value(
-      value: _cubit,
-      child: DefaultTabController(
+    return DefaultTabController(
         length: 2,
         child: Scaffold(
           backgroundColor: AppColors.background,
@@ -276,8 +260,7 @@ class _ResidentFinancePageState extends State<ResidentFinancePage> {
             },
           ),
         ),
-      ),
-    );
+      );
   }
 }
 

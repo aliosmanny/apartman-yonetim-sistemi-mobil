@@ -23,36 +23,13 @@ class ManagerDashboardPage extends StatefulWidget {
 
 class _ManagerDashboardPageState extends State<ManagerDashboardPage> {
   @override
-  void initState() {
-    super.initState();
-    // Diğer sekmelerin yüklenme sürelerini sıfırlamak için arkada veri çekiyoruz.
-    // Ancak ana sayfanın (Dashboard) yüklenmesini yavaşlatmamak adına
-    // bu istekleri yarım saniye geciktirerek sıraya sokuyoruz.
-    Future.delayed(const Duration(milliseconds: 500), () {
-      if (!mounted) return;
-      sl<PropertiesCubit>().fetchAll();
-      sl<FinanceCubit>().fetchManagerFinance();
-      sl<UserCubit>().fetchUsers();
-    });
-  }
-
-  @override
   Widget build(BuildContext context) {
     // Para birimi formatter (Örn: 124.500 ₺)
     final formatCurrency = NumberFormat.currency(locale: 'tr_TR', symbol: '₺');
     
-    return MultiBlocProvider(
-      providers: [
-        BlocProvider<DashboardCubit>(
-          create: (context) => sl<DashboardCubit>()..fetchManagerDashboard(),
-        ),
-        BlocProvider<NotificationCubit>(
-          create: (context) => sl<NotificationCubit>()..fetchNotifications(),
-        ),
-      ],
-      child: BlocBuilder<AuthCubit, AuthState>(
-        builder: (context, authState) {
-          final user = authState is AuthAuthenticated ? authState.user : null;
+    return BlocBuilder<AuthCubit, AuthState>(
+      builder: (context, authState) {
+        final user = authState is AuthAuthenticated ? authState.user : null;
 
           return Scaffold(
             backgroundColor: AppColors.background,
@@ -184,21 +161,25 @@ class _ManagerDashboardPageState extends State<ManagerDashboardPage> {
                             children: [
                               Expanded(
                                 child: _buildStatCard(
+                                  context: context,
                                   title: 'Kasa Bakiyesi',
                                   amount: formatCurrency.format(data.netBalance),
                                   icon: Icons.account_balance_wallet_rounded,
                                   color: AppColors.debtPaid,
                                   trend: '+%5', // Gerçek veride yok, mockup kaldı
+                                  onTap: () => context.go('/manager/finance'),
                                 ),
                               ),
                               const SizedBox(width: 16),
                               Expanded(
                                 child: _buildStatCard(
+                                  context: context,
                                   title: 'Gecikmiş Alacak',
                                   amount: formatCurrency.format(data.totalUnpaidAmount),
                                   icon: Icons.money_off_rounded,
                                   color: AppColors.debtOverdue,
                                   trend: '${data.overdueCount} Daire',
+                                  onTap: () => context.go('/manager/finance'),
                                 ),
                               ),
                             ],
@@ -247,7 +228,7 @@ class _ManagerDashboardPageState extends State<ManagerDashboardPage> {
                           child: Text('Son Talepler', style: AppTextStyles.headlineSmall),
                         ),
                         TextButton(
-                          onPressed: () => context.go('/manager/maintenance'),
+                          onPressed: () => context.go('/manager/services'),
                           child: const Text('Tümü'),
                         ),
                       ],
@@ -287,77 +268,82 @@ class _ManagerDashboardPageState extends State<ManagerDashboardPage> {
           ),
         );
       },
-      ),
     );
   }
 
   Widget _buildStatCard({
+    required BuildContext context,
     required String title,
     required String amount,
     required IconData icon,
     required Color color,
     required String trend,
+    VoidCallback? onTap,
   }) {
-    return Container(
-      decoration: BoxDecoration(
-        color: AppColors.cardBackground,
-        borderRadius: BorderRadius.circular(20),
-        border: Border.all(color: AppColors.border),
-      ),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          // Üst renkli accent bar
-          Container(
-            height: 4,
-            decoration: BoxDecoration(
-              color: color,
-              borderRadius: const BorderRadius.only(
-                topLeft: Radius.circular(20),
-                topRight: Radius.circular(20),
+    return InkWell(
+      onTap: onTap,
+      borderRadius: BorderRadius.circular(20),
+      child: Container(
+        decoration: BoxDecoration(
+          color: AppColors.cardBackground,
+          borderRadius: BorderRadius.circular(20),
+          border: Border.all(color: AppColors.border),
+        ),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            // Üst renkli accent bar
+            Container(
+              height: 4,
+              decoration: BoxDecoration(
+                color: color,
+                borderRadius: const BorderRadius.only(
+                  topLeft: Radius.circular(20),
+                  topRight: Radius.circular(20),
+                ),
               ),
             ),
-          ),
-          Padding(
-            padding: const EdgeInsets.all(16),
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Row(
-                  children: [
-                    Container(
-                      padding: const EdgeInsets.all(8),
-                      decoration: BoxDecoration(
-                        color: color.withAlpha(26),
-                        borderRadius: BorderRadius.circular(10),
+            Padding(
+              padding: const EdgeInsets.all(16),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Row(
+                    children: [
+                      Container(
+                        padding: const EdgeInsets.all(8),
+                        decoration: BoxDecoration(
+                          color: color.withAlpha(26),
+                          borderRadius: BorderRadius.circular(10),
+                        ),
+                        child: Icon(icon, color: color, size: 18),
                       ),
-                      child: Icon(icon, color: color, size: 18),
-                    ),
-                    const Spacer(),
-                    Container(
-                      padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
-                      decoration: BoxDecoration(
-                        color: color.withAlpha(20),
-                        borderRadius: BorderRadius.circular(20),
-                      ),
-                      child: Text(
-                        trend,
-                        style: AppTextStyles.labelSmall.copyWith(
-                          color: color,
-                          fontWeight: FontWeight.w700,
+                      const Spacer(),
+                      Container(
+                        padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
+                        decoration: BoxDecoration(
+                          color: color.withAlpha(20),
+                          borderRadius: BorderRadius.circular(20),
+                        ),
+                        child: Text(
+                          trend,
+                          style: AppTextStyles.labelSmall.copyWith(
+                            color: color,
+                            fontWeight: FontWeight.w700,
+                          ),
                         ),
                       ),
-                    ),
-                  ],
-                ),
-                const SizedBox(height: 14),
-                Text(title, style: AppTextStyles.labelSmall.copyWith(color: AppColors.textSecondary)),
-                const SizedBox(height: 4),
-                Text(amount, style: AppTextStyles.amountMedium.copyWith(fontSize: 17)),
-              ],
+                    ],
+                  ),
+                  const SizedBox(height: 14),
+                  Text(title, style: AppTextStyles.labelSmall.copyWith(color: AppColors.textSecondary)),
+                  const SizedBox(height: 4),
+                  Text(amount, style: AppTextStyles.amountMedium.copyWith(fontSize: 17)),
+                ],
+              ),
             ),
-          ),
-        ],
+          ],
+        ),
       ),
     );
   }

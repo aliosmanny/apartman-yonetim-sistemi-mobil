@@ -47,7 +47,6 @@ import '../../features/properties/presentation/controllers/properties_cubit.dart
 
 final GetIt sl = GetIt.instance;
 
-/// Dependency Injection container'ı başlatır.
 Future<void> initDependencies() async {
   // ── Storage ──────────────────────────────────────
   sl.registerLazySingleton<SecureStorage>(() => SecureStorage());

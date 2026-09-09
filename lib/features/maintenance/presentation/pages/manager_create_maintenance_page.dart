@@ -34,9 +34,6 @@ class _ManagerCreateMaintenancePageState
   XFile? _selectedImage;
   bool _isLoading = false;
 
-  final PropertiesCubit _propertiesCubit = sl<PropertiesCubit>();
-  final StaffCubit _staffCubit = sl<StaffCubit>();
-
   final List<Map<String, String>> _categories = [
     {'value': 'plumbing', 'label': 'Su Tesisatı'},
     {'value': 'electrical', 'label': 'Elektrik'},
@@ -57,13 +54,6 @@ class _ManagerCreateMaintenancePageState
     {'value': 'cancelled', 'label': 'İptal Edildi'},
   ];
 
-  @override
-  void initState() {
-    super.initState();
-    _propertiesCubit.fetchAll();
-    _staffCubit.fetchStaff();
-  }
-
   void _submit() async {
     if (!_formKey.currentState!.validate()) return;
     if (_selectedUnitId == null) {
@@ -77,7 +67,7 @@ class _ManagerCreateMaintenancePageState
     setState(() => _isLoading = true);
 
     try {
-      await sl<MaintenanceCubit>().createRequest(
+      await context.read<MaintenanceCubit>().createRequest(
         title: _title,
         description: _description,
         category: _category,
@@ -137,14 +127,9 @@ class _ManagerCreateMaintenancePageState
         foregroundColor: Colors.black87,
         elevation: 1,
       ),
-      body: MultiBlocProvider(
-        providers: [
-          BlocProvider.value(value: _propertiesCubit),
-          BlocProvider.value(value: _staffCubit),
-        ],
-        child: Form(
-          key: _formKey,
-          child: SingleChildScrollView(
+      body: Form(
+        key: _formKey,
+        child: SingleChildScrollView(
             padding: const EdgeInsets.all(16),
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.stretch,
@@ -420,7 +405,6 @@ class _ManagerCreateMaintenancePageState
             ),
           ),
         ),
-      ),
     );
   }
 }

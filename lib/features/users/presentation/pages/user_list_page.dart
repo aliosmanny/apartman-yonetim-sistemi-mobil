@@ -16,22 +16,9 @@ class UserListPage extends StatefulWidget {
 }
 
 class _UserListPageState extends State<UserListPage> {
-  late final UserCubit _cubit;
   String _searchQuery = '';
   String _selectedRole = 'all';
   String _selectedIsActive = 'all';
-
-  @override
-  void initState() {
-    super.initState();
-    _cubit = sl<UserCubit>()..fetchUsers();
-  }
-
-  @override
-  void dispose() {
-    _cubit.close();
-    super.dispose();
-  }
 
   void _showFilterBottomSheet(BuildContext context, List<AppUser> allUsers) {
     showModalBottomSheet(
@@ -258,9 +245,7 @@ class _UserListPageState extends State<UserListPage> {
 
   @override
   Widget build(BuildContext context) {
-    return BlocProvider.value(
-      value: _cubit,
-      child: Scaffold(
+    return Scaffold(
         backgroundColor: AppColors.background,
         appBar: AppBar(
           title: BlocBuilder<UserCubit, UserState>(
@@ -395,13 +380,12 @@ class _UserListPageState extends State<UserListPage> {
         ),
         floatingActionButton: FloatingActionButton(
           onPressed: () {
-            context.push('/manager/users/add', extra: _cubit);
+            context.push('/manager/users/add', extra: context.read<UserCubit>());
           },
           backgroundColor: AppColors.primary,
           child: const Icon(Icons.add, color: Colors.white),
         ),
-      ),
-    );
+      );
   }
 }
 

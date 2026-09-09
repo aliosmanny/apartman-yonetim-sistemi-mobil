@@ -191,11 +191,9 @@ class _ManagerDocumentsPageState extends State<ManagerDocumentsPage> {
 
   @override
   Widget build(BuildContext context) {
-    return BlocProvider(
-      create: (context) => sl<DocumentCubit>()..fetchDocuments(),
-      child: Scaffold(
-        backgroundColor: AppColors.background,
-        appBar: AppBar(
+    return Scaffold(
+      backgroundColor: AppColors.background,
+      appBar: AppBar(
           title: const Text('Belgeler'),
           centerTitle: true,
           actions: [
@@ -240,15 +238,43 @@ class _ManagerDocumentsPageState extends State<ManagerDocumentsPage> {
               }).toList();
 
               if (filtered.isEmpty) {
-                return const Center(child: Text('Belge bulunamadı.'));
+                return RefreshIndicator(
+                  onRefresh: () => context.read<DocumentCubit>().fetchDocuments(),
+                  child: ListView(
+                    physics: const AlwaysScrollableScrollPhysics(),
+                    children: [
+                      SizedBox(height: MediaQuery.of(context).size.height * 0.25),
+                      Center(
+                        child: Column(
+                          mainAxisAlignment: MainAxisAlignment.center,
+                          children: [
+                            Icon(Icons.folder_open_rounded, size: 64, color: AppColors.textTertiary.withOpacity(0.5)),
+                            const SizedBox(height: 16),
+                            Text(
+                              state.documents.isEmpty
+                                  ? 'Henüz yüklenmiş bir doküman bulunmuyor'
+                                  : 'Seçili filtrelere uygun belge bulunamadı',
+                              style: AppTextStyles.titleMedium.copyWith(color: AppColors.textTertiary),
+                              textAlign: TextAlign.center,
+                            ),
+                          ],
+                        ),
+                      ),
+                    ],
+                  ),
+                );
               }
-              return ListView.separated(
-                padding: const EdgeInsets.all(20),
-                itemCount: filtered.length,
-                separatorBuilder: (_, __) => const SizedBox(height: 12),
-                itemBuilder: (context, index) {
-                  return _ManagerDocumentCard(document: filtered[index]);
-                },
+              return RefreshIndicator(
+                onRefresh: () => context.read<DocumentCubit>().fetchDocuments(),
+                child: ListView.separated(
+                  physics: const AlwaysScrollableScrollPhysics(),
+                  padding: const EdgeInsets.all(20),
+                  itemCount: filtered.length,
+                  separatorBuilder: (_, __) => const SizedBox(height: 12),
+                  itemBuilder: (context, index) {
+                    return _ManagerDocumentCard(document: filtered[index]);
+                  },
+                ),
               );
             }
             return const SizedBox();
@@ -266,8 +292,7 @@ class _ManagerDocumentsPageState extends State<ManagerDocumentsPage> {
             );
           }
         ),
-      ),
-    );
+      );
   }
 }
 

@@ -17,23 +17,9 @@ class ResidentDashboardPage extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return MultiBlocProvider(
-      providers: [
-        BlocProvider(create: (context) {
-          final cubit = sl<FinanceCubit>();
-          Future.delayed(const Duration(milliseconds: 500), () => cubit.fetchDebts());
-          return cubit;
-        }),
-        BlocProvider(create: (context) => sl<DashboardCubit>()..fetchResidentDashboard()),
-        BlocProvider(create: (context) {
-          final cubit = sl<NotificationCubit>();
-          Future.delayed(const Duration(milliseconds: 500), () => cubit.fetchNotifications());
-          return cubit;
-        }),
-      ],
-      child: BlocBuilder<AuthCubit, AuthState>(
-        builder: (context, state) {
-          final user = state is AuthAuthenticated ? state.user : null;
+    return BlocBuilder<AuthCubit, AuthState>(
+      builder: (context, state) {
+        final user = state is AuthAuthenticated ? state.user : null;
 
           return Scaffold(
             backgroundColor: AppColors.background,
@@ -175,8 +161,7 @@ class ResidentDashboardPage extends StatelessWidget {
             ),
           );
         },
-      ),
-    );
+      );
   }
 }
 

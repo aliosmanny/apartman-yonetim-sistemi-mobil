@@ -180,11 +180,9 @@ class _ManagerAnnouncementPageState extends State<ManagerAnnouncementPage> {
 
   @override
   Widget build(BuildContext context) {
-    return BlocProvider(
-      create: (context) => sl<AnnouncementCubit>()..fetchAnnouncements(),
-      child: Scaffold(
-        backgroundColor: AppColors.background,
-        appBar: AppBar(
+    return Scaffold(
+      backgroundColor: AppColors.background,
+      appBar: AppBar(
           title: const Text('Duyurular'),
           centerTitle: true,
           actions: [
@@ -230,13 +228,40 @@ class _ManagerAnnouncementPageState extends State<ManagerAnnouncementPage> {
               }).toList();
 
               if (filtered.isEmpty) {
-                return const Center(child: Text('Duyuru bulunamadı.'));
+                return RefreshIndicator(
+                  onRefresh: () => context.read<AnnouncementCubit>().fetchAnnouncements(),
+                  child: ListView(
+                    physics: const AlwaysScrollableScrollPhysics(),
+                    children: [
+                      SizedBox(height: MediaQuery.of(context).size.height * 0.25),
+                      Center(
+                        child: Column(
+                          mainAxisAlignment: MainAxisAlignment.center,
+                          children: [
+                            Icon(Icons.campaign_outlined, size: 64, color: AppColors.textTertiary.withOpacity(0.5)),
+                            const SizedBox(height: 16),
+                            Text(
+                              state.announcements.isEmpty
+                                  ? 'Henüz yayınlanmış bir duyuru bulunmuyor'
+                                  : 'Seçili filtrelere uygun duyuru bulunamadı',
+                              style: AppTextStyles.titleMedium.copyWith(color: AppColors.textTertiary),
+                              textAlign: TextAlign.center,
+                            ),
+                          ],
+                        ),
+                      ),
+                    ],
+                  ),
+                );
               }
-              return ListView.separated(
-                padding: const EdgeInsets.all(20),
-                itemCount: filtered.length,
-                separatorBuilder: (_, __) => const SizedBox(height: 16),
-                itemBuilder: (context, index) {
+              return RefreshIndicator(
+                onRefresh: () => context.read<AnnouncementCubit>().fetchAnnouncements(),
+                child: ListView.separated(
+                  physics: const AlwaysScrollableScrollPhysics(),
+                  padding: const EdgeInsets.all(20),
+                  itemCount: filtered.length,
+                  separatorBuilder: (_, __) => const SizedBox(height: 16),
+                  itemBuilder: (context, index) {
                   final ann = filtered[index];
                   return Container(
                     decoration: BoxDecoration(
@@ -374,12 +399,13 @@ class _ManagerAnnouncementPageState extends State<ManagerAnnouncementPage> {
                     ),
                   );
                 },
-              );
-            }
-            return const SizedBox();
+              ),
+            );
+          }
+          return const SizedBox();
           },
         ),
-        floatingActionButton: Builder(
+          floatingActionButton: Builder(
           builder: (context) {
             return FloatingActionButton(
               onPressed: () {
@@ -390,7 +416,6 @@ class _ManagerAnnouncementPageState extends State<ManagerAnnouncementPage> {
             );
           }
         ),
-      ),
-    );
+      );
   }
 }

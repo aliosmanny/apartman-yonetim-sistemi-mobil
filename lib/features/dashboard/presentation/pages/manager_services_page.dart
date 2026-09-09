@@ -50,7 +50,7 @@ class ManagerServicesPage extends StatelessWidget {
             iconColor: AppColors.textPrimary,
             title: 'Dokümanlar',
             subtitle: 'Gelir gider tabloları, kararlar',
-            onTap: () => context.pushNamed('managerDocuments'), // I'll move this route
+            onTap: () => context.pushNamed('managerDocuments'),
           ),
         ],
       ),
@@ -109,3 +109,5 @@ class ManagerServicesPage extends StatelessWidget {
     );
   }
 }
+
+

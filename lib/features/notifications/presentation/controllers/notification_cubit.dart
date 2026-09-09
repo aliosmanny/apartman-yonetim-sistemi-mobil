@@ -1,9 +1,14 @@
 import 'package:flutter_bloc/flutter_bloc.dart';
 import '../../domain/repositories/notification_repository.dart';
+import '../../../../core/services/local_notification_service.dart';
 import 'notification_state.dart';
 
 class NotificationCubit extends Cubit<NotificationState> {
   final NotificationRepository _repository;
+  final LocalNotificationService _notifService = LocalNotificationService();
+
+  /// Daha önce gösterilmiş bildirim ID'leri – tekrar gösterme
+  final Set<int> _shownNotificationIds = {};
 
   NotificationCubit(this._repository) : super(NotificationInitial());
 
@@ -12,12 +17,50 @@ class NotificationCubit extends Cubit<NotificationState> {
     try {
       final notifications = await _repository.getNotifications();
       final unreadCount = await _repository.getUnreadCount();
+
+      // Yeni okunmamış bildirimleri tespit et ve local push olarak göster
+      final unreadNotifications = notifications.where((n) => !n.isRead).toList();
+      for (final n in unreadNotifications) {
+        if (!_shownNotificationIds.contains(n.id)) {
+          _shownNotificationIds.add(n.id);
+          // İlk yüklemede sessizce ekle; sonraki fetch'lerde göster
+        }
+      }
+
       emit(NotificationLoaded(
         notifications: notifications,
         unreadCount: unreadCount,
       ));
     } catch (e) {
       emit(NotificationError(e.toString()));
+    }
+  }
+
+  /// Arka planda yeni bildirim kontrolü – uygulama açıkken çağrılır.
+  /// Shell'den periyodik olarak bu metot çağrılabilir.
+  Future<void> checkForNewNotifications() async {
+    try {
+      final notifications = await _repository.getNotifications();
+      final unreadCount = await _repository.getUnreadCount();
+
+      // Daha önce gösterilmemiş yeni bildirimleri local push yap
+      for (final n in notifications) {
+        if (!n.isRead && !_shownNotificationIds.contains(n.id)) {
+          _shownNotificationIds.add(n.id);
+          await _notifService.showNotification(
+            id: n.id,
+            title: n.title,
+            body: n.message,
+          );
+        }
+      }
+
+      emit(NotificationLoaded(
+        notifications: notifications,
+        unreadCount: unreadCount,
+      ));
+    } catch (_) {
+      // Arka plan kontrolü sessizce başarısız olabilir
     }
   }
 

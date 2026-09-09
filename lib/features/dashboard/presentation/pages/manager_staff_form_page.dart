@@ -92,7 +92,7 @@ class _ManagerStaffFormPageState extends State<ManagerStaffFormPage> {
       _isManager = authState.user.role == UserRole.apartmentManager;
     }
 
-    final propState = sl<PropertiesCubit>().state;
+    final propState = context.read<PropertiesCubit>().state;
     final apts = <int, String>{};
     
     if (propState is PropertiesLoaded) {

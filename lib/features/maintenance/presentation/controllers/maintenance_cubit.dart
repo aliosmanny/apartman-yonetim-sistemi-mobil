@@ -8,10 +8,18 @@ class MaintenanceCubit extends Cubit<MaintenanceState> {
 
   MaintenanceCubit(this._repository) : super(MaintenanceInitial());
 
-  Future<void> fetchRequests({String? status, String? category}) async {
+  DateTime? _lastFetch;
+  static const _cacheTtl = Duration(seconds: 60);
+  bool get _isFresh =>
+      _lastFetch != null && DateTime.now().difference(_lastFetch!) < _cacheTtl;
+
+  Future<void> fetchRequests({String? status, String? category, bool forceRefresh = false}) async {
+    if (!forceRefresh && _isFresh && state is MaintenanceLoaded) return;
+
     emit(MaintenanceLoading());
     try {
       final requests = await _repository.getRequests(status: status, category: category);
+      _lastFetch = DateTime.now();
       emit(MaintenanceLoaded(requests: requests));
     } catch (e) {
       emit(MaintenanceError(message: 'Talepler yüklenirken hata oluştu: ${e.toString()}'));
@@ -39,17 +47,37 @@ class MaintenanceCubit extends Cubit<MaintenanceState> {
         status: status,
         assignedToStaffId: assignedToStaffId,
       );
-      await fetchRequests();
+      _lastFetch = null;
+      await fetchRequests(forceRefresh: true);
     } catch (e) {
       throw Exception(e.toString());
     }
   }
 
   Future<void> updateRequestStatus(String id, String status, {String? note, int? assignedStaffId}) async {
+    // 1. Optimistic update (yerel state'i anında güncelle ki UI'da görev anında Tamamlanan'a geçsin)
+    if (state is MaintenanceLoaded) {
+      final currentRequests = (state as MaintenanceLoaded).requests;
+      final updatedRequests = currentRequests.map((r) {
+        if (r.id == id) {
+          return r.copyWith(
+            status: status,
+            adminNotes: note ?? r.adminNotes,
+          );
+        }
+        return r;
+      }).toList();
+      emit(MaintenanceLoaded(requests: updatedRequests));
+    }
+
     try {
       await _repository.updateRequestStatus(id, status, note: note, assignedStaffId: assignedStaffId);
-      await fetchRequests();
+      _lastFetch = null;
+      await fetchRequests(forceRefresh: true);
     } catch (e) {
+      // Backend hatası olursa dahi fetchRequests ile sunucu durumunu eşitle
+      _lastFetch = null;
+      await fetchRequests(forceRefresh: true);
       throw Exception(e.toString());
     }
   }
@@ -59,7 +87,8 @@ class MaintenanceCubit extends Cubit<MaintenanceState> {
     try {
       await _repository.updateAssignedStaff(requestId, staffId);
       await _repository.updateRequestStatus(requestId, 'assigned');
-      await fetchRequests();
+      _lastFetch = null;
+      await fetchRequests(forceRefresh: true);
     } catch (e) {
       throw Exception(e.toString());
     }

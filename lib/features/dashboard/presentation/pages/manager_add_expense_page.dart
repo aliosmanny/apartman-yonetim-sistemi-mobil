@@ -121,12 +121,12 @@ class _DuesPeriodFormTabState extends State<_DuesPeriodFormTab> {
   void didChangeDependencies() {
     super.didChangeDependencies();
     
-    final authState = sl<AuthCubit>().state;
+    final authState = context.read<AuthCubit>().state;
     if (authState is AuthAuthenticated) {
       _isManager = authState.user.role == UserRole.apartmentManager;
     }
 
-    final propState = sl<PropertiesCubit>().state;
+    final propState = context.read<PropertiesCubit>().state;
     final apts = <int, String>{};
     
     if (propState is PropertiesLoaded) {
@@ -321,12 +321,12 @@ class _IncomeFormTabState extends State<_IncomeFormTab> {
   @override
   void didChangeDependencies() {
     super.didChangeDependencies();
-    final authState = sl<AuthCubit>().state;
+    final authState = context.read<AuthCubit>().state;
     if (authState is AuthAuthenticated) {
       _isManager = authState.user.role == UserRole.apartmentManager;
     }
     
-    final propState = sl<PropertiesCubit>().state;
+    final propState = context.read<PropertiesCubit>().state;
     if (propState is PropertiesLoaded) {
       if (propState.apartments.isNotEmpty && _selectedApartmentId == null) {
         if (_isManager || propState.apartments.length == 1) {
@@ -395,7 +395,6 @@ class _IncomeFormTabState extends State<_IncomeFormTab> {
             Text('Apartman / Site*', style: AppTextStyles.labelMedium),
             const SizedBox(height: 8),
             BlocBuilder<PropertiesCubit, PropertiesState>(
-              bloc: sl<PropertiesCubit>(),
               builder: (context, state) {
                 if (state is PropertiesLoaded) {
                   final apartments = state.apartments;

@@ -18,13 +18,20 @@ class NotificationDto {
   });
 
   factory NotificationDto.fromJson(Map<String, dynamic> json) {
+    int parsedId = 0;
+    if (json['id'] is int) {
+      parsedId = json['id'] as int;
+    } else if (json['id'] != null) {
+      parsedId = int.tryParse(json['id'].toString()) ?? 0;
+    }
+
     return NotificationDto(
-      id: json['id'] as int,
-      title: json['title'] as String? ?? '',
-      message: json['message'] as String? ?? '',
-      isRead: json['is_read'] as bool? ?? false,
-      link: json['link'] as String?,
-      createdAt: json['created_at'] as String? ?? '',
+      id: parsedId,
+      title: json['title']?.toString() ?? '',
+      message: json['message']?.toString() ?? '',
+      isRead: json['is_read'] == true || json['is_read'] == 'true' || json['is_read'] == 1,
+      link: json['link']?.toString(),
+      createdAt: json['created_at']?.toString() ?? '',
     );
   }
 

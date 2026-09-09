@@ -20,10 +20,18 @@ class StaffCubit extends Cubit<StaffState> {
 
   StaffCubit(this._repository) : super(StaffInitial());
 
-  Future<void> fetchStaff() async {
+  DateTime? _lastFetch;
+  static const _cacheTtl = Duration(seconds: 60);
+  bool get _isFresh =>
+      _lastFetch != null && DateTime.now().difference(_lastFetch!) < _cacheTtl;
+
+  Future<void> fetchStaff({bool forceRefresh = false}) async {
+    if (!forceRefresh && _isFresh && state is StaffLoaded) return;
+
     emit(StaffLoading());
     try {
       final list = await _repository.getStaffList();
+      _lastFetch = DateTime.now();
       emit(StaffLoaded(list));
     } catch (e) {
       emit(StaffError(e.toString()));

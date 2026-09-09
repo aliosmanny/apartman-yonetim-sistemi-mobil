@@ -12,10 +12,7 @@ class ManagerStaffPage extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return BlocProvider<StaffCubit>(
-      create: (context) => sl<StaffCubit>()..fetchStaff(),
-      child: const _ManagerStaffPageView(),
-    );
+    return const _ManagerStaffPageView();
   }
 }
 

@@ -3,7 +3,7 @@ import 'package:flutter/services.dart';
 import 'app_colors.dart';
 import 'app_text_styles.dart';
 
-// Sayfalar arası geçişi hızlandırmak (minimize etmek) için özel transition builder
+// Sayfalar arası geçişi hızlandırmak (minimize etmek) için özel transition builder ekledim.
 class FastPageTransitionsBuilder extends PageTransitionsBuilder {
   const FastPageTransitionsBuilder();
 
