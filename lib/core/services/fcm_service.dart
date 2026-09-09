@@ -34,27 +34,14 @@ class FcmService {
       final messaging = FirebaseMessaging.instance;
 
       // İzin iste (iOS & Android 13+)
-      await messaging.requestPermission(
-        alert: true,
-        badge: true,
-        sound: true,
-        provisional: false,
-      ).timeout(
-        const Duration(seconds: 3),
-        onTimeout: () => const NotificationSettings(
-          alert: AppleNotificationSetting.notSupported,
-          announcement: AppleNotificationSetting.notSupported,
-          authorizationStatus: AuthorizationStatus.authorized,
-          badge: AppleNotificationSetting.notSupported,
-          carPlay: AppleNotificationSetting.notSupported,
-          criticalAlert: AppleNotificationSetting.notSupported,
-          sound: AppleNotificationSetting.notSupported,
-          lockScreen: AppleNotificationSetting.notSupported,
-          notificationCenter: AppleNotificationSetting.notSupported,
-          showPreviews: AppleShowPreviewSetting.notSupported,
-          timeSensitive: AppleNotificationSetting.notSupported,
-        ),
-      );
+      try {
+        await messaging.requestPermission(
+          alert: true,
+          badge: true,
+          sound: true,
+          provisional: false,
+        ).timeout(const Duration(seconds: 3));
+      } catch (_) {}
 
       // Foreground mesaj dinleyicisi
       FirebaseMessaging.onMessage.listen((RemoteMessage message) {

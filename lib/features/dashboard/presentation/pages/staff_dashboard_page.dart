@@ -246,9 +246,10 @@ class StaffDashboardPage extends StatelessWidget {
                 ),
               ],
             ),
-          );
-        },
-      );
+          ),
+        );
+      },
+    );
   }
 }
 
