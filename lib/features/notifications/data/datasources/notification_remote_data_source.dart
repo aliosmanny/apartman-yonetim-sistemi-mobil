@@ -7,6 +7,10 @@ abstract class NotificationRemoteDataSource {
   Future<int> getUnreadCount();
   Future<void> markAsRead(int id);
   Future<void> markAllAsRead();
+  Future<Map<String, dynamic>> getNotificationPreferences();
+  Future<Map<String, dynamic>> updateNotificationPreferences(Map<String, dynamic> preferences);
+  Future<void> registerDeviceToken(String fcmToken, {String deviceType = 'android'});
+  Future<void> deleteDeviceToken(String fcmToken);
 }
 
 class NotificationRemoteDataSourceImpl implements NotificationRemoteDataSource {
@@ -62,6 +66,55 @@ class NotificationRemoteDataSourceImpl implements NotificationRemoteDataSource {
   Future<void> markAllAsRead() async {
     try {
       await _dio.post('/notifications/mark-all-read/');
+    } on DioException catch (e) {
+      throw ApiException.fromDioException(e);
+    }
+  }
+
+  @override
+  Future<Map<String, dynamic>> getNotificationPreferences() async {
+    try {
+      final response = await _dio.get('/users/notification-preferences/');
+      if (response.data is Map) {
+        return Map<String, dynamic>.from(response.data as Map);
+      }
+      return {};
+    } on DioException catch (e) {
+      throw ApiException.fromDioException(e);
+    }
+  }
+
+  @override
+  Future<Map<String, dynamic>> updateNotificationPreferences(Map<String, dynamic> preferences) async {
+    try {
+      final response = await _dio.patch('/users/notification-preferences/', data: preferences);
+      if (response.data is Map) {
+        return Map<String, dynamic>.from(response.data as Map);
+      }
+      return {};
+    } on DioException catch (e) {
+      throw ApiException.fromDioException(e);
+    }
+  }
+
+  @override
+  Future<void> registerDeviceToken(String fcmToken, {String deviceType = 'android'}) async {
+    try {
+      await _dio.post('/users/device-token/', data: {
+        'fcm_token': fcmToken,
+        'device_type': deviceType,
+      });
+    } on DioException catch (e) {
+      throw ApiException.fromDioException(e);
+    }
+  }
+
+  @override
+  Future<void> deleteDeviceToken(String fcmToken) async {
+    try {
+      await _dio.delete('/users/device-token/', data: {
+        'fcm_token': fcmToken,
+      });
     } on DioException catch (e) {
       throw ApiException.fromDioException(e);
     }

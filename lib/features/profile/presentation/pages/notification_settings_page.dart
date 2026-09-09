@@ -2,10 +2,9 @@ import 'package:flutter/material.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import '../../../../app/theme/app_colors.dart';
 import '../../../../app/theme/app_text_styles.dart';
+import '../../../../core/di/injection.dart';
+import '../../notifications/data/datasources/notification_remote_data_source.dart';
 
-/// Bildirim tercihleri yerel olarak (SharedPreferences) saklanır.
-/// Backend'de /users/notification-preferences/ endpoint'i olmadığından
-/// sadece cihaz üzerinde kalıcı hale getirilir.
 class NotificationSettingsPage extends StatefulWidget {
   const NotificationSettingsPage({super.key});
 
@@ -39,13 +38,32 @@ class _NotificationSettingsPageState extends State<NotificationSettingsPage> {
   Future<void> _loadPreferences() async {
     try {
       final prefs = await SharedPreferences.getInstance();
+      bool pAnnounce = prefs.getBool(_kPushAnnouncements) ?? true;
+      bool pDebts = prefs.getBool(_kPushDebts) ?? true;
+      bool pMaint = prefs.getBool(_kPushMaintenance) ?? true;
+      bool eNews = prefs.getBool(_kEmailNewsletter) ?? false;
+      bool sAlert = prefs.getBool(_kSmsAlerts) ?? true;
+
+      // Backend'den çekmeyi dene
+      try {
+        final remoteDs = sl<NotificationRemoteDataSource>();
+        final remote = await remoteDs.getNotificationPreferences();
+        if (remote.isNotEmpty) {
+          if (remote['push_announcements'] is bool) pAnnounce = remote['push_announcements'];
+          if (remote['push_debts'] is bool) pDebts = remote['push_debts'];
+          if (remote['push_maintenance'] is bool) pMaint = remote['push_maintenance'];
+          if (remote['email_newsletter'] is bool) eNews = remote['email_newsletter'];
+          if (remote['sms_alerts'] is bool) sAlert = remote['sms_alerts'];
+        }
+      } catch (_) {}
+
       if (mounted) {
         setState(() {
-          _pushAnnouncements = prefs.getBool(_kPushAnnouncements) ?? true;
-          _pushDebts = prefs.getBool(_kPushDebts) ?? true;
-          _pushMaintenance = prefs.getBool(_kPushMaintenance) ?? true;
-          _emailNewsletter = prefs.getBool(_kEmailNewsletter) ?? false;
-          _smsAlerts = prefs.getBool(_kSmsAlerts) ?? true;
+          _pushAnnouncements = pAnnounce;
+          _pushDebts = pDebts;
+          _pushMaintenance = pMaint;
+          _emailNewsletter = eNews;
+          _smsAlerts = sAlert;
           _isLoading = false;
         });
       }
@@ -57,12 +75,25 @@ class _NotificationSettingsPageState extends State<NotificationSettingsPage> {
   Future<void> _savePreferences() async {
     setState(() => _isSaving = true);
     try {
+      // 1. Yerel sakla
       final prefs = await SharedPreferences.getInstance();
       await prefs.setBool(_kPushAnnouncements, _pushAnnouncements);
       await prefs.setBool(_kPushDebts, _pushDebts);
       await prefs.setBool(_kPushMaintenance, _pushMaintenance);
       await prefs.setBool(_kEmailNewsletter, _emailNewsletter);
       await prefs.setBool(_kSmsAlerts, _smsAlerts);
+
+      // 2. Backend'e gönder
+      try {
+        final remoteDs = sl<NotificationRemoteDataSource>();
+        await remoteDs.updateNotificationPreferences({
+          'push_announcements': _pushAnnouncements,
+          'push_debts': _pushDebts,
+          'push_maintenance': _pushMaintenance,
+          'email_newsletter': _emailNewsletter,
+          'sms_alerts': _smsAlerts,
+        });
+      } catch (_) {}
 
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(

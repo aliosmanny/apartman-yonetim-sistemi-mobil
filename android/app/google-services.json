@@ -1,0 +1,48 @@
+{
+  "project_info": {
+    "project_number": "244040299811",
+    "project_id": "apartman-yonetimi-29fe0",
+    "storage_bucket": "apartman-yonetimi-29fe0.firebasestorage.app"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:244040299811:android:c3963246264bba41628896",
+        "android_client_info": {
+          "package_name": "com.apartman.yonetim"
+        }
+      },
+      "oauth_client": [],
+      "api_key": [
+        {
+          "current_key": "AIzaSyAzz1iPE1PokDknENAYbMgW4dx8zbMVd10"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": []
+        }
+      }
+    },
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:244040299811:android:c3963246264bba41628896",
+        "android_client_info": {
+          "package_name": "com.example.apartman_yonetim_sistemi_mobil"
+        }
+      },
+      "oauth_client": [],
+      "api_key": [
+        {
+          "current_key": "AIzaSyAzz1iPE1PokDknENAYbMgW4dx8zbMVd10"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": []
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}
