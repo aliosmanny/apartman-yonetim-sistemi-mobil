@@ -10,6 +10,20 @@ import 'local_notification_service.dart';
 Future<void> firebaseMessagingBackgroundHandler(RemoteMessage message) async {
   try {
     await Firebase.initializeApp();
+    final notification = message.notification;
+    final title = notification?.title ?? message.data['title'] ?? message.data['heading'];
+    final body = notification?.body ?? message.data['body'] ?? message.data['message'];
+    
+    // Eğer notification payload yoksa (sadece data payload geldiyse) yerel bildirim tetikle
+    if (notification == null && (title != null || body != null)) {
+      final local = LocalNotificationService();
+      await local.initialize();
+      await local.showNotification(
+        id: message.hashCode,
+        title: title?.toString() ?? 'Apartman Bildirimi',
+        body: body?.toString() ?? '',
+      );
+    }
   } catch (_) {}
 }
 
@@ -43,16 +57,24 @@ class FcmService {
         ).timeout(const Duration(seconds: 3));
       } catch (_) {}
 
-      // Foreground mesaj dinleyicisi
+      // Foreground bildirim sunumu için (iOS)
+      await messaging.setForegroundNotificationPresentationOptions(
+        alert: true,
+        badge: true,
+        sound: true,
+      );
+
+      // Foreground mesaj dinleyicisi (Uygulama açıkken)
       FirebaseMessaging.onMessage.listen((RemoteMessage message) {
         final notification = message.notification;
-        if (notification != null) {
-          LocalNotificationService().showNotification(
-            id: message.hashCode,
-            title: notification.title ?? 'Yeni Bildirim',
-            body: notification.body ?? '',
-          );
-        }
+        final title = notification?.title ?? message.data['title'] ?? message.data['heading'] ?? 'Yeni Bildirim';
+        final body = notification?.body ?? message.data['body'] ?? message.data['message'] ?? '';
+
+        LocalNotificationService().showNotification(
+          id: message.hashCode,
+          title: title.toString(),
+          body: body.toString(),
+        );
       });
 
       // Token yenilendiğinde backend'i güncelle

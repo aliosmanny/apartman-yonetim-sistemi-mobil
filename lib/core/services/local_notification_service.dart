@@ -39,7 +39,10 @@ class LocalNotificationService {
       'apartman_notifications',
       'Apartman Bildirimleri',
       description: 'Apartman yönetim sistemi bildirimleri',
-      importance: Importance.high,
+      importance: Importance.max,
+      playSound: true,
+      enableVibration: true,
+      showBadge: true,
     );
 
     await _plugin
@@ -60,9 +63,11 @@ class LocalNotificationService {
       'apartman_notifications',
       'Apartman Bildirimleri',
       channelDescription: 'Apartman yönetim sistemi bildirimleri',
-      importance: Importance.high,
-      priority: Priority.high,
+      importance: Importance.max,
+      priority: Priority.max,
       showWhen: true,
+      playSound: true,
+      enableVibration: true,
       icon: '@mipmap/ic_launcher',
     );
 

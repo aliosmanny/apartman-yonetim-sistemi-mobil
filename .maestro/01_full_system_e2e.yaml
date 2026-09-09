@@ -1,0 +1,424 @@
+appId: com.example.apartman_yonetim_sistemi_mobil
+---
+# ══════════════════════════════════════════════════════════════════
+# BÖLÜM 1: YÖNETİCİ (ADMİN) AKIŞI — İNCELEME & GÖREV ATAMA
+# ══════════════════════════════════════════════════════════════════
+
+# 1.1. Yönetici Girişi
+- launchApp:
+    clearState: true
+- tapOn: "5XX XXX XX XX"
+- inputText: "5445401710"
+- tapOn: "••••••••"
+- inputText: "ahmet123"
+- hideKeyboard
+- tapOn: "Giriş Yap"
+- waitForAnimationToEnd:
+    timeout: 8000
+- assertVisible: "Hızlı Eylemler"
+
+# 1.2. Ana Sayfa & Bildirimler
+- tapOn:
+    point: "76%, 15%"
+- waitForAnimationToEnd:
+    timeout: 3000
+- swipe:
+    start: "50%, 65%"
+    end: "50%, 35%"
+    duration: 400
+- back
+- waitForAnimationToEnd:
+    timeout: 2000
+
+# 1.3. Ana Sayfayı Kaydır
+- swipe:
+    start: "50%, 70%"
+    end: "50%, 30%"
+    duration: 400
+- waitForAnimationToEnd:
+    timeout: 1000
+- swipe:
+    start: "50%, 30%"
+    end: "50%, 70%"
+    duration: 400
+- waitForAnimationToEnd:
+    timeout: 1000
+
+# 1.4. Kullanıcılar Sekmesi (Sekme 1)
+- tapOn:
+    point: "25%, 90%"
+- waitForAnimationToEnd:
+    timeout: 3000
+- swipe:
+    start: "50%, 65%"
+    end: "50%, 35%"
+    duration: 400
+- waitForAnimationToEnd:
+    timeout: 1000
+- swipe:
+    start: "50%, 35%"
+    end: "50%, 65%"
+    duration: 400
+- waitForAnimationToEnd:
+    timeout: 1000
+
+# 1.5. Yapı & Sakin Sekmesi (Sekme 2)
+- tapOn:
+    point: "42%, 90%"
+- waitForAnimationToEnd:
+    timeout: 3000
+
+# Apartmanlar: Çoğalt & Geri
+- tapOn: "Çoğalt"
+- waitForAnimationToEnd:
+    timeout: 3000
+- back
+- waitForAnimationToEnd:
+    timeout: 2000
+
+# Bloklar, Daireler, Malikler, Kiracılar, Sözleşmeler Gezintisi
+- swipe:
+    start: "80%, 40%"
+    end: "20%, 40%"
+    duration: 350
+- waitForAnimationToEnd:
+    timeout: 1500
+- swipe:
+    start: "80%, 40%"
+    end: "20%, 40%"
+    duration: 350
+- waitForAnimationToEnd:
+    timeout: 1500
+- swipe:
+    start: "80%, 40%"
+    end: "20%, 40%"
+    duration: 350
+- waitForAnimationToEnd:
+    timeout: 1500
+- swipe:
+    start: "80%, 40%"
+    end: "20%, 40%"
+    duration: 350
+- waitForAnimationToEnd:
+    timeout: 1500
+- swipe:
+    start: "80%, 40%"
+    end: "20%, 40%"
+    duration: 350
+- waitForAnimationToEnd:
+    timeout: 1500
+
+# 1.6. Finans Yönetimi Sekmesi (Sekme 3)
+- tapOn:
+    point: "58%, 90%"
+- waitForAnimationToEnd:
+    timeout: 3000
+
+# Borçlar, Ödemeler, Gelirler, Giderler
+- swipe:
+    start: "80%, 40%"
+    end: "20%, 40%"
+    duration: 350
+- waitForAnimationToEnd:
+    timeout: 1500
+- swipe:
+    start: "80%, 40%"
+    end: "20%, 40%"
+    duration: 350
+- waitForAnimationToEnd:
+    timeout: 1500
+- swipe:
+    start: "80%, 40%"
+    end: "20%, 40%"
+    duration: 350
+- waitForAnimationToEnd:
+    timeout: 1500
+- swipe:
+    start: "80%, 40%"
+    end: "20%, 40%"
+    duration: 350
+- waitForAnimationToEnd:
+    timeout: 1500
+
+# 1.7. Hizmetler & Yeni Bakım Talebi Oluşturup Personele Atama (Sekme 4)
+- tapOn:
+    point: "75%, 90%"
+- waitForAnimationToEnd:
+    timeout: 3000
+
+# Bakım Talepleri Listesine Gir
+- tapOn: "Bakım Talepleri.*"
+- waitForAnimationToEnd:
+    timeout: 3000
+
+# FAB (+) ile Talep Formunu Aç
+- tapOn:
+    point: "88%, 81%"
+- waitForAnimationToEnd:
+    timeout: 2000
+
+# Formu Doldur ve Ali Kaya'ya Ata
+- tapOn: "Talep Başlığı.*"
+- inputText: "Otopark Otomatik Kapı Arızası"
+- tapOn: "Açıklama.*"
+- inputText: "Sensör okumuyor, acil kontrol gerekiyor."
+- hideKeyboard
+
+- tapOn: "Atanan Personel.*"
+- waitForAnimationToEnd:
+    timeout: 1000
+- tapOn: "Ali Kaya.*"
+- waitForAnimationToEnd:
+    timeout: 1000
+
+- tapOn: "Daire.*"
+- waitForAnimationToEnd:
+    timeout: 1000
+- tapOn:
+    point: "50%, 45%"
+- waitForAnimationToEnd:
+    timeout: 1000
+
+- swipe:
+    start: "50%, 75%"
+    end: "50%, 35%"
+    duration: 350
+- tapOn: "Kaydet"
+- waitForAnimationToEnd:
+    timeout: 4000
+
+# Talepler Listesinden Geri Dön
+- back
+- waitForAnimationToEnd:
+    timeout: 2000
+
+# 1.8. Menü & Yöneticiden Çıkış Yap (Sekme 5)
+- tapOn:
+    point: "92%, 90%"
+- waitForAnimationToEnd:
+    timeout: 3000
+- swipe:
+    start: "50%, 65%"
+    end: "50%, 35%"
+    duration: 400
+- tapOn: "Çıkış Yap.*"
+- waitForAnimationToEnd:
+    timeout: 2000
+- tapOn:
+    point: "72%, 56%"
+- waitForAnimationToEnd:
+    timeout: 5000
+- assertVisible: "Tekrar Hoş Geldiniz"
+
+
+# ══════════════════════════════════════════════════════════════════
+# BÖLÜM 2: PERSONEL (ALİ KAYA) AKIŞI — İŞİ İNCELEME & TAMAMLAMA
+# ══════════════════════════════════════════════════════════════════
+
+# 2.1. Personel Girişi
+- tapOn: "5XX XXX XX XX"
+- inputText: "5814904199"
+- tapOn: "••••••••"
+- inputText: "DemoUser123!"
+- hideKeyboard
+- tapOn: "Giriş Yap"
+- waitForAnimationToEnd:
+    timeout: 8000
+
+# 2.2. Personel Ana Sayfa Kısayolları
+- tapOn: ".*Bekleyen.*"
+- waitForAnimationToEnd:
+    timeout: 2500
+- tapOn:
+    point: "12%, 90%"
+- waitForAnimationToEnd:
+    timeout: 2000
+
+- tapOn: ".*Tamamlanan.*"
+- waitForAnimationToEnd:
+    timeout: 2500
+- tapOn:
+    point: "12%, 90%"
+- waitForAnimationToEnd:
+    timeout: 2000
+
+# 2.3. 'Atanan' Sekmesine Git ve Görevi Tamamla (Sekme 1)
+- tapOn:
+    point: "38%, 90%"
+- waitForAnimationToEnd:
+    timeout: 3000
+
+# Atanan İşe Tıkla ve Detay Sayfasına Git
+- tapOn: ".*Otopark.*"
+- waitForAnimationToEnd:
+    timeout: 3000
+- assertVisible: "İş Detayı"
+
+# Personel Notu Ekle ve İşi Tamamla
+- tapOn: "Yapılan işlemleri kısaca açıklayın..."
+- inputText: "Kapı sensörü temizlendi ve onarım tamamlandı."
+- hideKeyboard
+- swipe:
+    start: "50%, 75%"
+    end: "50%, 35%"
+    duration: 350
+- tapOn: "İşi Tamamla"
+- waitForAnimationToEnd:
+    timeout: 4000
+
+# 2.4. 'Tamamlanan' Sekmesine Git ve Doğrula (Sekme 2)
+- tapOn:
+    point: "62%, 90%"
+- waitForAnimationToEnd:
+    timeout: 3000
+- assertVisible: ".*Otopark.*"
+- assertVisible: ".*Tamamlandı.*"
+
+# 2.5. Profil Sekmesine Git ve Çıkış Yap (Sekme 3)
+- tapOn:
+    point: "88%, 90%"
+- waitForAnimationToEnd:
+    timeout: 3000
+- tapOn: "Profil Bilgileri"
+- waitForAnimationToEnd:
+    timeout: 2000
+- back
+- waitForAnimationToEnd:
+    timeout: 2000
+- tapOn: "Uygulama Ayarları"
+- waitForAnimationToEnd:
+    timeout: 2000
+- back
+- waitForAnimationToEnd:
+    timeout: 2000
+- tapOn: "Çıkış Yap"
+- waitForAnimationToEnd:
+    timeout: 2000
+- tapOn:
+    point: "72%, 56%"
+- waitForAnimationToEnd:
+    timeout: 5000
+- assertVisible: "Tekrar Hoş Geldiniz"
+
+
+# ══════════════════════════════════════════════════════════════════
+# BÖLÜM 3: SAKİN / MALİK AKIŞI — TÜM MODÜLLERİ DENETLEME
+# ══════════════════════════════════════════════════════════════════
+
+# 3.1. Sakin Girişi
+- tapOn: "5XX XXX XX XX"
+- inputText: "5353641829"
+- tapOn: "••••••••"
+- inputText: "123412341234"
+- hideKeyboard
+- tapOn: "Giriş Yap"
+- waitForAnimationToEnd:
+    timeout: 8000
+
+# 3.2. Ana Sayfa, Bildirimler ve Kısayollar
+- tapOn:
+    point: "76%, 15%"
+- waitForAnimationToEnd:
+    timeout: 3000
+- swipe:
+    direction: UP
+    duration: 500
+- tapOn:
+    point: "6%, 6%"
+- waitForAnimationToEnd:
+    timeout: 2000
+
+# Kısayollar: Borçlar, Duyurular, Sözleşmem
+- tapOn: "Borçlarımı Görüntüle"
+- waitForAnimationToEnd:
+    timeout: 2500
+- tapOn:
+    point: "10%, 90%"
+- waitForAnimationToEnd:
+    timeout: 2000
+
+- tapOn: "Duyurular"
+- waitForAnimationToEnd:
+    timeout: 2500
+- tapOn:
+    point: "10%, 90%"
+- waitForAnimationToEnd:
+    timeout: 2000
+
+# 3.3. Yapı & Sakin Sekmesi (Sekme 1)
+- tapOn:
+    point: "30%, 90%"
+- waitForAnimationToEnd:
+    timeout: 3000
+- swipe:
+    direction: UP
+    duration: 600
+- swipe:
+    direction: DOWN
+    duration: 500
+
+# 3.4. Finans & Aidat Sekmesi (Sekme 2)
+- tapOn:
+    point: "50%, 90%"
+- waitForAnimationToEnd:
+    timeout: 3000
+- swipe:
+    direction: UP
+    duration: 600
+- swipe:
+    direction: LEFT
+    duration: 400
+- waitForAnimationToEnd:
+    timeout: 2000
+
+# 3.5. Operasyon & Hizmetler Sekmesi (Sekme 3)
+- tapOn:
+    point: "70%, 90%"
+- waitForAnimationToEnd:
+    timeout: 3000
+- swipe:
+    direction: UP
+    duration: 600
+- swipe:
+    direction: LEFT
+    duration: 400
+- waitForAnimationToEnd:
+    timeout: 2000
+
+# 3.6. Profil Sekmesi ve Çıkış Yap (Sekme 4)
+- tapOn:
+    point: "90%, 90%"
+- waitForAnimationToEnd:
+    timeout: 3000
+- tapOn: "Şifre Değiştir"
+- waitForAnimationToEnd:
+    timeout: 2000
+- back
+- waitForAnimationToEnd:
+    timeout: 2000
+- tapOn: "Bildirim Tercihleri"
+- waitForAnimationToEnd:
+    timeout: 2000
+- back
+- waitForAnimationToEnd:
+    timeout: 2000
+- swipe:
+    direction: UP
+    duration: 500
+- tapOn: "Çıkış Yap"
+- waitForAnimationToEnd:
+    timeout: 2000
+- tapOn:
+    point: "72%, 56%"
+- waitForAnimationToEnd:
+    timeout: 5000
+
+# ══════════════════════════════════════════════════════════════════
+# TEST TAMAMLANDI: BAŞARIYLA GİRİŞ EKRANINA DÖNÜLDÜ
+# ══════════════════════════════════════════════════════════════════
+- assertVisible: "Tekrar Hoş Geldiniz"
+
+
+
+
+

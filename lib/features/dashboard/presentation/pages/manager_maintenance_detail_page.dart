@@ -51,6 +51,7 @@ class _ManagerMaintenanceDetailPageState
     _selectedStatus = _normalize(widget.request.status);
     _notesController =
         TextEditingController(text: widget.request.adminNotes ?? '');
+    _selectedStaffId = widget.request.assignedTo;
   }
 
   @override
@@ -133,8 +134,14 @@ class _ManagerMaintenanceDetailPageState
                                 ),
                               ))
                           .toList(),
-                      onChanged: (val) =>
-                          setState(() => _selectedStaffId = val),
+                      onChanged: (val) {
+                        setState(() {
+                          _selectedStaffId = val;
+                          if (val != null && _selectedStatus == 'pending') {
+                            _selectedStatus = 'assigned';
+                          }
+                        });
+                      },
                     );
                   },
                 ),

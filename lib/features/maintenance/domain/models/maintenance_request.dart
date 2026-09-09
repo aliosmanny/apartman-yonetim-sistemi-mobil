@@ -12,6 +12,7 @@ class MaintenanceRequest {
   final String? creatorName;
   final String? unitDisplay;
   final String? apartmentName;
+  final int? assignedTo;
   final String? assignedToName;
   final String? statusDisplay;
   final String? categoryDisplay;
@@ -30,6 +31,7 @@ class MaintenanceRequest {
     this.creatorName,
     this.unitDisplay,
     this.apartmentName,
+    this.assignedTo,
     this.assignedToName,
     this.statusDisplay,
     this.categoryDisplay,
@@ -49,6 +51,7 @@ class MaintenanceRequest {
     String? creatorName,
     String? unitDisplay,
     String? apartmentName,
+    int? assignedTo,
     String? assignedToName,
     String? statusDisplay,
     String? categoryDisplay,
@@ -67,6 +70,7 @@ class MaintenanceRequest {
       creatorName: creatorName ?? this.creatorName,
       unitDisplay: unitDisplay ?? this.unitDisplay,
       apartmentName: apartmentName ?? this.apartmentName,
+      assignedTo: assignedTo ?? this.assignedTo,
       assignedToName: assignedToName ?? this.assignedToName,
       statusDisplay: statusDisplay ?? this.statusDisplay,
       categoryDisplay: categoryDisplay ?? this.categoryDisplay,

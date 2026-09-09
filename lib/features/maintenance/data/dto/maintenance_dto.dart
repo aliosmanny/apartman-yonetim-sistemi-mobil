@@ -12,6 +12,7 @@ class MaintenanceDto {
   final String? unitDisplay;
   final String? apartmentName;
   final String? createdByName;
+  final int? assignedTo;
   final String? assignedToName;
   final String? imageUrl;
   final String? staffNote;
@@ -31,6 +32,7 @@ class MaintenanceDto {
     this.unitDisplay,
     this.apartmentName,
     this.createdByName,
+    this.assignedTo,
     this.assignedToName,
     this.imageUrl,
     this.staffNote,
@@ -40,6 +42,13 @@ class MaintenanceDto {
   });
 
   factory MaintenanceDto.fromJson(Map<String, dynamic> json) {
+    int? parseAssignedTo(dynamic val) {
+      if (val is int) return val;
+      if (val is Map && val['id'] != null) return val['id'] as int?;
+      if (val is String) return int.tryParse(val);
+      return null;
+    }
+
     return MaintenanceDto(
       id: json['id'] as int? ?? 0,
       title: json['title'] as String? ?? '',
@@ -52,6 +61,7 @@ class MaintenanceDto {
       unitDisplay: json['unit_display'] as String?,
       apartmentName: json['apartment_name'] as String?,
       createdByName: json['created_by_name'] as String?,
+      assignedTo: parseAssignedTo(json['assigned_to'] ?? json['assigned_staff'] ?? json['assigned_to_id']),
       assignedToName: json['assigned_to_name'] as String?,
       imageUrl: json['image_url'] as String?,
       staffNote: json['staff_note'] as String?,
@@ -75,6 +85,7 @@ class MaintenanceDto {
       creatorName: createdByName,
       unitDisplay: unitDisplay,
       apartmentName: apartmentName,
+      assignedTo: assignedTo,
       assignedToName: assignedToName,
       statusDisplay: statusDisplay,
       categoryDisplay: categoryDisplay,

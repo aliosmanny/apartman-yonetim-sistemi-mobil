@@ -13,16 +13,18 @@ class MaintenanceCubit extends Cubit<MaintenanceState> {
   bool get _isFresh =>
       _lastFetch != null && DateTime.now().difference(_lastFetch!) < _cacheTtl;
 
-  Future<void> fetchRequests({String? status, String? category, bool forceRefresh = false}) async {
-    if (!forceRefresh && _isFresh && state is MaintenanceLoaded) return;
-
-    emit(MaintenanceLoading());
+  Future<void> fetchRequests({String? status, String? category, bool forceRefresh = true}) async {
+    if (state is! MaintenanceLoaded) {
+      emit(MaintenanceLoading());
+    }
     try {
       final requests = await _repository.getRequests(status: status, category: category);
       _lastFetch = DateTime.now();
       emit(MaintenanceLoaded(requests: requests));
     } catch (e) {
-      emit(MaintenanceError(message: 'Talepler yüklenirken hata oluştu: ${e.toString()}'));
+      if (state is! MaintenanceLoaded) {
+        emit(MaintenanceError(message: 'Talepler yüklenirken hata oluştu: ${e.toString()}'));
+      }
     }
   }
 
